@@ -1,35 +1,24 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Onboarding from './pages/onBoarding';
+
+// 만약 Login 페이지를 만드셨다면 아래 주석을 풀고 임포트하세요.
+// import Login from './pages/Login'; 
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <Routes>
+        {/* 온보딩은 전체 화면으로 렌더링 */}
+        <Route path="/" element={<Onboarding />} />
+
+        {/* 나중에 로그인이 완성되면 아래처럼 추가하세요.
+           현재는 Login 컴포넌트가 없어서 에러 방지를 위해 주석 처리합니다.
+        */}
+        {/* <Route path="/login" element={<div className="mx-auto max-w-md min-h-screen bg-white shadow-2xl"><Login /></div>} /> */}
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
