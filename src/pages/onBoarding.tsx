@@ -1,12 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/button';
 
 const Onboarding: React.FC = () => {
+  const navigate = useNavigate();
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC] font-sans overflow-x-hidden">
-
-      {/* 카드 */}
-      <div className="w-full max-w-[440px] bg-white rounded-[40px] shadow-xl border border-[#E5E7EB] p-10 flex flex-col items-center">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC] font-sans overflow-x-hidden p-6">
+      <div className="w-[382px] h-[812px] bg-white rounded-[40px] shadow-2xl border border-[#E5E7EB] px-8 pt-20 pb-10 flex flex-col items-center relative">
 
         {/* 로고 */}
         <div className="flex flex-col items-center mb-12">
@@ -37,10 +37,10 @@ const Onboarding: React.FC = () => {
 
           <div className="mt-5 space-y-1">
             <p className="text-[#6A7282] text-[16px] font-medium tracking-tight">
-              기술 스택 기반 팀 빌딩부터
+              팀 빌딩부터
             </p>
             <p className="text-[#6A7282] text-[16px] font-medium tracking-tight">
-              코드 리뷰까지
+              정보 공유까지
             </p>
           </div>
         </div>
@@ -90,7 +90,7 @@ const Onboarding: React.FC = () => {
             variant="primary"
             size="lg"
             className="h-[64px] w-full rounded-[20px] bg-[#5C7CFF] flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-200/50 border-none"
-            onClick={() => console.log("이동")}
+            onClick={() => navigate('/login')}
           >
 
             <span style={{ color: 'white' }}>시작하기</span>
