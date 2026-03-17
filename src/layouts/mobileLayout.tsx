@@ -1,9 +1,9 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import Home from "../assets/home.svg?react";
-import Member from "../assets/member.svg?react"; // 팀원 아이콘
-import Project from "../assets/project.svg?react"; // 프로젝트 아이콘
-import Board from "../assets/board.svg?react"; // 게시판 아이콘
-import My from "../assets/my.svg?react";
+import Home from "../assets/footer/home.svg?react";
+import Member from "../assets/footer/member.svg?react"; // 팀원 아이콘
+import Project from "../assets/footer/project.svg?react"; // 프로젝트 아이콘
+import Board from "../assets/footer/board.svg?react"; // 게시판 아이콘
+import My from "../assets/footer/my.svg?react";
 
 export default function MobileLayout() {
   const location = useLocation();
