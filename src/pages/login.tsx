@@ -2,7 +2,7 @@ import React from 'react';
 import Button from '../components/button';
 import { useNavigate } from 'react-router-dom';
 
-const Onboarding: React.FC = () => {
+const Login: React.FC = () => {
     const navigate = useNavigate();
   return (
 
@@ -81,4 +81,4 @@ const Onboarding: React.FC = () => {
   );
 };
 
-export default Onboarding;
+export default Login;
