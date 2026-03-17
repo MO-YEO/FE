@@ -1,28 +1,24 @@
-import { createBrowserRouter } from 'react-router-dom';
-import { publicRoutes } from './public-routes';
-import { protectedRoutes } from './protected-routes';
-//import ProtectedRoute from './ProtectedRoute';
-//import RootLayout from '../components/layout/RootLayout';
-//import NotFoundPage from '../pages/NotFound';
+import { createBrowserRouter } from "react-router-dom";
+import { publicRoutes } from "./public-routes";
+import { protectedRoutes } from "./protected-routes";
+import NotFound from "../pages/notFound";
+import MobileLayout from "../layouts/mobileLayout";
 
-// export const router = createBrowserRouter([
-//   {
-//     Component: RootLayout,
-//     children: [
-//       // 1. 누구나 접근 가능한 페이지
-//       ...publicRoutes,
-      
-//       // 2. 로그인(인증)이 필요한 페이지들
-//       {
-//         Component: ProtectedRoute,
-//         children: protectedRoutes,
-//       },
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <MobileLayout />,
+    children: [
+      ...publicRoutes,
 
-//       // 3. 404 에러 페이지
-//       {
-//         path: '*',
-//         Component: NotFoundPage,
-//       },
-//     ],
-//   },
-// ]);
+      {
+        // element: <ProtectedRoute />,
+        children: protectedRoutes,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
+      },
+    ],
+  },
+]);
