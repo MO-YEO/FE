@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import PostPreviewCard from "../components/PostPreviewCard";
 import backIcon from "../assets/back.svg";
 import editIcon from "../assets/edit.svg";
@@ -8,6 +9,8 @@ import logoutIcon from "../assets/logout.svg";
 import profileImage from "../assets/profileImage.svg";
 
 export default function MyPage() {
+  const navigate = useNavigate();
+
   const profile = {
     name: "김가톨릭",
     role: "Frontend Developer",
@@ -69,9 +72,7 @@ export default function MyPage() {
       {/* 헤더 */}
       <header className="border-b border-[#E5E7EB] bg-white">
         <div className="flex h-[96px] items-end px-[16px] pb-[20px] pt-[40px]">
-          <button
-            type="button"
-          >
+          <button type="button">
             <img src={backIcon} alt="뒤로가기" className="h-[24px] w-[24px]" />
           </button>
 
@@ -224,6 +225,7 @@ export default function MyPage() {
 
               <button
                 type="button"
+                onClick={() => navigate("/mypage/posts")}
                 className="text-[12px] font-semibold leading-[20px] text-[#0EA5E9]"
               >
                 전체보기
