@@ -1,9 +1,9 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import Home from "../assets/home.svg";
-import Member from "../assets/member.svg"; // 팀원 아이콘
-import Project from "../assets/project.svg"; // 프로젝트 아이콘
-import Board from "../assets/board.svg"; // 게시판 아이콘
-import My from "../assets/my.svg";
+import Home from "../assets/home.svg?react";
+import Member from "../assets/member.svg?react"; // 팀원 아이콘
+import Project from "../assets/project.svg?react"; // 프로젝트 아이콘
+import Board from "../assets/board.svg?react"; // 게시판 아이콘
+import My from "../assets/my.svg?react";
 
 export default function MobileLayout() {
   const location = useLocation();
@@ -26,6 +26,7 @@ export default function MobileLayout() {
           <div className="fixed bottom-0 w-full max-w-[400px] flex border-t-1 border-black h-16 bg-[#FFFFFF]">
             {footerMenu.map((menu) => {
               const isActive = location.pathname === `/${menu.path}`;
+              const Icon = menu.icon;
               return (
                 <button
                   key={menu.label}
@@ -33,10 +34,10 @@ export default function MobileLayout() {
                   onClick={() => navigate(`/${menu.path}`)}
                 >
                   <div className="flex flex-col gap-[2px] items-center">
-                    <img
-                      src={menu.icon}
-                      className="size-5"
-                      alt={`${menu.label} 아이콘`}
+                    <Icon
+                      className={`size-5 fill-none stroke-2 ${
+                        isActive ? "text-[#155DFC]" : "text-[#90A1B9]"
+                      }`}
                     />
                     <p
                       className={`text-[10px] font-bold ${isActive ? "text-[#155DFC]" : "text-[#90A1B9]"}`}
