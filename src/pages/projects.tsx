@@ -4,16 +4,19 @@ const ProjectPage = () => {
   return (
     <div className="flex flex-col min-h-full">
       프로젝트페이지
-      <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b-1 border-[#E5E7EB]">
+      <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b border-[#E5E7EB]">
         {menu.map((menu) => (
-          <button className="text-[#4A5565] text-[14px] font-bold">
+          <button key={menu} className="text-[#4A5565] text-[14px] font-bold">
             {menu}
           </button>
         ))}
       </div>
-      <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b-1 border-[#E5E7EB]">
+      <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b border-[#E5E7EB]">
         {tagMenu.map((menu) => (
-          <button className="text-[12px] font-bold bg-white rounded-xl px-3 py-[6px] border-1 border-[#E5E7EB]">
+          <button
+            key={menu}
+            className="text-[12px] font-bold bg-white rounded-xl px-3 py-[6px] border-1 border-[#E5E7EB]"
+          >
             {menu}
           </button>
         ))}
@@ -46,7 +49,7 @@ const ProjectPage = () => {
               fastApi
             </button>
           </div>
-          <div className="border-t-1 border-[#D0D0D0] flex justify-between">
+          <div className="border-t border-[#D0D0D0] flex justify-between">
             <div className="text-[#9D9D9D] text-[12px] py-2">
               <p>박머신</p>
               <p>미디어과</p>

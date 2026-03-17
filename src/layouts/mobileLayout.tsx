@@ -11,11 +11,11 @@ export default function MobileLayout() {
 
   const hideFooter = hideFooterPaths.includes(location.pathname);
   const footerMenu = [
-    ["홈", "home", Home],
-    ["팀원", "member", Member],
-    ["프로젝트", "projects", Project],
-    ["게시판", "board", Board],
-    ["마이", "my", My],
+    { label: "홈", path: "home", icon: Home },
+    { label: "팀원", path: "member", icon: Member },
+    { label: "프로젝트", path: "projects", icon: Project },
+    { label: "게시판", path: "board", icon: Board },
+    { label: "마이", path: "my", icon: My },
   ];
   const navigate = useNavigate();
   return (
@@ -23,20 +23,25 @@ export default function MobileLayout() {
       <div className="relative w-full max-w-[400px] bg-white shadow-md">
         <Outlet />
         {!hideFooter && (
-          <div className="fixed bottom-0 w-full max-w-[400px] flex bg-white border-t-1 border-black h-16 bg-[#FFFFFF]">
+          <div className="fixed bottom-0 w-full max-w-[400px] flex border-t-1 border-black h-16 bg-[#FFFFFF]">
             {footerMenu.map((menu) => {
-              const isActive = location.pathname === `/${menu[1]}`;
+              const isActive = location.pathname === `/${menu.path}`;
               return (
                 <button
+                  key={menu.label}
                   className="flex flex-1 items-center justify-center border-0 p-0 cursor-pointer"
-                  onClick={() => navigate(`/${menu[1]}`)}
+                  onClick={() => navigate(`/${menu.path}`)}
                 >
                   <div className="flex flex-col gap-[2px] items-center">
-                    <img src={menu[2]} className="size-5" alt="홈 아이콘" />
+                    <img
+                      src={menu.icon}
+                      className="size-5"
+                      alt={`${menu.label} 아이콘`}
+                    />
                     <p
                       className={`text-[10px] font-bold ${isActive ? "text-[#155DFC]" : "text-[#90A1B9]"}`}
                     >
-                      {menu[0]}
+                      {menu.label}
                     </p>
                   </div>
                 </button>
