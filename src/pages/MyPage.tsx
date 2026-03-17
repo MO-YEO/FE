@@ -10,8 +10,8 @@ import profileImage from "../assets/profileImage.svg";
 export default function MyPage() {
   const profile = {
     name: "김가톨릭",
-    role: "Frontend\nDeveloper",
-    email: "name@catholic....",
+    role: "Frontend Developer",
+    email: "name@catholic.ac.kr",
     bio: "안녕하세요! 프론트엔드 개발에 관심있는 학생입니다.",
     techStacks: ["React", "TypeScript", "Node.js"],
     githubUrl: "github.com/user",
