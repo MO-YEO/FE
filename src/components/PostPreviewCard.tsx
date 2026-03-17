@@ -19,7 +19,7 @@ export default function PostPreviewCard({
       className="
       w-full
       bg-white
-      rounded-14
+      rounded-[14px]
       border border-gray-100
       p-4
       "
