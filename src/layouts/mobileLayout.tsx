@@ -15,7 +15,7 @@ export default function MobileLayout() {
     { label: "팀원", path: "member", icon: Member },
     { label: "프로젝트", path: "projects", icon: Project },
     { label: "게시판", path: "board", icon: Board },
-    { label: "마이", path: "my", icon: My },
+    { label: "마이", path: "mypage", icon: My },
   ];
   const navigate = useNavigate();
   return (
