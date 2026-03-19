@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-// 에셋 임포트 (경로는 프로젝트 설정에 맞춰주세요)
 import fourZeroFourIcon from "../assets/404.svg"; 
 import faceIcon from "../assets/faceIcon.svg";
 
@@ -8,10 +7,8 @@ const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    /* 1. 전체 컨테이너: 팀 프로젝트 표준 규격(430px) 및 중앙 정렬 */
     <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] font-sans flex flex-col items-center justify-center px-[24px] shadow-2xl relative">
       
-      {/* 2. 404 SVG 영역 */}
       <div className="mb-6">
         <img 
           src={fourZeroFourIcon} 
@@ -19,8 +16,6 @@ const NotFoundPage: React.FC = () => {
           className="w-[200px] h-auto"
         />
       </div>
-
-      {/* 3. 텍스트 안내 영역 */}
       <div className="text-center mb-12">
         <h1 className="text-[26px] font-bold text-[#1E293B] mb-3 tracking-tight">
           페이지를 찾을 수 없습니다
@@ -30,8 +25,6 @@ const NotFoundPage: React.FC = () => {
           이동되었을 수 있습니다
         </p>
       </div>
-
-      {/* 4. 얼굴 아이콘 영역 (원형 배경 포함) */}
       <div className="mb-16">
         <div className="w-[160px] h-[160px] bg-[#EFF6FF] rounded-full flex items-center justify-center">
           <img 
@@ -44,7 +37,6 @@ const NotFoundPage: React.FC = () => {
 
       {/* 5. 버튼 섹션 */}
       <div className="w-full flex flex-col gap-3 mb-12">
-        {/* 홈으로 가기 버튼 */}
         <button 
           onClick={() => navigate('/home')}
           className="w-full h-[56px] bg-[#5C7CFF] text-white rounded-[14px] font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-100 transition-all active:scale-[0.98]"
@@ -53,7 +45,6 @@ const NotFoundPage: React.FC = () => {
           홈으로 가기
         </button>
 
-        {/* 이전 페이지로 버튼 */}
         <button 
           onClick={() => navigate(-1)}
           className="w-full h-[56px] bg-white text-[#5C7CFF] border border-[#E2E8F0] rounded-[14px] font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
@@ -63,7 +54,6 @@ const NotFoundPage: React.FC = () => {
         </button>
       </div>
 
-      {/* 6. 하단 안내 텍스트 */}
       <footer className="text-[12px] text-[#94A3B8] font-medium text-center">
         문제가 지속되면 관리자에게 문의해주세요
       </footer>
