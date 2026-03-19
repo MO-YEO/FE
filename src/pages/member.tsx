@@ -6,7 +6,7 @@ import backIcon from "../assets/back.svg";
 // 1. 새로운 플러스 버튼 아이콘 임포트
 import plusIcon from "../assets/PlusButton.svg"; 
 
-const Board: React.FC = () => {
+const Member: React.FC = () => {
   const navigate = useNavigate();
 
   const posts = [
@@ -81,4 +81,4 @@ const Board: React.FC = () => {
   );
 };
 
-export default Board;
+export default Member;
