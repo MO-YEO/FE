@@ -7,7 +7,7 @@ import My from "../assets/footer/my.svg?react";
 
 export default function MobileLayout() {
   const location = useLocation();
-  const hideFooterPaths = ["/onboarding", "/login"];
+  const hideFooterPaths = ["/onboarding", "/login", "/signUp"];
 
   const hideFooter = hideFooterPaths.includes(location.pathname);
   const footerMenu = [

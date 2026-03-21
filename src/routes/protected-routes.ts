@@ -5,7 +5,7 @@ const HomePage = lazy(() => import("../pages/home"));
 const BoardPage = lazy(() => import("../pages/board"));
 //const MemberFindPage = lazy(() => import('../pages/MemberFind'));
 const ProjectPage = lazy(() => import("../pages/projects"));
-//const SignupPage = lazy(() => import('../pages/Signup')); // 가입 후 최초 프로필 설정 등
+const SignupPage = lazy(() => import("../pages/signUp"));
 const MyPage = lazy(() => import("../pages/MyPage"));
 const MyPostsPage = lazy(() => import("../pages/MyPostsPage"));
 
@@ -26,10 +26,10 @@ export const protectedRoutes = [
     path: PATH.PROJECTS,
     Component: ProjectPage,
   },
-  //   {
-  //     path: PATH.SIGNUP,
-  //     Component: SignupPage,
-  //   },
+  {
+    path: PATH.SIGNUP,
+    Component: SignupPage,
+  },
   {
     path: PATH.MY,
     Component: MyPage,
