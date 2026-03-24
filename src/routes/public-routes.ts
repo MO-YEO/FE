@@ -5,12 +5,6 @@ const OnboardingPage = lazy(() => import('../pages/onBoarding'));
 const LoginPage = lazy(() => import('../pages/login'));
 
 export const publicRoutes = [
-  {
-    path: PATH.LANDING,
-    Component: OnboardingPage,
-  },
-  {
-    path: PATH.LOGIN,
-    Component: LoginPage,
-  },
+  { path: PATH.ONBOARDING, Component: OnboardingPage },
+  { path: PATH.LOGIN, Component: LoginPage },
 ];

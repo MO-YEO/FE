@@ -1,17 +1,33 @@
-import { Navigate, Outlet } from 'react-router-dom';
-//import { PATH } from '../constants/path';
-// 실제 구현하실 유저 상태 확인 커스텀 훅 (예시)
-//import { useMe } from '../hooks/auth/useMe'; 
+// 1. react에서 lazy와 함께 타입들을 불러옵니다.
+import { lazy, type LazyExoticComponent, type ComponentType } from "react"; 
+import { PATH } from "../components/path";
 
-// export default function ProtectedRoute() {
-//   const { data: user, isLoading, isError } = useMe();
+// 만약 위에서 계속 에러가 난다면 아래처럼 'import type'을 써보세요.
+// import { lazy } from "react";
+// import type { LazyExoticComponent, ComponentType } from "react";
 
-//   if (isLoading) return <div>로딩 중...</div>; // 로딩 애니메이션 위치
+// 2. 라우트 객체를 위한 타입 정의
+interface RouteConfig {
+  path: string;
+  // React.ComponentType으로 써도 무방합니다.
+  Component: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
+}
 
-//   // 인증되지 않은 사용자는 로그인 페이지로 리다이렉트
-//   if (isError || !user) {
-//     return <Navigate to={PATH.LOGIN} replace />;
-//   }
+// --- 이하 동일 ---
+const HomePage = lazy(() => import("../pages/home"));
+const BoardPage = lazy(() => import("../pages/board"));
+const ProjectPage = lazy(() => import("../pages/project/project"));
+const MyPage = lazy(() => import("../pages/my/my"));
+const MyPostPage = lazy(() => import("../pages/my/myPost"));
+const NotFoundPage = lazy(() => import("../pages/notFound"));
 
-//   return <Outlet />;
-// }
+export const protectedRoutes: RouteConfig[] = [
+  { path: PATH.HOME, Component: HomePage },
+  { path: PATH.BOARD, Component: BoardPage },
+  { path: PATH.PROJECTS, Component: ProjectPage },
+  { path: PATH.MY, Component: MyPage },
+  { path: PATH.MY_POSTS, Component: MyPostPage },
+  { path: PATH.NOT_FOUND, Component: NotFoundPage },
+];
+
+export default protectedRoutes;
