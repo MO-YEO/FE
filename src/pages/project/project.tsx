@@ -1,15 +1,20 @@
+import { useState } from "react";
 import backIcon from "../../assets/back.svg";
 import plusIcon from "../../assets/plus.svg";
 
 const ProjectPage = () => {
-  const menu = ["전체", "수업", "프로젝트", "공모전", "스터디"];
-  const tagMenu = ["전체", "기획", "개발", "디자인", "마케팅", "기타"];
+  const menu = ["전체", "수업", "프로젝트", "공모전", "스터디"] as const;
+  const tagMenu = ["전체", "기획", "개발", "디자인", "마케팅", "기타"] as const;
+  const [selectMenu, setSelectMenu] = useState<(typeof menu)[number]>("전체");
+  const [selectTagMenu, setSelectTagMenu] =
+    useState<(typeof tagMenu)[number]>("전체");
+
   return (
     <div className="flex flex-col min-h-full">
       {/* 헤더 */}
       <header className="border-b border-[#E5E7EB] bg-white">
         <div className="flex flex-col gap-4 justify-center px-[16px] pb-[20px] pt-[40px] pb-4">
-          <div className="flex">
+          <div className="flex items-center">
             <button
               type="button"
               className="flex h-[24px] w-[24px] items-center justify-center"
@@ -41,19 +46,26 @@ const ProjectPage = () => {
         </div>
       </header>
       <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b border-[#E5E7EB]">
-        {menu.map((menu) => (
-          <button key={menu} className="text-[#4A5565] text-[14px] font-bold">
-            {menu}
-          </button>
-        ))}
+        {menu.map((menu) => {
+          return (
+            <button
+              key={menu}
+              className={`text-[14px] font-bold cursor-pointer ${menu == selectMenu ? "text-[#356AE6]" : "text-[#4A5565]"}`}
+              onClick={() => setSelectMenu(menu)}
+            >
+              {menu}
+            </button>
+          );
+        })}
       </div>
       <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b border-[#E5E7EB]">
-        {tagMenu.map((menu) => (
+        {tagMenu.map((tag) => (
           <button
-            key={menu}
-            className="text-[12px] font-bold bg-white rounded-xl px-3 py-[6px] border-1 border-[#E5E7EB]"
+            key={tag}
+            className={`text-[12px] font-bold rounded-xl px-3 py-[6px] border cursor-pointer ${tag == selectTagMenu ? "bg-[#356AE6] border-[#356AE6] text-white" : "bg-white border-[#E5E7EB]"}`}
+            onClick={() => setSelectTagMenu(tag)}
           >
-            {menu}
+            {tag}
           </button>
         ))}
       </div>
