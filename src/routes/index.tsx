@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import { publicRoutes } from "./public-routes";
 import { protectedRoutes } from "./protected-routes";
-import NotFound from "../pages/notFound";
+import NotFound from "../pages/member";
 import MobileLayout from "../layouts/mobileLayout";
 
 export const router = createBrowserRouter([
