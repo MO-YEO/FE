@@ -97,12 +97,14 @@ const ProjectPage = () => {
               fastApi
             </button>
           </div>
-          <div className="border-t border-[#D0D0D0] flex justify-between">
-            <div className="text-[#9D9D9D] text-[12px] py-2">
+          <div className="border-t border-[#D0D0D0] flex justify-between items-center py-2">
+            <div className="text-[#9D9D9D] text-[12px]">
               <p>박머신</p>
               <p>미디어과</p>
             </div>
-            <button>지원하기</button>
+            <button className="bg-[#2F6BFF] rounded-lg px-4 py-2 text-[12px] text-white font-bold leading-none shadow-sm">
+              지원하기
+            </button>
           </div>
         </div>
       </div>
