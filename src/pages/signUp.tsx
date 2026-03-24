@@ -73,10 +73,7 @@ const SignUpPage = () => {
             )}
           </div>
         ))}
-        <p className="font-bold">
-          사용 가능한 툴 / 기술 스택
-          <span className="text-[#2F6BFF] font-bold"> *</span>
-        </p>
+        <FieldLabel label="사용 가능한 툴 / 기술 스택" required={true} />
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
