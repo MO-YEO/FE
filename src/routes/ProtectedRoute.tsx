@@ -20,6 +20,7 @@ const ProjectPage = lazy(() => import("../pages/project/project"));
 const MyPage = lazy(() => import("../pages/my/my"));
 const MyPostPage = lazy(() => import("../pages/my/myPost"));
 const NotFoundPage = lazy(() => import("../pages/notFound"));
+const MemberPage = lazy(() => import("../pages/member"));
 
 export const protectedRoutes: RouteConfig[] = [
   { path: PATH.HOME, Component: HomePage },
@@ -28,6 +29,7 @@ export const protectedRoutes: RouteConfig[] = [
   { path: PATH.MY, Component: MyPage },
   { path: PATH.MY_POSTS, Component: MyPostPage },
   { path: PATH.NOT_FOUND, Component: NotFoundPage },
+  { path: PATH.MEMBER, Component: MemberPage },
 ];
 
 export default protectedRoutes;
