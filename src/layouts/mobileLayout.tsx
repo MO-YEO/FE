@@ -10,7 +10,7 @@ export default function MobileLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const hideFooterPaths = [PATH.ONBOARDING, PATH.LOGIN]; // 상수 활용
+  const hideFooterPaths = [PATH.ONBOARDING, PATH.LOGIN, PATH.SIGNUP]; // 상수 활용
   const hideFooter = hideFooterPaths.some((path) => path === location.pathname);
 
   const footerMenu = [
