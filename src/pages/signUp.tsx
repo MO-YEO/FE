@@ -1,4 +1,5 @@
 import { useState } from "react";
+import FieldLabel from "../components/fieldLabel";
 
 const fields = [
   {
@@ -55,13 +56,8 @@ const SignUpPage = () => {
       </div>
       <form className="flex flex-col gap-2">
         {fields.map((field) => (
-          <div key={field.id} className="w-full">
-            <p className="font-bold">
-              {field.title}
-              {field.required && (
-                <span className="text-[#2F6BFF] font-bold"> *</span>
-              )}
-            </p>
+          <div key={field.id} className="w-full flex flex-col gap-2">
+            <FieldLabel label={field.title} required={field.required} />
             {field.id === "intro" ? (
               <textarea
                 name={`${field.id}`}
