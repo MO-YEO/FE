@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import PostPreviewCard from "../components/PostPreviewCard";
-import backIcon from "../assets/back.svg";
-import editIcon from "../assets/edit.svg";
-import mailIcon from "../assets/mail.svg";
-import projectIcon from "../assets/project.svg";
-import postIcon from "../assets/post.svg";
-import logoutIcon from "../assets/logout.svg";
-import profileImage from "../assets/profileImage.svg";
+import PostPreviewCard from "../../components/PostPreviewCard";
+import backIcon from "../../assets/back.svg";
+import editIcon from "../../assets/edit.svg";
+import mailIcon from "../../assets/mail.svg";
+import projectIcon from "../../assets/project.svg";
+import postIcon from "../../assets/post.svg";
+import logoutIcon from "../../assets/logout.svg";
+import profileImage from "../../assets/profileImage.svg";
 
 export default function MyPage() {
   const navigate = useNavigate();
