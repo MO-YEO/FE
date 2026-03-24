@@ -1,5 +1,7 @@
 import { useState } from "react";
 import FieldLabel from "../components/fieldLabel";
+import { useNavigate } from "react-router-dom";
+import { PATH } from "../components/path";
 
 const fields = [
   {
@@ -37,6 +39,7 @@ const fields = [
 const SignUpPage = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const navigate = useNavigate();
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && input.trim() !== "") {
       e.preventDefault();
@@ -48,6 +51,19 @@ const SignUpPage = () => {
   const handleDelete = (deleteTag: string) => {
     setTags((prev) => prev.filter((tag) => tag !== deleteTag));
   };
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+    const finalData = {
+      ...data,
+      tags: tags,
+    };
+
+    console.log("최종 데이터:", finalData);
+    navigate(PATH.HOME);
+  };
+
   return (
     <>
       <div className="bg-[#F7F8FA] px-5 py-10 flex flex-col gap-5 h-full">
@@ -55,7 +71,11 @@ const SignUpPage = () => {
           <p className="font-bold text-[24px]">계정 생성</p>
           <p className="font-regular text-[14px]">프로필 정보를 입력해주세요</p>
         </div>
-        <form className="flex flex-col gap-2">
+        <form
+          className="flex flex-col gap-2"
+          id="signUpForm"
+          onSubmit={handleSubmit}
+        >
           {fields.map((field) => (
             <div key={field.id} className="w-full flex flex-col gap-2">
               <FieldLabel label={field.title} required={field.required} />
@@ -104,6 +124,7 @@ const SignUpPage = () => {
       <div className="fixed bottom-0 w-full max-w-[400px] p-5">
         <button
           type="submit"
+          form="signUpForm"
           className="bg-[#2F6BFF] w-full h-13 rounded-lg text-white font-bold cursor-pointer"
         >
           계정 생성 완료
