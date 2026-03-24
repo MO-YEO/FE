@@ -1,38 +1,39 @@
 import { useState } from "react";
 
+const fields = [
+  {
+    id: "nickname",
+    title: "이름",
+    placeholder: "이름을 입력하세요",
+    required: true,
+  },
+  {
+    id: "role",
+    title: "직무",
+    placeholder: "예: 프론트엔드 개발자",
+    required: true,
+  },
+  {
+    id: "email",
+    title: "이메일",
+    placeholder: "example@email.com",
+    required: true,
+  },
+  {
+    id: "githubUrl",
+    title: "깃허브 주소",
+    placeholder: "https://github.com/username",
+    required: false,
+  },
+  {
+    id: "intro",
+    title: "자기소개",
+    placeholder: "자기소개를 입력하세요",
+    required: true,
+  },
+];
+
 const SignUpPage = () => {
-  const fields = [
-    {
-      id: "nikename",
-      title: "이름",
-      placeholder: "이름을 입력하세요",
-      required: true,
-    },
-    {
-      id: "role",
-      title: "직무",
-      placeholder: "예: 프론트엔드 개발자",
-      required: true,
-    },
-    {
-      id: "email",
-      title: "이메일",
-      placeholder: "example@email.com",
-      required: true,
-    },
-    {
-      id: "githubUrl",
-      title: "깃허브 주소",
-      placeholder: "https://github.com/username",
-      required: false,
-    },
-    {
-      id: "intro",
-      title: "자기소개",
-      placeholder: "자기소개를 입력하세요",
-      required: true,
-    },
-  ];
   const [tags, setTags] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -43,8 +44,8 @@ const SignUpPage = () => {
       setInput("");
     }
   };
-  const handleDelete = (deleteIdx: number) => {
-    setTags((prev) => prev.filter((_, idx) => idx !== deleteIdx));
+  const handleDelete = (deleteTag: string) => {
+    setTags((prev) => prev.filter((tag) => tag !== deleteTag));
   };
   return (
     <div className="bg-[#F7F8FA] px-5 py-10 flex flex-col gap-5 h-full">
@@ -54,7 +55,7 @@ const SignUpPage = () => {
       </div>
       <form className="flex flex-col gap-2">
         {fields.map((field) => (
-          <>
+          <div key={field.id}>
             <p className="font-bold">
               {field.title}
               {field.required && (
@@ -74,7 +75,7 @@ const SignUpPage = () => {
                 placeholder={`${field.placeholder}`}
               />
             )}
-          </>
+          </div>
         ))}
         <p className="font-bold">
           사용 가능한 툴 / 기술 스택
@@ -88,16 +89,16 @@ const SignUpPage = () => {
           onKeyDown={handleAddTag}
         />
         <div className="flex gap-2 flex-wrap">
-          {tags.map((tag, idx) => (
+          {tags.map((tag) => (
             <p
-              key={idx}
+              key={tag}
               className="text-[#0069A8] bg-[#F0F9FF] px-2 py-1 rounded-lg"
             >
               {tag}
               <button
                 type="button"
                 className="px-1 cursor-pointer"
-                onClick={() => handleDelete(idx)}
+                onClick={() => handleDelete(tag)}
               >
                 x
               </button>
