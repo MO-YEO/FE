@@ -13,7 +13,7 @@ export const PATH = {
   MY: "/my",
   MY_POSTS: "/my/posts", // pages/my/myPost.tsx 로 라우팅
 
-  MEMBER: "./member", // 팀원 페이지도 PATH에 추가 (추후 구현 예정)
+  MEMBER: "/member", // 팀원 페이지도 PATH에 추가 (추후 구현 예정)
 
   // 4. Error
   NOT_FOUND: "*",

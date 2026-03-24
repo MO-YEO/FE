@@ -9,9 +9,8 @@ const ProjectPage = lazy(() => import('../pages/project/project')); // projects.
 const NotFoundPage = lazy(() => import('../pages/notFound')); // notFound.tsx
 const MyPage = lazy(() => import('../pages/my/my')); // pages/my/my.tsx
 const MyPostsPage = lazy(() => import('../pages/my/myPost')); // pages/my/myPost.tsx
-// 2. 추후 구현 예정 (주석 유지)
-// const MemberPage = lazy(() => import("../pages/member/member"));
-// const MemberApplyPage = lazy(() => import("../pages/member/memberApply"));
+const MemberPage = lazy(() => import("../pages/member"));
+
 // const ProjectUploadPage = lazy(() => import("../pages/project/projectUpload"));
 // const ProjectApplyPage = lazy(() => import("../pages/project/projectApply"));
 
@@ -27,6 +26,10 @@ export const protectedRoutes = [
   {
     path: PATH.PROJECTS,
     Component: ProjectPage,
+  },
+  {
+    path: PATH.MEMBER,
+    Component: MemberPage,
   },
   // MyPage 서브 라우팅
   {

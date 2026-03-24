@@ -1,84 +1,366 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-// 팀원분이 만든 공통 컴포넌트 및 에셋
-import PostCard from '../components/PostCard'; 
+import { useEffect, useRef, useState } from "react";
+import TeamMemberCard from "../components/memberCard";
 import backIcon from "../assets/back.svg";
-// 1. 새로운 플러스 버튼 아이콘 임포트
-import plusIcon from "../assets/PlusButton.svg"; 
+import plusIcon from "../assets/plus.svg";
+import closeIcon from "../assets/close.svg";
 
-const Member: React.FC = () => {
-  const navigate = useNavigate();
+type Category = "전체" | "수업" | "프로젝트" | "스터디" | "공모전";
+type InterestCategory = "전체" | "수업" | "프로젝트" | "공모전" | "스터디";
 
-  const posts = [
-    { id: 1, title: "오늘 도서관가실분", content: "5시부터 같이 공부하고 밥도먹어요 좋지👍", author: "꿀범", time: "14:31", likeCount: 5, commentCount: 2 },
-    { id: 2, title: "쑤기님이랑 도서관가실분", content: "5시부터 같이 공부하고 밥도먹어요 전체 목록에서 보이는 내용은 최대 두줄로 해요...", author: "꿀범", time: "14:31", likeCount: 0, commentCount: 2 },
-    { id: 3, title: "코드 리뷰좀...", content: 'System.out.println("Moyeo");', author: "꿀범", time: "14:31", likeCount: 1, commentCount: 2 },
-    { id: 4, title: "코드 리뷰좀...", content: 'System.out.println("Moyeo");', author: "꿀범", time: "14:31", likeCount: 1, commentCount: 2 },
-    { id: 5, title: "코드 리뷰좀...", content: 'System.out.println("Moyeo");', author: "꿀범", time: "14:31", likeCount: 1, commentCount: 2 },
-    
-  ];
+const categories: Category[] = ["전체", "수업", "프로젝트", "스터디", "공모전"];
+const interestCategories: InterestCategory[] = [
+  "전체",
+  "수업",
+  "프로젝트",
+  "공모전",
+  "스터디",
+];
+
+const members = [
+  {
+    id: 1,
+    name: "김백엔드",
+    role: "Backend Developer",
+    description: "Java/Spring 백엔드 개발자입니다. MSA 아키텍처에 관심이 많습니다.",
+    techStacks: ["Spring", "MySQL", "AWS", "Docker"],
+    rating: 95,
+    profileInitial: "김",
+    isBookmarked: false,
+    githubUrl: "https://github.com/",
+  },
+  {
+    id: 2,
+    name: "이프론트",
+    role: "Frontend Developer",
+    description: "UI/UX에 관심 많은 프론트엔드 개발자입니다.",
+    techStacks: ["React", "TypeScript", "Next.js", "Tailwind"],
+    rating: 92,
+    profileInitial: "이",
+    isBookmarked: true,
+    githubUrl: "https://github.com/",
+  },
+  {
+    id: 3,
+    name: "박풀스택",
+    role: "Full Stack Developer",
+    description: "풀스택 개발에 도전하고 있습니다!",
+    techStacks: ["MERN Stack", "GraphQL", "PostgreSQL"],
+    rating: 88,
+    profileInitial: "박",
+    isBookmarked: false,
+    githubUrl: "https://github.com/",
+  },
+];
+
+export default function TeamMemberPage() {
+  const [selectedCategory, setSelectedCategory] = useState<Category>("전체");
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [selectedInterest, setSelectedInterest] =
+    useState<InterestCategory>("전체");
+  const [sheetWidth, setSheetWidth] = useState<number>(430);
+
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    role: "",
+    bio: "",
+    skills: "",
+    email: "",
+    phone: "",
+    github: "",
+  });
+
+  useEffect(() => {
+    const updateSheetWidth = () => {
+      if (wrapperRef.current) {
+        setSheetWidth(wrapperRef.current.offsetWidth);
+      }
+    };
+
+    updateSheetWidth();
+    window.addEventListener("resize", updateSheetWidth);
+
+    return () => {
+      window.removeEventListener("resize", updateSheetWidth);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = isRegisterOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isRegisterOpen]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleOpenSheet = () => {
+    if (wrapperRef.current) {
+      setSheetWidth(wrapperRef.current.offsetWidth);
+    }
+    setIsRegisterOpen(true);
+  };
+
+  const handleCloseSheet = () => {
+    setIsRegisterOpen(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("등록 데이터", { ...form, interest: selectedInterest });
+    setIsRegisterOpen(false);
+  };
 
   return (
-    /* 마이페이지 규격(430px) 및 배경색 통일 */
-    <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[88px] font-sans">
-      
-      {/* 헤더: 마이페이지 h-[96px] 및 flex 구조와 100% 일치 */}
-      <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
+    <div
+      ref={wrapperRef}
+      className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F9FAFB]"
+    >
+      {/* 헤더 */}
+      <header className="border-b border-[#E5E7EB] bg-white">
         <div className="flex h-[96px] items-end px-[16px] pb-[20px] pt-[40px]">
-          <button type="button" onClick={() => navigate(-1)}>
+          <button
+            type="button"
+            className="flex h-[24px] w-[24px] items-center justify-center"
+          >
             <img src={backIcon} alt="뒤로가기" className="h-[24px] w-[24px]" />
           </button>
 
           <div className="flex flex-1 justify-center">
             <span className="text-[20px] font-bold leading-[28px] text-[#000000]">
-              게시판
+              팀원 찾기
             </span>
           </div>
 
-          {/* 2. 우측 글쓰기 버튼: PlussButton.svg 적용 */}
-          {/* 정렬 유지를 위해 w-[36px] 박스 크기는 그대로 유지합니다. */}
-          <button 
-            type="button" 
-            onClick={() => navigate('/board/write')}
-            className="flex h-[25px] w-[25px] shrink-0 items-center justify-end transition-transform active:scale-90"
+          <button
+            type="button"
+            onClick={handleOpenSheet}
+            className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[10px] bg-[#356AE6]"
           >
-            <img src={plusIcon} alt="글쓰기" className="h-[24px] w-[24px]" />
+            <img src={plusIcon} alt="추가" className="h-[20px] w-[20px]" />
           </button>
         </div>
       </header>
 
-      {/* 섹션 패딩 및 검색창 (마이페이지 스타일) */}
-      <section className="px-[16px] pt-[16px]">
-        <div className="relative mb-[16px]">
-          <input 
-            type="text" 
-            placeholder="🔍 게시글 검색..." 
-            className="w-full h-[48px] pl-12 pr-4 bg-white border border-[#E2E8F0] rounded-[14px] text-[15px] focus:outline-none focus:border-[#2563EB] shadow-sm transition-colors"
-          />
-        </div>
+      {/* 카테고리 */}
+      <section className="border-b border-[#E5E7EB] bg-white px-4 py-3">
+        <div className="flex w-full items-center gap-2 overflow-x-auto">
+          {categories.map((category) => {
+            const isSelected = selectedCategory === category;
 
-        {/* 게시글 리스트 */}
-        <div className="flex flex-col gap-[12px]">
-          {posts.map((post) => (
-            <div 
-              key={post.id} 
-              onClick={() => navigate(`/board/${post.id}`)}
-              className="cursor-pointer transition-transform active:scale-[0.98]"
-            >
-              <PostCard 
-                title={post.title}
-                content={post.content}
-                author={post.author}
-                time={post.time}
-                likeCount={post.likeCount}
-                commentCount={post.commentCount}
-              />
-            </div>
-          ))}
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setSelectedCategory(category)}
+                className={`whitespace-nowrap rounded-[8px] border px-3 py-1 text-[12px] font-medium leading-4 transition ${
+                  isSelected
+                    ? "border-[#356AE6] bg-[#356AE6] text-white"
+                    : "border-[#E5E7EB] bg-white text-[#374151]"
+                }`}
+              >
+                {category}
+              </button>
+            );
+          })}
         </div>
       </section>
-    </main>
-  );
-};
 
-export default Member;
+      {/* 본문 */}
+      <main className="px-4 pt-4 pb-6">
+        <p className="mb-4 text-[14px] font-medium leading-5 text-[#6B7280]">
+          3명의 팀원
+        </p>
+
+        <div className="flex flex-col gap-3">
+          {members.map((member) => (
+            <TeamMemberCard
+              key={member.id}
+              name={member.name}
+              role={member.role}
+              description={member.description}
+              techStacks={member.techStacks}
+              rating={member.rating}
+              profileInitial={member.profileInitial}
+              isBookmarked={member.isBookmarked}
+              githubUrl={member.githubUrl}
+            />
+          ))}
+        </div>
+      </main>
+
+      {/* 바텀시트 */}
+      <div
+        className={`fixed inset-0 z-50 transition-all duration-300 ${
+          isRegisterOpen
+            ? "pointer-events-auto bg-black/50"
+            : "pointer-events-none bg-black/0"
+        }`}
+        onClick={handleCloseSheet}
+      >
+        <div
+          className={`fixed bottom-0 left-1/2 z-[60] overflow-hidden rounded-t-[20px] bg-white transition-transform duration-300 ${
+            isRegisterOpen ? "translate-y-0" : "translate-y-full"
+          }`}
+          style={{
+            width: `${sheetWidth}px`,
+            transform: `translateX(-50%) translateY(${isRegisterOpen ? "0" : "100%"})`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* 시트 헤더 */}
+          <div className="h-[68.8px] border-b border-[#E2E8F0] bg-white">
+            <div className="flex h-full items-center justify-between px-5">
+              <h2 className="text-[18px] font-bold leading-[32px] text-[#111827]">
+                프로필 등록
+              </h2>
+
+              <button
+                type="button"
+                onClick={handleCloseSheet}
+                className="flex h-6 w-6 items-center justify-center"
+              >
+                <img src={closeIcon} alt="닫기" className="h-7 w-7" />
+              </button>
+            </div>
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className="flex max-h-[calc(100vh-96px)] flex-col bg-white"
+          >
+            <div className="flex flex-col gap-[10px] overflow-y-auto px-4 py-4">
+              <FieldLabel label="이름" required />
+              <input
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="김가톨릭"
+                className="h-[45px] w-full rounded-[10px] border border-[#E2E8F0] px-4 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF]"
+              />
+
+              <FieldLabel label="역할/포지션" required />
+              <input
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                className="h-[45px] w-full rounded-[10px] border border-[#E2E8F0] px-4 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF]"
+              />
+
+              <FieldLabel label="자기소개" required />
+              <textarea
+                name="bio"
+                value={form.bio}
+                onChange={handleChange}
+                placeholder={"자신을 소개하고 어떤 프로젝트에 관심있는지 알려주세요\n(전공을 적고 싶으시면 적어도 됩니다)"}
+                className="min-h-[64px] w-full resize-none rounded-[10px] border border-[#E2E8F0] px-4 py-3 text-[14px] leading-5 text-[#111827] outline-none placeholder:text-[#9CA3AF]"
+              />
+
+              <FieldLabel label="기술스택" required />
+              <input
+                name="skills"
+                value={form.skills}
+                onChange={handleChange}
+                placeholder="예: React, TypeScript, Node.js (쉼표로 구분)"
+                className="h-[45px] w-full rounded-[10px] border border-[#E2E8F0] px-4 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF]"
+              />
+
+              <FieldLabel label="관심 분야" required />
+              <div className="flex flex-wrap gap-2">
+                {interestCategories.map((category) => {
+                  const isSelected = selectedInterest === category;
+
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => setSelectedInterest(category)}
+                      className={`h-[37.6px] rounded-[8px] border px-4 text-[12px] font-medium leading-4 ${
+                        isSelected
+                          ? "border-[#2F6BFF] bg-[#2F6BFF] text-white"
+                          : "border-[#E2E8F0] bg-white text-[#314158]"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <FieldLabel label="이메일" required />
+              <input
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="name@catholic.ac.kr"
+                className="h-[45px] w-full rounded-[10px] border border-[#E2E8F0] px-4 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF]"
+              />
+
+              <FieldLabel label="연락처" />
+              <input
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="010-1234-5678"
+                className="h-[45px] w-full rounded-[10px] border border-[#E2E8F0] px-4 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF]"
+              />
+
+              <FieldLabel label="깃허브 주소" />
+              <input
+                name="github"
+                value={form.github}
+                onChange={handleChange}
+                placeholder="github.com/username"
+                className="h-[45px] w-full rounded-[10px] border border-[#E2E8F0] px-4 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF]"
+              />
+            </div>
+
+            <div className="border-t border-[#E2E8F0] bg-white px-5 py-5">
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleCloseSheet}
+                  className="h-[45px] flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#314158]"
+                >
+                  취소
+                </button>
+
+                <button
+                  type="submit"
+                  className="h-[45px] flex-1 rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white"
+                >
+                  등록하기
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FieldLabel({
+  label,
+  required = false,
+}: {
+  label: string;
+  required?: boolean;
+}) {
+  return (
+    <label className="text-[14px] font-semibold leading-5 text-[#314158]">
+      {label}
+      {required && <span className="ml-1 text-[#3B82F6]">*</span>}
+    </label>
+  );
+}
+
+
+
+
