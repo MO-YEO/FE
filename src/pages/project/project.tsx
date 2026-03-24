@@ -1,9 +1,45 @@
+import backIcon from "../../assets/back.svg";
+import plusIcon from "../../assets/plus.svg";
+
 const ProjectPage = () => {
   const menu = ["전체", "수업", "프로젝트", "공모전", "스터디"];
   const tagMenu = ["전체", "기획", "개발", "디자인", "마케팅", "기타"];
   return (
     <div className="flex flex-col min-h-full">
-      프로젝트페이지
+      {/* 헤더 */}
+      <header className="border-b border-[#E5E7EB] bg-white">
+        <div className="flex flex-col gap-4 justify-center px-[16px] pb-[20px] pt-[40px] pb-4">
+          <div className="flex">
+            <button
+              type="button"
+              className="flex h-[24px] w-[24px] items-center justify-center"
+            >
+              <img
+                src={backIcon}
+                alt="뒤로가기"
+                className="h-[24px] w-[24px]"
+              />
+            </button>
+
+            <div className="flex flex-1 justify-center">
+              <span className="text-[20px] font-bold leading-[28px] text-[#000000]">
+                프로젝트
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[10px] bg-[#356AE6]"
+            >
+              <img src={plusIcon} alt="추가" className="h-[20px] w-[20px]" />
+            </button>
+          </div>
+          <input
+            className="h-11 rounded-lg border border-[#E5E7EB] p-3 focus:outline-none"
+            placeholder="프로젝트 검색..."
+          />
+        </div>
+      </header>
       <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b border-[#E5E7EB]">
         {menu.map((menu) => (
           <button key={menu} className="text-[#4A5565] text-[14px] font-bold">
