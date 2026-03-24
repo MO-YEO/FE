@@ -7,6 +7,9 @@ import projectIcon from "../../assets/project.svg";
 import postIcon from "../../assets/post.svg";
 import logoutIcon from "../../assets/logout.svg";
 import profileImage from "../../assets/profileImage.svg";
+import warningIcon from "../../assets/warningIcon.svg";
+import inquiryIcon from "../../assets/inquiryIcon.svg";
+import chevronRightIcon from "../../assets/chevronRight.svg";
 
 export default function MyPage() {
   const navigate = useNavigate();
@@ -163,6 +166,32 @@ export default function MyPage() {
             </div>
           </section>
 
+          {/* 경고 누적 */}
+          <section className="rounded-[14px] border border-[#FFD230] bg-[#FFF8EB] px-[17.6px] py-[17.6px] shadow-[0_1px_3px_rgba(0,0,0,0.10),0_1px_2px_-1px_rgba(0,0,0,0.10)]">
+            <div className="flex items-start justify-between gap-[12px]">
+              <div className="flex min-w-0 flex-1 items-start gap-[10px]">
+                <img
+                  src={warningIcon}
+                  alt="경고"
+                  className="mt-[1px] h-[18px] w-[18px] shrink-0"
+                />
+
+                <div className="min-w-0">
+                  <div className="text-[16px] font-bold leading-[24px] text-[#B45309]">
+                    경고 누적
+                  </div>
+                  <p className="mt-[4px] text-[12px] leading-[18px] text-[#F97316]">
+                    부적절한 행동이 감지되었습니다. 커뮤니티 규칙을 준수해주세요.
+                  </p>
+                </div>
+              </div>
+
+              <span className="shrink-0 rounded-[999px] bg-[#E17100] px-[8px] py-[2px] text-[12px] font-bold leading-[18px] text-white">
+                2회
+              </span>
+            </div>
+          </section>
+
           {/* 내 프로젝트 */}
           <section>
             <div className="mb-[12px] flex items-center justify-between">
@@ -245,15 +274,52 @@ export default function MyPage() {
             </div>
           </section>
 
+          {/* 문의하기 */}
+          <button
+            type="button"
+            className="mt-[4px] flex h-[52px] w-full items-center justify-between rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] text-left shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
+          >
+            <div className="flex items-center gap-[10px]">
+              <img
+                src={inquiryIcon}
+                alt="문의하기"
+                className="h-[16px] w-[16px] shrink-0"
+              />
+
+              <span className="text-[14px] font-medium leading-[20px] text-[#1D293D]">
+                문의하기
+              </span>
+            </div>
+
+            <img
+              src={chevronRightIcon}
+              alt=""
+              className="h-[16px] w-[16px] shrink-0"
+            />
+          </button>
+
           {/* 로그아웃 */}
           <button
             type="button"
-            className="mt-[4px] flex h-[52px] w-full items-center gap-[10px] rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] text-left shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
+            className="mt-[4px] flex h-[52px] w-full items-center justify-between rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] text-left shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
           >
-            <img src={logoutIcon} alt="" className="h-[18px] w-[18px]" />
-            <span className="text-[14px] font-medium leading-[20px] text-[#F97316]">
-              로그아웃
-            </span>
+            <div className="flex items-center gap-[10px]">
+              <img
+                src={logoutIcon}
+                alt="로그아웃"
+                className="h-[16px] w-[16px] shrink-0"
+              />
+
+              <span className="text-[14px] font-medium leading-[20px] text-[#1D293D]">
+                로그아웃
+              </span>
+            </div>
+
+            <img
+              src={chevronRightIcon}
+              alt=""
+              className="h-[16px] w-[16px] shrink-0"
+            />
           </button>
         </div>
       </section>
