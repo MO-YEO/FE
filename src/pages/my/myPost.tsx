@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import PostCard from "../components/PostCard";
+import PostCard from "../../components/PostCard";
 import backIcon from "../assets/back.svg";
 
 export default function MyPostsPage() {

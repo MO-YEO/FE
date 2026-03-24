@@ -55,7 +55,7 @@ const SignUpPage = () => {
       </div>
       <form className="flex flex-col gap-2">
         {fields.map((field) => (
-          <div key={field.id}>
+          <div key={field.id} className="w-full">
             <p className="font-bold">
               {field.title}
               {field.required && (
@@ -65,13 +65,13 @@ const SignUpPage = () => {
             {field.id === "intro" ? (
               <textarea
                 name={`${field.id}`}
-                className="bg-white px-4 py-[14px] h-27 rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px] resize-none"
+                className="bg-white w-full px-4 py-[14px] h-27 rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px] resize-none"
                 placeholder={`${field.placeholder}`}
               />
             ) : (
               <input
                 name={`${field.id}`}
-                className="bg-white px-4 py-[14px] rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px]"
+                className="bg-white w-full px-4 py-[14px] rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px]"
                 placeholder={`${field.placeholder}`}
               />
             )}
