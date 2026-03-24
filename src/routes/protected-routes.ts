@@ -2,6 +2,7 @@
 import { lazy } from "react";
 import { PATH } from "../components/path";
 
+
 // 1. pages/ 루트 폴더 파일들
 const HomePage = lazy(() => import("../pages/home"));
 const BoardPage = lazy(() => import("../pages/board"));
@@ -11,6 +12,7 @@ const MyPage = lazy(() => import("../pages/my/my")); // pages/my/my.tsx
 const MyPostsPage = lazy(() => import("../pages/my/myPost")); // pages/my/myPost.tsx
 const MemberPage = lazy(() => import("../pages/member"));
 const SignupPage = lazy(() => import("../pages/signUp"));
+const InquiryPage = lazy(() => import("../pages/Inquiry"));
 
 // const ProjectUploadPage = lazy(() => import("../pages/project/projectUpload"));
 // const ProjectApplyPage = lazy(() => import("../pages/project/projectApply"));
@@ -49,5 +51,9 @@ export const protectedRoutes = [
   {
     path: PATH.NOT_FOUND,
     Component: NotFoundPage,
+  },
+   {
+    path: PATH.INQUIRY,
+    Component: InquiryPage,
   },
 ];

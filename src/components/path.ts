@@ -16,6 +16,8 @@ export const PATH = {
 
   MEMBER: "/member", // 팀원 페이지도 PATH에 추가 (추후 구현 예정)
 
+  INQUIRY: "/inquiry", // 문의 페이지도 PATH에 추가 (추후 구현 예정)
+
   // 4. Error
   NOT_FOUND: "*",
 } as const;

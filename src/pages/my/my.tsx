@@ -277,6 +277,7 @@ export default function MyPage() {
           {/* 문의하기 */}
           <button
             type="button"
+            onClick={() => navigate("/inquiry")}
             className="mt-[4px] flex h-[52px] w-full items-center justify-between rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] text-left shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
           >
             <div className="flex items-center gap-[10px]">
