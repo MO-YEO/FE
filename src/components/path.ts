@@ -12,7 +12,10 @@ export const PATH = {
 
   // 3. MyPage (pages/my/ 서브 폴더 구조 반영)
   MY: "/my",
-  MY_POSTS: "/my/posts", // pages/my/myPost.tsx 로 라우팅
+  MY_POSTS: "/my/myposts", // pages/my/myPost.tsx 로 라우팅
+  MY_LIKE: "/my/myLike",
+  MY_SCRAP: "/my/myScrap",
+  MY_APPLIED_PROJECT: "/my/myApplied-projects",
 
   MEMBER: "/member", // 팀원 페이지도 PATH에 추가 (추후 구현 예정)
 
