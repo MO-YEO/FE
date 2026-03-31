@@ -1,4 +1,6 @@
-function Textarea({ ...props }) {
+function Textarea({
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       {...props}

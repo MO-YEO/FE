@@ -5,6 +5,7 @@ import closeIcon from "../../assets/close.svg";
 import FieldLabel from "../../components/fieldLabel";
 import Input from "../../components/input";
 import Textarea from "../../components/textarea";
+import { useNavigate } from "react-router-dom";
 
 const menu = ["전체", "수업", "프로젝트", "공모전", "스터디"] as const;
 const tagMenu = ["전체", "기획", "개발", "디자인", "마케팅", "기타"] as const;
@@ -50,6 +51,8 @@ const ProjectPage = () => {
     console.log("최종 데이터:", finalData);
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const updateSheetWidth = () => {
       if (wrapperRef.current) {
@@ -66,18 +69,12 @@ const ProjectPage = () => {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = isRegisterOpen ? "hidden" : "";
+    const isOpen = isRegisterOpen || isApplyOpen;
+    document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isRegisterOpen]);
-
-  useEffect(() => {
-    document.body.style.overflow = isApplyOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isApplyOpen]);
+  }, [isRegisterOpen, isApplyOpen]);
 
   return (
     <div className="flex flex-col min-h-full" ref={wrapperRef}>
@@ -87,7 +84,8 @@ const ProjectPage = () => {
           <div className="flex items-center">
             <button
               type="button"
-              className="flex h-[24px] w-[24px] items-center justify-center"
+              className="flex h-[24px] w-[24px] items-center justify-center cursor-pointer"
+              onClick={() => navigate(-1)}
             >
               <img
                 src={backIcon}
@@ -105,13 +103,9 @@ const ProjectPage = () => {
             <button
               type="button"
               className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[10px] bg-[#356AE6] cursor-pointer"
+              onClick={() => handleOpenSheet("register")}
             >
-              <img
-                src={plusIcon}
-                onClick={() => handleOpenSheet("register")}
-                alt="추가"
-                className="h-[20px] w-[20px]"
-              />
+              <img src={plusIcon} alt="추가" className="h-[20px] w-[20px]" />
             </button>
           </div>
           <input
@@ -120,6 +114,8 @@ const ProjectPage = () => {
           />
         </div>
       </header>
+
+      {/* 메뉴들 */}
       <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b border-[#E5E7EB]">
         {menu.map((menu) => {
           return (
@@ -144,6 +140,7 @@ const ProjectPage = () => {
           </button>
         ))}
       </div>
+      {/* 본문 */}
       <div className="flex-1 px-5 py-4 bg-[#F9FAFB]">
         <div className="bg-white flex flex-col gap-2 p-4 rounded-lg shadow-sm border border-1 border-[#D0D0D0]">
           <div className="flex justify-between">
@@ -258,6 +255,7 @@ function RegisterSheet({
           </div>
         </div>
 
+        {/*프로젝트 등록 폼 */}
         <form
           onSubmit={onSubmit}
           className="flex max-h-[calc(100vh-96px)] flex-col bg-white"
@@ -294,7 +292,7 @@ function RegisterSheet({
                 ))}
               </div>
             </div>
-            <FieldLabel label="프로젝트 제목" required={true} />
+            <FieldLabel label="프로젝트 설명" required={true} />
             <Textarea
               name="description"
               placeholder="프로젝트에 대해 설명해주세요"
@@ -429,24 +427,23 @@ function ApplySheet({
           </div>
         </div>
 
+        {/* 지원하기 폼 */}
         <form
           onSubmit={onSubmit}
           className="flex max-h-[calc(100vh-96px)] flex-col bg-white overflow-y-auto"
         >
-          <div className="p-4">
+          <div className="flex flex-col gap-[10px] overflow-y-auto px-4 py-4">
             {fields.map((field) => (
               <div key={field.id} className="w-full flex flex-col gap-2">
                 <FieldLabel label={field.title} required={field.required} />
                 {field.id === "intro" ? (
-                  <textarea
+                  <Textarea
                     name={`${field.id}`}
-                    className="bg-white w-full px-4 py-[14px] h-27 rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px] resize-none"
                     placeholder={`${field.placeholder}`}
                   />
                 ) : (
-                  <input
+                  <Input
                     name={`${field.id}`}
-                    className="bg-white w-full px-4 py-[14px] rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px]"
                     placeholder={`${field.placeholder}`}
                   />
                 )}
@@ -454,6 +451,7 @@ function ApplySheet({
             ))}
           </div>
 
+          {/* 하단 버튼 */}
           <div className="border-t border-[#E2E8F0] bg-white px-5 py-5">
             <div className="flex gap-3">
               <button
