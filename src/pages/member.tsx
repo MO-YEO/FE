@@ -3,6 +3,7 @@ import TeamMemberCard from "../components/memberCard";
 import backIcon from "../assets/back.svg";
 import plusIcon from "../assets/plus.svg";
 import closeIcon from "../assets/close.svg";
+import FieldLabel from "../components/fieldLabel";
 
 type Category = "전체" | "수업" | "프로젝트" | "스터디" | "공모전";
 type InterestCategory = "전체" | "수업" | "프로젝트" | "공모전" | "스터디";
@@ -21,7 +22,8 @@ const members = [
     id: 1,
     name: "김백엔드",
     role: "Backend Developer",
-    description: "Java/Spring 백엔드 개발자입니다. MSA 아키텍처에 관심이 많습니다.",
+    description:
+      "Java/Spring 백엔드 개발자입니다. MSA 아키텍처에 관심이 많습니다.",
     techStacks: ["Spring", "MySQL", "AWS", "Docker"],
     rating: 95,
     profileInitial: "김",
@@ -94,7 +96,7 @@ export default function TeamMemberPage() {
   }, [isRegisterOpen]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -138,10 +140,7 @@ export default function TeamMemberPage() {
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleOpenSheet}
-          >
+          <button type="button" onClick={handleOpenSheet}>
             <img src={plusIcon} alt="추가" className="h-[24px] w-[24px]" />
           </button>
         </div>
@@ -257,7 +256,9 @@ export default function TeamMemberPage() {
                 name="bio"
                 value={form.bio}
                 onChange={handleChange}
-                placeholder={"자신을 소개하고 어떤 프로젝트에 관심있는지 알려주세요\n(전공을 적고 싶으시면 적어도 됩니다)"}
+                placeholder={
+                  "자신을 소개하고 어떤 프로젝트에 관심있는지 알려주세요\n(전공을 적고 싶으시면 적어도 됩니다)"
+                }
                 className="min-h-[64px] w-full resize-none rounded-[10px] border border-[#E2E8F0] px-4 py-3 text-[14px] leading-5 text-[#111827] outline-none placeholder:text-[#9CA3AF]"
               />
 
@@ -344,21 +345,3 @@ export default function TeamMemberPage() {
     </div>
   );
 }
-
-function FieldLabel({
-  label,
-  required = false,
-}: {
-  label: string;
-  required?: boolean;
-}) {
-  return (
-    <label className="text-[14px] font-semibold leading-5 text-[#314158]">
-      {label}
-      {required && <span className="ml-1 text-[#3B82F6]">*</span>}
-    </label>
-  );
-}
-
-
-
