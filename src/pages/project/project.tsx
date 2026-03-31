@@ -5,6 +5,7 @@ import closeIcon from "../../assets/close.svg";
 import FieldLabel from "../../components/fieldLabel";
 import Input from "../../components/input";
 import Textarea from "../../components/textarea";
+import { useNavigate } from "react-router-dom";
 
 const menu = ["전체", "수업", "프로젝트", "공모전", "스터디"] as const;
 const tagMenu = ["전체", "기획", "개발", "디자인", "마케팅", "기타"] as const;
@@ -50,6 +51,8 @@ const ProjectPage = () => {
     console.log("최종 데이터:", finalData);
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const updateSheetWidth = () => {
       if (wrapperRef.current) {
@@ -87,7 +90,8 @@ const ProjectPage = () => {
           <div className="flex items-center">
             <button
               type="button"
-              className="flex h-[24px] w-[24px] items-center justify-center"
+              className="flex h-[24px] w-[24px] items-center justify-center cursor-pointer"
+              onClick={() => navigate(-1)}
             >
               <img
                 src={backIcon}
@@ -120,6 +124,8 @@ const ProjectPage = () => {
           />
         </div>
       </header>
+
+      {/* 메뉴들 */}
       <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b border-[#E5E7EB]">
         {menu.map((menu) => {
           return (
@@ -144,6 +150,7 @@ const ProjectPage = () => {
           </button>
         ))}
       </div>
+      {/* 본문 */}
       <div className="flex-1 px-5 py-4 bg-[#F9FAFB]">
         <div className="bg-white flex flex-col gap-2 p-4 rounded-lg shadow-sm border border-1 border-[#D0D0D0]">
           <div className="flex justify-between">
