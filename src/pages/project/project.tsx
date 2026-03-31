@@ -258,6 +258,7 @@ function RegisterSheet({
           </div>
         </div>
 
+        {/*프로젝트 등록 폼 */}
         <form
           onSubmit={onSubmit}
           className="flex max-h-[calc(100vh-96px)] flex-col bg-white"
@@ -429,11 +430,12 @@ function ApplySheet({
           </div>
         </div>
 
+        {/* 지원하기 폼 */}
         <form
           onSubmit={onSubmit}
           className="flex max-h-[calc(100vh-96px)] flex-col bg-white overflow-y-auto"
         >
-          <div className="p-4">
+          <div className="flex flex-col gap-[10px] overflow-y-auto px-4 py-4">
             {fields.map((field) => (
               <div key={field.id} className="w-full flex flex-col gap-2">
                 <FieldLabel label={field.title} required={field.required} />
@@ -454,6 +456,7 @@ function ApplySheet({
             ))}
           </div>
 
+          {/* 하단 버튼 */}
           <div className="border-t border-[#E2E8F0] bg-white px-5 py-5">
             <div className="flex gap-3">
               <button
