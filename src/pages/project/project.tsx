@@ -69,18 +69,12 @@ const ProjectPage = () => {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = isRegisterOpen ? "hidden" : "";
+    const isOpen = isRegisterOpen || isApplyOpen;
+    document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isRegisterOpen]);
-
-  useEffect(() => {
-    document.body.style.overflow = isApplyOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isApplyOpen]);
+  }, [isRegisterOpen, isApplyOpen]);
 
   return (
     <div className="flex flex-col min-h-full" ref={wrapperRef}>
@@ -109,13 +103,9 @@ const ProjectPage = () => {
             <button
               type="button"
               className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[10px] bg-[#356AE6] cursor-pointer"
+              onClick={() => handleOpenSheet("register")}
             >
-              <img
-                src={plusIcon}
-                onClick={() => handleOpenSheet("register")}
-                alt="추가"
-                className="h-[20px] w-[20px]"
-              />
+              <img src={plusIcon} alt="추가" className="h-[20px] w-[20px]" />
             </button>
           </div>
           <input
@@ -302,7 +292,7 @@ function RegisterSheet({
                 ))}
               </div>
             </div>
-            <FieldLabel label="프로젝트 제목" required={true} />
+            <FieldLabel label="프로젝트 설명" required={true} />
             <Textarea
               name="description"
               placeholder="프로젝트에 대해 설명해주세요"
@@ -447,15 +437,13 @@ function ApplySheet({
               <div key={field.id} className="w-full flex flex-col gap-2">
                 <FieldLabel label={field.title} required={field.required} />
                 {field.id === "intro" ? (
-                  <textarea
+                  <Textarea
                     name={`${field.id}`}
-                    className="bg-white w-full px-4 py-[14px] h-27 rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px] resize-none"
                     placeholder={`${field.placeholder}`}
                   />
                 ) : (
-                  <input
+                  <Input
                     name={`${field.id}`}
-                    className="bg-white w-full px-4 py-[14px] rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px]"
                     placeholder={`${field.placeholder}`}
                   />
                 )}
