@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import PostPreviewCard from "../../components/PostPreviewCard";
+import { PATH } from "../../components/path";
 import backIcon from "../../assets/back.svg";
 import editIcon from "../../assets/edit.svg";
 import mailIcon from "../../assets/mail.svg";
@@ -7,8 +8,6 @@ import projectIcon from "../../assets/project.svg";
 import postIcon from "../../assets/post.svg";
 import logoutIcon from "../../assets/logout.svg";
 import profileImage from "../../assets/profileImage.svg";
-import warningIcon from "../../assets/warningIcon.svg";
-import inquiryIcon from "../../assets/inquiryIcon.svg";
 import chevronRightIcon from "../../assets/chevronRight.svg";
 
 export default function MyPage() {
@@ -24,9 +23,21 @@ export default function MyPage() {
   };
 
   const stats = [
-    { label: "참여\n프로젝트", value: 12 },
-    { label: "스크랩", value: 45 },
-    { label: "좋아요", value: 156 },
+    {
+      label: "지원한\n프로젝트",
+      value: 12,
+      path: PATH.MY_APPLIED_PROJECT,
+    },
+    {
+      label: "스크랩",
+      value: 45,
+      path: PATH.MY_SCRAP,
+    },
+    {
+      label: "좋아요",
+      value: 156,
+      path: PATH.MY_LIKE,
+    },
   ];
 
   const projects = [
@@ -42,7 +53,22 @@ export default function MyPage() {
       title: "2026 정처기 한방에 끝내자 스터디원 모집",
       role: "스터디원",
       status: "모집중",
-      applicants: "4/5",
+      applicants: "4/5 지원자 확인하기",
+    },
+  ];
+
+  const participatedProjects = [
+    {
+      id: 1,
+      title: "2026 정처기 한방에 끝내자 스터디원 모집",
+      role: "Frontend",
+      reviewText: "팀원 리뷰달기 >",
+    },
+    {
+      id: 2,
+      title: "2026 ICT 공모전 팀원 모집",
+      role: "Frontend",
+      reviewText: "팀원 리뷰달기 >",
     },
   ];
 
@@ -72,10 +98,9 @@ export default function MyPage() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[88px]">
-      {/* 헤더 */}
       <header className="border-b border-[#E5E7EB] bg-white">
         <div className="flex h-[96px] items-end px-[16px] pb-[20px] pt-[40px]">
-          <button type="button">
+          <button type="button" onClick={() => navigate(-1)}>
             <img src={backIcon} alt="뒤로가기" className="h-[24px] w-[24px]" />
           </button>
 
@@ -91,7 +116,6 @@ export default function MyPage() {
 
       <section className="px-[16px] pt-[16px]">
         <div className="flex flex-col gap-[16px]">
-          {/* 프로필 카드 */}
           <section className="rounded-[14px] border border-[#E2E8F0] bg-white px-[20px] pb-[20px] pt-[20px] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
             <div className="flex items-start justify-between gap-[12px]">
               <div className="flex min-w-0 flex-1 items-start gap-[14px]">
@@ -144,12 +168,13 @@ export default function MyPage() {
             </div>
           </section>
 
-          {/* 활동 요약 */}
           <section className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[18px] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
             <div className="grid grid-cols-3">
               {stats.map((item, index) => (
-                <div
+                <button
                   key={item.label}
+                  type="button"
+                  onClick={() => navigate(item.path)}
                   className={`flex min-h-[96px] flex-col items-center justify-center ${
                     index !== stats.length - 1 ? "border-r border-[#E2E8F0]" : ""
                   }`}
@@ -161,44 +186,17 @@ export default function MyPage() {
                   <span className="mt-[12px] h-[32px] whitespace-pre-line text-center text-[12px] leading-[16px] text-[#62748E]">
                     {item.label}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           </section>
 
-          {/* 경고 누적 */}
-          <section className="rounded-[14px] border border-[#FFD230] bg-[#FFF8EB] px-[17.6px] py-[17.6px] shadow-[0_1px_3px_rgba(0,0,0,0.10),0_1px_2px_-1px_rgba(0,0,0,0.10)]">
-            <div className="flex items-start justify-between gap-[12px]">
-              <div className="flex min-w-0 flex-1 items-start gap-[10px]">
-                <img
-                  src={warningIcon}
-                  alt="경고"
-                  className="mt-[1px] h-[18px] w-[18px] shrink-0"
-                />
-
-                <div className="min-w-0">
-                  <div className="text-[16px] font-bold leading-[24px] text-[#B45309]">
-                    경고 누적
-                  </div>
-                  <p className="mt-[4px] text-[12px] leading-[18px] text-[#F97316]">
-                    부적절한 행동이 감지되었습니다. 커뮤니티 규칙을 준수해주세요.
-                  </p>
-                </div>
-              </div>
-
-              <span className="shrink-0 rounded-[999px] bg-[#E17100] px-[8px] py-[2px] text-[12px] font-bold leading-[18px] text-white">
-                2회
-              </span>
-            </div>
-          </section>
-
-          {/* 내 프로젝트 */}
           <section>
             <div className="mb-[12px] flex items-center justify-between">
               <div className="flex items-center gap-[8px]">
                 <img src={projectIcon} alt="" className="h-[22px] w-[22px]" />
                 <h2 className="text-[16px] font-bold leading-[24px] text-[#111827]">
-                  내 프로젝트
+                  내가 모집한 프로젝트
                 </h2>
               </div>
 
@@ -242,7 +240,50 @@ export default function MyPage() {
             </div>
           </section>
 
-          {/* 내가 작성한 게시물 */}
+          <section>
+            <div className="mb-[12px] flex items-center justify-between">
+              <div className="flex items-center gap-[8px]">
+                <img src={projectIcon} alt="" className="h-[22px] w-[22px]" />
+                <h2 className="text-[16px] font-bold leading-[24px] text-[#111827]">
+                  내가 참여한 프로젝트
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                className="text-[12px] font-semibold leading-[20px] text-[#0EA5E9]"
+              >
+                전체보기
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-[12px]">
+              {participatedProjects.map((project) => (
+                <article
+                  key={project.id}
+                  className="rounded-[14px] border border-[#E2E8F0] bg-white px-[20px] py-[18px] shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
+                >
+                  <h3 className="truncate text-[15px] font-bold leading-[24px] text-[#1E293B]">
+                    {project.title}
+                  </h3>
+
+                  <div className="mt-[18px] flex items-end justify-between gap-[12px]">
+                    <div className="text-[12px] leading-[20px] text-[#64748B]">
+                      역할: {project.role}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="text-[12px] font-semibold leading-[20px] text-[#2563EB]"
+                    >
+                      {project.reviewText}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
           <section>
             <div className="mb-[12px] flex items-center justify-between">
               <div className="flex items-center gap-[8px]">
@@ -254,7 +295,7 @@ export default function MyPage() {
 
               <button
                 type="button"
-                onClick={() => navigate("/mypage/posts")}
+                onClick={() => navigate(PATH.MY_POSTS)}
                 className="text-[12px] font-semibold leading-[20px] text-[#0EA5E9]"
               >
                 전체보기
@@ -274,32 +315,6 @@ export default function MyPage() {
             </div>
           </section>
 
-          {/* 문의하기 */}
-          <button
-            type="button"
-            onClick={() => navigate("/inquiry")}
-            className="mt-[4px] flex h-[52px] w-full items-center justify-between rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] text-left shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
-          >
-            <div className="flex items-center gap-[10px]">
-              <img
-                src={inquiryIcon}
-                alt="문의하기"
-                className="h-[16px] w-[16px] shrink-0"
-              />
-
-              <span className="text-[14px] font-medium leading-[20px] text-[#1D293D]">
-                문의하기
-              </span>
-            </div>
-
-            <img
-              src={chevronRightIcon}
-              alt=""
-              className="h-[16px] w-[16px] shrink-0"
-            />
-          </button>
-
-          {/* 로그아웃 */}
           <button
             type="button"
             className="mt-[4px] flex h-[52px] w-full items-center justify-between rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] text-left shadow-[0_2px_8px_rgba(15,23,42,0.06)]"

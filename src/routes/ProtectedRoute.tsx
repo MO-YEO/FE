@@ -19,6 +19,9 @@ const BoardPage = lazy(() => import("../pages/board"));
 const ProjectPage = lazy(() => import("../pages/project/project"));
 const MyPage = lazy(() => import("../pages/my/my"));
 const MyPostPage = lazy(() => import("../pages/my/myPost"));
+const MyLikePage = lazy(() => import("../pages/my/myLike"));
+const MyScrapPage = lazy(() => import("../pages/my/myScrap"));
+const MyAppliedProjectPage = lazy(() => import("../pages/my/myAppliedProject"));
 const NotFoundPage = lazy(() => import("../pages/notFound"));
 const MemberPage = lazy(() => import("../pages/member"));
 
@@ -28,6 +31,9 @@ export const protectedRoutes: RouteConfig[] = [
   { path: PATH.PROJECTS, Component: ProjectPage },
   { path: PATH.MY, Component: MyPage },
   { path: PATH.MY_POSTS, Component: MyPostPage },
+  { path: PATH.MY_LIKE, Component: MyLikePage },
+  { path: PATH.MY_SCRAP, Component: MyScrapPage },
+  { path: PATH.MY_APPLIED_PROJECT, Component: MyAppliedProjectPage },
   { path: PATH.NOT_FOUND, Component: NotFoundPage },
   { path: PATH.MEMBER, Component: MemberPage },
 ];
