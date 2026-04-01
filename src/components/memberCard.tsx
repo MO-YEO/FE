@@ -59,16 +59,12 @@ export default function TeamMemberCard({
         <button
           type="button"
           onClick={onBookmarkClick}
-          className="
-            flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]
-            bg-[#F8FAFC] transition hover:bg-[#EEF2F6]
-          "
           aria-label="북마크"
         >
           <img
             src={bookmarkIcon}
             alt="북마크"
-            className={`h-[18px] w-[18px] object-contain ${
+            className={`h-[24px] w-[24px] object-contain ${
               isBookmarked ? "opacity-100" : "opacity-70"
             }`}
           />
@@ -104,16 +100,6 @@ export default function TeamMemberCard({
           pt-3 pb-1
         "
       >
-        <div className="flex items-center gap-1 text-[#1D293D]">
-          <img
-            src={starIcon}
-            alt="별점"
-            className="h-4 w-4 shrink-0 object-contain"
-          />
-          <span className="text-[14px] font-semibold leading-[20px]">
-            {rating}%
-          </span>
-        </div>
 
         {githubUrl ? (
           <a

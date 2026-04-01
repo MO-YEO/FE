@@ -6,7 +6,7 @@ import closeIcon from "../../assets/close.svg";
 import FieldLabel from "../../components/fieldLabel";
 import Input from "../../components/input";
 import Textarea from "../../components/textarea";
-import { useNavigate } from "react-router-dom";
+import ProjectCard from "../../components/projectCard";
 
 const menu = ["전체", "수업", "프로젝트", "공모전", "스터디"] as const;
 const tagMenu = ["전체", "기획", "개발", "디자인", "마케팅", "기타"] as const;
@@ -26,6 +26,7 @@ const ProjectPage = () => {
     if (wrapperRef.current) {
       setSheetWidth(wrapperRef.current.offsetWidth);
     }
+
     if (type === "register") {
       setIsRegisterOpen(true);
     } else {
@@ -45,6 +46,7 @@ const ProjectPage = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
+
     const finalData = {
       ...data,
     };
@@ -78,10 +80,10 @@ const ProjectPage = () => {
   }, [isRegisterOpen, isApplyOpen]);
 
   return (
-    <div className="flex flex-col min-h-full" ref={wrapperRef}>
+    <div className="flex min-h-full flex-col" ref={wrapperRef}>
       {/* 헤더 */}
       <header className="border-b border-[#E5E7EB] bg-white">
-        <div className="flex flex-col gap-4 justify-center px-[16px] pb-[20px] pt-[40px] pb-4">
+        <div className="flex flex-col justify-center gap-4 px-[16px] pt-[40px] pb-[20px]">
           <div className="flex items-center">
             <button
               type="button"
@@ -103,12 +105,13 @@ const ProjectPage = () => {
 
             <button
               type="button"
-              className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[10px] bg-[#356AE6] cursor-pointer"
               onClick={() => handleOpenSheet("register")}
+              className="flex h-[36px] w-[36px] shrink-0 cursor-pointer items-center justify-center rounded-[10px] bg-[#356AE6]"
             >
               <img src={plusIcon} alt="추가" className="h-[20px] w-[20px]" />
             </button>
           </div>
+
           <input
             className="h-11 rounded-lg border border-[#E5E7EB] p-3 focus:outline-none"
             placeholder="프로젝트 검색..."
@@ -116,73 +119,53 @@ const ProjectPage = () => {
         </div>
       </header>
 
-      {/* 메뉴들 */}
-      <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b border-[#E5E7EB]">
-        {menu.map((menu) => {
+      <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
+        {menu.map((menuItem) => {
           return (
             <button
-              key={menu}
-              className={`text-[14px] font-bold cursor-pointer ${menu == selectMenu ? "text-[#356AE6]" : "text-[#4A5565]"}`}
-              onClick={() => setSelectMenu(menu)}
+              key={menuItem}
+              type="button"
+              className={`cursor-pointer text-[14px] font-bold ${
+                menuItem === selectMenu ? "text-[#356AE6]" : "text-[#4A5565]"
+              }`}
+              onClick={() => setSelectMenu(menuItem)}
             >
-              {menu}
+              {menuItem}
             </button>
           );
         })}
       </div>
-      <div className="flex gap-2 bg-[#F9FAFB] px-4 py-2 border-b border-[#E5E7EB]">
+
+      <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
         {tagMenu.map((tag) => (
           <button
             key={tag}
-            className={`text-[12px] font-bold rounded-xl px-3 py-[6px] border cursor-pointer ${tag == selectTagMenu ? "bg-[#356AE6] border-[#356AE6] text-white" : "bg-white border-[#E5E7EB]"}`}
+            type="button"
+            className={`cursor-pointer rounded-xl border px-3 py-[6px] text-[12px] font-bold ${
+              tag === selectTagMenu
+                ? "border-[#356AE6] bg-[#356AE6] text-white"
+                : "border-[#E5E7EB] bg-white text-[#111827]"
+            }`}
             onClick={() => setSelectTagMenu(tag)}
           >
             {tag}
           </button>
         ))}
       </div>
-      {/* 본문 */}
-      <div className="flex-1 px-5 py-4 bg-[#F9FAFB]">
-        <div className="bg-white flex flex-col gap-2 p-4 rounded-lg shadow-sm border border-1 border-[#D0D0D0]">
-          <div className="flex justify-between">
-            <button className="text-[10px] text-[#2F6BFF] font-bold bg-[#EFF6FF] px-2 py-1 rounded-lg">
-              공모전
-            </button>
-            <button className="text-[10px] text-[#EF4400] font-bold bg-[#FEF2F2] px-2 py-1 rounded-lg">
-              D-709
-            </button>
-          </div>
-          <p className="font-bold text-[16px]">
-            부천시 영상 공모전 같이 하실 분
-          </p>
-          <p className="font-regular text-[14px]">
-            저는 에펙 사용할 줄 알아요! 이왕이면 에펙 사용 가능 하신분을
-            구합니다 입상을 목표로 열심히 해봐요
-          </p>
-          <div>
-            <p className="text-[12px]">모집인원: 5명</p>
-          </div>
-          <div className="flex gap-2">
-            <button className="text-[10px] text-[#0069A8] bg-[#F0F9FF] px-2 py-1 rounded-lg">
-              python
-            </button>
-            <button className="text-[10px] text-[#0069A8] bg-[#F0F9FF] px-2 py-1 rounded-lg">
-              fastApi
-            </button>
-          </div>
-          <div className="border-t border-[#D0D0D0] flex justify-between items-center py-2">
-            <div className="text-[#9D9D9D] text-[12px]">
-              <p>박머신</p>
-              <p>미디어과</p>
-            </div>
-            <button
-              className="bg-[#2F6BFF] rounded-lg px-4 py-2 text-[12px] text-white font-bold leading-none shadow-sm cursor-pointer"
-              onClick={() => handleOpenSheet("apply")}
-            >
-              지원하기
-            </button>
-          </div>
-        </div>
+
+      <div className="flex-1 bg-[#F9FAFB] px-5 py-4">
+        <ProjectCard
+          category="공모전"
+          dDay="D-709"
+          title="부천시 영상 공모전 같이 하실 분"
+          description="저는 에펙 사용할 줄 알아요! 이왕이면 에펙 사용 가능 하신분을 구합니다 입상을 목표로 열심히 해봐요"
+          recruitCount={5}
+          techStacks={["Python", "TensorFlow", "FastAPI"]}
+          writer="박머신"
+          department="미디어과"
+          buttonLabel="지원하기"
+          onButtonClick={() => handleOpenSheet("apply")}
+        />
       </div>
 
       {/* 프로젝트 등록 바텀시트 */}
@@ -220,6 +203,7 @@ function RegisterSheet({
   const [selectMenu, setSelectMenu] = useState<(typeof menu)[number]>("전체");
   const [selectTagMenu, setSelectTagMenu] =
     useState<(typeof tagMenu)[number]>("전체");
+
   return (
     <div
       className={`fixed inset-0 z-50 transition-all duration-300 ${
@@ -235,7 +219,9 @@ function RegisterSheet({
         }`}
         style={{
           width: `${sheetWidth}px`,
-          transform: `translateX(-50%) translateY(${isRegisterOpen ? "0" : "100%"})`,
+          transform: `translateX(-50%) translateY(${
+            isRegisterOpen ? "0" : "100%"
+          })`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -249,7 +235,7 @@ function RegisterSheet({
             <button
               type="button"
               onClick={onClick}
-              className="flex h-6 w-6 items-center justify-center cursor-pointer"
+              className="flex h-6 w-6 cursor-pointer items-center justify-center"
             >
               <img src={closeIcon} alt="닫기" className="h-7 w-7" />
             </button>
@@ -264,13 +250,19 @@ function RegisterSheet({
           <div className="flex flex-col gap-[10px] overflow-y-auto px-4 py-4">
             <FieldLabel label="프로젝트 제목" required={true} />
             <Input name="title" placeholder="예: 2024 공모전 팀원 모집" />
+
             <FieldLabel label="카테고리" />
-            <div className="px-4 py-2 overflow-x-auto shrink-0">
-              <div className="flex gap-2 ">
+            <div className="shrink-0 overflow-x-auto px-4 py-2">
+              <div className="flex gap-2">
                 {menu.map((tag) => (
                   <button
                     key={tag}
-                    className={`text-[12px] font-bold rounded-xl px-3 py-[6px] border cursor-pointer shrink-0 ${tag == selectMenu ? "bg-[#356AE6] border-[#356AE6] text-white" : "bg-white border-[#E5E7EB]"}`}
+                    type="button"
+                    className={`shrink-0 cursor-pointer rounded-xl border px-3 py-[6px] text-[12px] font-bold ${
+                      tag === selectMenu
+                        ? "border-[#356AE6] bg-[#356AE6] text-white"
+                        : "border-[#E5E7EB] bg-white text-[#111827]"
+                    }`}
                     onClick={() => setSelectMenu(tag)}
                   >
                     {tag}
@@ -278,14 +270,19 @@ function RegisterSheet({
                 ))}
               </div>
             </div>
-            <FieldLabel label="세부 카테고리" />
 
-            <div className="px-4 py-2 overflow-x-auto shrink-0">
-              <div className="flex gap-2 ">
+            <FieldLabel label="세부 카테고리" />
+            <div className="shrink-0 overflow-x-auto px-4 py-2">
+              <div className="flex gap-2">
                 {tagMenu.map((tag) => (
                   <button
                     key={tag}
-                    className={`text-[12px] font-bold rounded-xl px-3 py-[6px] border cursor-pointer shrink-0 ${tag == selectTagMenu ? "bg-[#356AE6] border-[#356AE6] text-white" : "bg-white border-[#E5E7EB]"}`}
+                    type="button"
+                    className={`shrink-0 cursor-pointer rounded-xl border px-3 py-[6px] text-[12px] font-bold ${
+                      tag === selectTagMenu
+                        ? "border-[#356AE6] bg-[#356AE6] text-white"
+                        : "border-[#E5E7EB] bg-white text-[#111827]"
+                    }`}
                     onClick={() => setSelectTagMenu(tag)}
                   >
                     {tag}
@@ -298,13 +295,16 @@ function RegisterSheet({
               name="description"
               placeholder="프로젝트에 대해 설명해주세요"
             />
+
             <FieldLabel label="필요한 툴 / 기술 스택" required={false} />
             <Input
               name="techStacks"
               placeholder="예: React, 포토샵, 노션 (쉼표로 구분해주세요!)"
             />
+
             <FieldLabel label="모집 마감일" required={true} />
             <Input name="deadline" placeholder="예: 2026/12/12" />
+
             <FieldLabel label="나의 정보" required={false} />
             <Input
               name="myInfo"
@@ -317,14 +317,14 @@ function RegisterSheet({
               <button
                 type="button"
                 onClick={onClick}
-                className="h-[45px] flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#314158] cursor-pointer"
+                className="h-[45px] flex-1 cursor-pointer rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#314158]"
               >
                 취소
               </button>
 
               <button
                 type="submit"
-                className="h-[45px] flex-1 rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white cursor-pointer"
+                className="h-[45px] flex-1 cursor-pointer rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white"
               >
                 등록하기
               </button>
@@ -407,7 +407,9 @@ function ApplySheet({
         }`}
         style={{
           width: `${sheetWidth}px`,
-          transform: `translateX(-50%) translateY(${isApplyOpen ? "0" : "100%"})`,
+          transform: `translateX(-50%) translateY(${
+            isApplyOpen ? "0" : "100%"
+          })`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -421,7 +423,7 @@ function ApplySheet({
             <button
               type="button"
               onClick={onClick}
-              className="flex h-6 w-6 items-center justify-center cursor-pointer"
+              className="flex h-6 w-6 cursor-pointer items-center justify-center"
             >
               <img src={closeIcon} alt="닫기" className="h-7 w-7" />
             </button>
@@ -431,21 +433,23 @@ function ApplySheet({
         {/* 지원하기 폼 */}
         <form
           onSubmit={onSubmit}
-          className="flex max-h-[calc(100vh-96px)] flex-col bg-white overflow-y-auto"
+          className="flex max-h-[calc(100vh-96px)] flex-col overflow-y-auto bg-white"
         >
           <div className="flex flex-col gap-[10px] overflow-y-auto px-4 py-4">
             {fields.map((field) => (
-              <div key={field.id} className="w-full flex flex-col gap-2">
+              <div key={field.id} className="flex w-full flex-col gap-2">
                 <FieldLabel label={field.title} required={field.required} />
                 {field.id === "intro" ? (
-                  <Textarea
-                    name={`${field.id}`}
-                    placeholder={`${field.placeholder}`}
+                  <textarea
+                    name={field.id}
+                    className="h-27 w-full resize-none rounded-lg border border-[#E2E8F0] bg-white px-4 py-[14px] text-[14px] focus:outline-none"
+                    placeholder={field.placeholder}
                   />
                 ) : (
-                  <Input
-                    name={`${field.id}`}
-                    placeholder={`${field.placeholder}`}
+                  <input
+                    name={field.id}
+                    className="w-full rounded-lg border border-[#E2E8F0] bg-white px-4 py-[14px] text-[14px] focus:outline-none"
+                    placeholder={field.placeholder}
                   />
                 )}
               </div>
@@ -458,14 +462,14 @@ function ApplySheet({
               <button
                 type="button"
                 onClick={onClick}
-                className="h-[45px] flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#314158] cursor-pointer"
+                className="h-[45px] flex-1 cursor-pointer rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#314158]"
               >
                 취소
               </button>
 
               <button
                 type="submit"
-                className="h-[45px] flex-1 rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white cursor-pointer"
+                className="h-[45px] flex-1 cursor-pointer rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white"
               >
                 등록하기
               </button>
