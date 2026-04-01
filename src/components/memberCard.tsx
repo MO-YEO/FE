@@ -1,5 +1,4 @@
 import bookmarkIcon from "../assets/member_bookmark.svg";
-import starIcon from "../assets/star.svg";
 import githubIcon from "../assets/github.svg";
 
 type TeamMemberCardProps = {
@@ -22,7 +21,6 @@ export default function TeamMemberCard({
   techStacks,
   githubLabel = "GitHub",
   githubUrl,
-  rating,
   profileInitial = "김",
   isBookmarked = false,
   onBookmarkClick,

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import backIcon from "../../assets/back.svg";
 import plusIcon from "../../assets/plus.svg";
 import closeIcon from "../../assets/close.svg";
