@@ -1,6 +1,6 @@
 import bookmarkIcon from "../assets/bookmark.svg";
 import commentIcon from "../assets/comment.svg";
-import profileIcon from "../assets/profile.svg";
+import profileIcon from "../assets/profileImage.svg";
 import heartIcon from "../assets/like.svg";
 
 type PostCardProps = {
@@ -46,7 +46,7 @@ export default function PostCard({
           <img
             src={bookmarkIcon}
             alt="스크랩"
-            className="h-[18px] w-[18px]"
+            className="h-[15px] w-[15px]"
           />
         </div>
       </div>

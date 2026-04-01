@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 // 팀원분이 만든 공통 컴포넌트 및 에셋
-import PostCard from '../components/PostCard'; 
-import backIcon from "../assets/back.svg";
+import PostCard from '../../components/PostCard'; 
+import backIcon from "../../assets/back.svg";
 // 1. 새로운 플러스 버튼 아이콘 임포트
-import plusIcon from "../assets/PlusButton.svg"; 
+import plusIcon from "../../assets/PlusButton.svg"; 
 
 const Board: React.FC = () => {
   const navigate = useNavigate();
