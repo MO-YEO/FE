@@ -7,6 +7,7 @@ import postIcon from "../assets/post.svg";
 import Input from "../components/input";
 import Member from "../assets/footer/member.svg?react";
 import HomeBoard from "../assets/homeBoard.svg?react";
+import Time from "../assets/time.svg?react";
 
 // 1. 프로젝트 카드 컴포넌트 (팀원분 스타일 반영)
 interface ProjectCardProps {
@@ -14,7 +15,6 @@ interface ProjectCardProps {
   author: string;
   members: number;
   time: string;
-  tag: "Backend" | "Frontend" | "ML Engineer" | "Design";
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -22,38 +22,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   author,
   members,
   time,
-  tag,
 }) => {
-  const tagColor = {
-    Backend: "bg-[#EFF6FF] text-[#1447E6]",
-    Frontend: "bg-[#F0FDF4] text-[#16A34A]",
-    "ML Engineer": "bg-[#FAF5FF] text-[#7E22CE]",
-    Design: "bg-[#FFF7ED] text-[#EA580C]",
-  };
-
   return (
-    <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-[20px] shadow-[0_2px_8px_rgba(15,23,42,0.06)] mb-3">
+    <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-[17px] shadow-[0_2px_8px_rgba(15,23,42,0.06)] mb-3">
       <div className="flex justify-between items-start gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-[16px] font-bold text-[#1E293B] truncate mb-1">
+          <h3 className="text-[16px] font-bold text-[#1E293B] truncate mb-2">
             {title}
           </h3>
           <p className="text-[12px] text-[#64748B]">작성자: {author}</p>
         </div>
-        <span
-          className={`${tagColor[tag]} text-[10px] px-2 py-1 rounded-[8px] font-bold shrink-0`}
-        >
-          {tag}
-        </span>
       </div>
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-2 flex items-center justify-between">
         <div className="flex items-center gap-3 text-[#94A3B8] text-[12px]">
-          <span className="flex items-center gap-1">👥 {members}명</span>
-          <span className="flex items-center gap-1">🕒 {time}</span>
+          <span className="flex items-center gap-1">
+            <Member className="size-[14px]" /> {members}명
+          </span>
+          <span className="flex items-center gap-1">
+            <Time className="size-[14px]" /> {time}
+          </span>
         </div>
-        <button className="text-[12px] font-semibold text-[#2563EB]">
-          자세히 보기
-        </button>
       </div>
     </div>
   );
@@ -126,14 +114,12 @@ const Home: React.FC = () => {
           author="김가톨릭"
           members={5}
           time="2일 후"
-          tag="Backend"
         />
         <ProjectCard
           title="졸업작품 프론트엔드 구인"
           author="이코딩"
           members={3}
           time="5일 후"
-          tag="Frontend"
         />
       </section>
 
