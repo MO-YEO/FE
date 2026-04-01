@@ -24,12 +24,13 @@ export default function ApplicantCard({
   reviews = [],
 }: ApplicantCardProps) {
   const filledStars = Math.round(reviewScore);
+  const profileInitial = name.trim().charAt(0) || "?";
 
   return (
     <article className="rounded-[14px] border border-[#E2E8F0] bg-white px-[14px] py-[14px] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
       <div className="flex items-start gap-[12px]">
         <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#2563EB] text-[14px] font-bold text-white">
-          김
+          {profileInitial}
         </div>
 
         <div className="min-w-0 flex-1">

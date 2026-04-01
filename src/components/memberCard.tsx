@@ -21,10 +21,12 @@ export default function TeamMemberCard({
   techStacks,
   githubLabel = "GitHub",
   githubUrl,
-  profileInitial = "김",
+  profileInitial,
   isBookmarked = false,
   onBookmarkClick,
 }: TeamMemberCardProps) {
+  const displayInitial = profileInitial || name.trim().charAt(0) || "?";
+
   return (
     <article
       className="
@@ -34,7 +36,6 @@ export default function TeamMemberCard({
         shadow-[0_1px_3px_rgba(0,0,0,0.10),0_1px_2px_-1px_rgba(0,0,0,0.10)]
       "
     >
-      {/* 상단 영역 */}
       <div className="flex min-h-[40px] items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div
@@ -43,7 +44,7 @@ export default function TeamMemberCard({
               bg-[#2188FF] text-[14px] font-semibold text-white
             "
           >
-            {profileInitial}
+            {displayInitial}
           </div>
 
           <div className="flex min-w-0 flex-col justify-center">
@@ -71,12 +72,10 @@ export default function TeamMemberCard({
         </button>
       </div>
 
-      {/* 소개글 */}
       <p className="mt-3 w-full break-words text-[14px] font-normal leading-[20px] text-[#45556C]">
         {description}
       </p>
 
-      {/* 기술 스택 */}
       <div className="mt-3 flex flex-wrap items-start gap-2">
         {techStacks.map((stack) => (
           <span
@@ -92,7 +91,6 @@ export default function TeamMemberCard({
         ))}
       </div>
 
-      {/* 하단 영역 */}
       <div
         className="
           mt-4 flex items-center justify-between
@@ -100,7 +98,6 @@ export default function TeamMemberCard({
           pt-3 pb-1
         "
       >
-
         {githubUrl ? (
           <a
             href={githubUrl}

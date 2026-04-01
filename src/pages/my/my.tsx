@@ -11,9 +11,7 @@ import mailIcon from "../../assets/mail.svg";
 import projectIcon from "../../assets/project.svg";
 import postIcon from "../../assets/post.svg";
 import logoutIcon from "../../assets/logout.svg";
-import profileImage from "../../assets/profileImage.svg";
 import chevronRightIcon from "../../assets/chevronRight.svg";
-
 import { membersApi } from "../../api/member";
 import { recruitsApi } from "../../api/recruits";
 import { boardsApi } from "../../api/boards";
@@ -75,6 +73,9 @@ export default function MyPage() {
     queryKey: ["myLikedPosts"],
     queryFn: () => boardsApi.getLikedPosts({ size: 1 }),
   });
+
+  const profileInitial =
+  ((profile?.nickname ?? editableProfile.name)?.trim().charAt(0)) || "?";
 
   useEffect(() => {
     if (!profile) return;
@@ -181,12 +182,8 @@ export default function MyPage() {
                 <>
                   <div className="flex items-start justify-between gap-[12px]">
                     <div className="flex min-w-0 flex-1 items-start gap-[14px]">
-                      <div className="h-[80px] w-[80px] shrink-0 overflow-hidden rounded-full">
-                        <img
-                          src={profileImage}
-                          alt="프로필 이미지"
-                          className="h-full w-full object-cover"
-                        />
+                      <div className="flex h-[80px] w-[80px] shrink-0 items-center justify-center rounded-full bg-[#2563EB] text-[28px] font-bold text-white">
+                        {profileInitial}
                       </div>
 
                       <div className="min-w-0 flex-1 pt-[4px]">

@@ -68,10 +68,7 @@ export const protectedRoutes = [
     path: PATH.MY_RECRUITED_PROJECTS,
     Component: MyRecruitedProjectsPage,
   },
-  {
-    path: PATH.MY_RECRUITED_PROJECTS,
-    Component: MyRecruitedProjectsPage,
-  },
+  
   {
     path: PATH.MY_APPLICANTS,
     Component: MyApplicantsPage,
