@@ -12,7 +12,12 @@ const MyPage = lazy(() => import("../pages/my/my")); // pages/my/my.tsx
 const MyPostsPage = lazy(() => import("../pages/my/myPost")); // pages/my/myPost.tsx
 const MyLikePage = lazy(() => import("../pages/my/myLike")); // pages/my/myLike.tsx
 const MyScrapPage = lazy(() => import("../pages/my/myScrap")); // pages/my/myScrap.tsx
-const MyAppliedProjectPage = lazy(() => import("../pages/my/myAppliedProject")); // pages/my/myAppliedProject.tsx
+const MyAppliedProjectPage = lazy(() => import("../pages/my/myAppliedProject"));
+ // pages/my/myAppliedProject.tsx
+const MyRecruitedProjectsPage = lazy(() => import("../pages/my/myRecruitedProject"));
+const MyApplicantsPage = lazy(() => import("../pages/my/myApplicants"));
+const MyParticipatedProjectsPage = lazy(() => import("../pages/my/myParticipatedProject"));
+ // pages/my/myRecruitedProjects.tsx
 
 const MemberPage = lazy(() => import("../pages/member"));
 const SignupPage = lazy(() => import("../pages/signUp"));
@@ -62,6 +67,22 @@ export const protectedRoutes = [
   {
     path: PATH.MY_APPLIED_PROJECT,
     Component: MyAppliedProjectPage,
+  },
+  {
+    path: PATH.MY_RECRUITED_PROJECTS,
+    Component: MyRecruitedProjectsPage,
+  },
+  {
+    path: PATH.MY_RECRUITED_PROJECTS,
+    Component: MyRecruitedProjectsPage,
+  },
+  {
+    path: PATH.MY_APPLICANTS,
+    Component: MyApplicantsPage,
+  },
+  {
+    path: PATH.MY_PARTICIPATED_PROJECTS,
+    Component: MyParticipatedProjectsPage,
   },
   // 404 페이지도 로그인 한 사람에게 보여주도록 Protected에 추가
   {
