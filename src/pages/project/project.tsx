@@ -53,6 +53,8 @@ const ProjectPage = () => {
     console.log("최종 데이터:", finalData);
   };
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const updateSheetWidth = () => {
       if (wrapperRef.current) {
@@ -69,18 +71,12 @@ const ProjectPage = () => {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = isRegisterOpen ? "hidden" : "";
+    const isOpen = isRegisterOpen || isApplyOpen;
+    document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isRegisterOpen]);
-
-  useEffect(() => {
-    document.body.style.overflow = isApplyOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isApplyOpen]);
+  }, [isRegisterOpen, isApplyOpen]);
 
   return (
     <div className="flex min-h-full flex-col" ref={wrapperRef}>
@@ -90,7 +86,8 @@ const ProjectPage = () => {
           <div className="flex items-center">
             <button
               type="button"
-              className="flex h-[24px] w-[24px] items-center justify-center"
+              className="flex h-[24px] w-[24px] items-center justify-center cursor-pointer"
+              onClick={() => navigate(-1)}
             >
               <img
                 src={backIcon}
@@ -244,6 +241,7 @@ function RegisterSheet({
           </div>
         </div>
 
+        {/*프로젝트 등록 폼 */}
         <form
           onSubmit={onSubmit}
           className="flex max-h-[calc(100vh-96px)] flex-col bg-white"
@@ -291,7 +289,6 @@ function RegisterSheet({
                 ))}
               </div>
             </div>
-
             <FieldLabel label="프로젝트 설명" required={true} />
             <Textarea
               name="description"
@@ -432,11 +429,12 @@ function ApplySheet({
           </div>
         </div>
 
+        {/* 지원하기 폼 */}
         <form
           onSubmit={onSubmit}
           className="flex max-h-[calc(100vh-96px)] flex-col overflow-y-auto bg-white"
         >
-          <div className="p-4">
+          <div className="flex flex-col gap-[10px] overflow-y-auto px-4 py-4">
             {fields.map((field) => (
               <div key={field.id} className="flex w-full flex-col gap-2">
                 <FieldLabel label={field.title} required={field.required} />
@@ -457,6 +455,7 @@ function ApplySheet({
             ))}
           </div>
 
+          {/* 하단 버튼 */}
           <div className="border-t border-[#E2E8F0] bg-white px-5 py-5">
             <div className="flex gap-3">
               <button

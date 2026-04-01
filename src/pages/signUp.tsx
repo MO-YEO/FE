@@ -2,6 +2,8 @@ import { useState } from "react";
 import FieldLabel from "../components/fieldLabel";
 import { useNavigate } from "react-router-dom";
 import { PATH } from "../components/path";
+import Input from "../components/input";
+import Textarea from "../components/textarea";
 
 const fields = [
   {
@@ -80,25 +82,24 @@ const SignUpPage = () => {
             <div key={field.id} className="w-full flex flex-col gap-2">
               <FieldLabel label={field.title} required={field.required} />
               {field.id === "intro" ? (
-                <textarea
+                <Textarea
                   name={`${field.id}`}
-                  className="bg-white w-full px-4 py-[14px] h-27 rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px] resize-none"
                   placeholder={`${field.placeholder}`}
                 />
               ) : (
-                <input
+                <Input
                   name={`${field.id}`}
-                  className="bg-white w-full px-4 py-[14px] rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px]"
                   placeholder={`${field.placeholder}`}
                 />
               )}
             </div>
           ))}
           <FieldLabel label="사용 가능한 툴 / 기술 스택" required={true} />
-          <input
+          <Input
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="bg-white px-4 py-[14px] rounded-lg border border-[#E2E8F0] focus:outline-none text-[14px]"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setInput(e.target.value)
+            }
             placeholder="하나씩 입력하고 Enter를 누르세요"
             onKeyDown={handleAddTag}
           />
