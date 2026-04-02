@@ -22,8 +22,8 @@ export default function MobileLayout() {
   ];
 
   return (
-    <div className="flex min-h-[100dvh] justify-center bg-white shadow-2xl">
-      <div className="relative w-full max-w-[400px] bg-white shadow-md">
+    <div className="flex min-h-[100dvh] justify-center bg-white">
+      <div className="relative w-full max-w-[400px] bg-white shadow-2xl">
         <Outlet />
 
         {!hideFooter && (

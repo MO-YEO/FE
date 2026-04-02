@@ -52,7 +52,7 @@ const Home: React.FC = () => {
 
   return (
     /* 팀원분 MyPage 규격: 430px 고정 및 중앙 정렬 */
-    <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[100px] font-sans shadow-2xl relative">
+    <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[100px] relative">
       {/* 2. 블루 헤더 섹션 (로고 파일 사용 및 좌측 정렬) */}
       <header className="bg-[#2F6BFF] pt-5 pb-12 px-6 shadow-lg relative z-10">
         <div className="flex items-center justify-start mb-8 gap-3">
