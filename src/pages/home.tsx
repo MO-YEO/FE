@@ -17,6 +17,16 @@ interface ProjectCardProps {
   time: string;
 }
 
+const post = [
+  {
+    postId: 1,
+    title: "아자아자화이팅?...",
+    author: "쑤기쑤기",
+    likeCount: 2,
+    commentCount: 2,
+    createdAt: "2026-04-01",
+  },
+];
 const ProjectCard: React.FC<ProjectCardProps> = ({
   title,
   author,
@@ -140,18 +150,21 @@ const Home: React.FC = () => {
           </button>
         </div>
         <div className="flex flex-col gap-3">
-          <PostPreviewCard
-            title="같이 시험공부 하실 분 구함!"
-            likeCount={12}
-            commentCount={4}
-            date="03.19 13:30"
-          />
-          <PostPreviewCard
-            title="이번 프로젝트 백엔드 스택 추천좀"
-            likeCount={8}
-            commentCount={15}
-            date="03.19 12:45"
-          />
+          {post.map((p) => (
+            <div
+              key={p.postId}
+              onClick={() => navigate(`/board/${p.postId}`)}
+              className="cursor-pointer"
+            >
+              <PostPreviewCard
+                title={p.title}
+                likeCount={p.likeCount}
+                commentCount={p.commentCount}
+                date={new Date(p.createdAt).toLocaleDateString()}
+                author={p.author}
+              />
+            </div>
+          ))}
         </div>
       </section>
     </main>
