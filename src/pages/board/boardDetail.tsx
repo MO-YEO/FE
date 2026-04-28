@@ -1,72 +1,111 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import backIcon from "../../assets/back.svg";
-// 더보기 아이콘이 없다면 아래 코드로 대체해서 사용하세요.
-// import moreIcon from "../../assets/more.svg"; 
+import { apiClient } from '../../api/client'; // ✅ 작성하신 apiClient 임포트
+
+interface PostDetail {
+  id: string | number;
+  title: string;
+  content: string;
+  author: string;
+  time: string;
+  likeCount: number;
+  commentCount: number;
+}
 
 const BoardDetailPage: React.FC = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   
-  // 1. 상태 관리 추가
-  const [isEditing, setIsEditing] = useState(false); // 수정 모드 여부
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // 더보기 메뉴 오픈 여부
-  
-  // 임시 데이터 (실제로는 useQuery의 data)
-  const [post, setPost] = useState({
-    id: id,
-    title: "오늘 도서관가실분",
-    content: "5시부터 같이 공부하고 밥도먹어요 좋지👍",
-    author: "최노드",
-    time: "02.10 14:31",
-    likeCount: 5,
-    commentCount: 2,
-  });
+  // 1. 상태 관리
+  const [post, setPost] = useState<PostDetail | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // 2. 수정용 로컬 상태 (임시 데이터를 복사)
-  const [editedTitle, setEditedTitle] = useState(post.title);
-  const [editedContent, setEditedContent] = useState(post.content);
+  // 2. 수정용 로컬 상태
+  const [editedTitle, setEditedTitle] = useState("");
+  const [editedContent, setEditedContent] = useState("");
 
-  // 메뉴 핸들러
-  const handleEditStart = () => {
-    setIsEditing(true); // 수정 모드 진입
-    setIsMenuOpen(false);
-  };
-
-  const handleEditCancel = () => {
-    // 취소 시 입력했던 내용 초기화
-    setEditedTitle(post.title);
-    setEditedContent(post.content);
-    setIsEditing(false);
-    setIsMenuOpen(false);
-  };
-
-  const handleEditComplete = () => {
-    // 실제로는 여기서 API 업데이트 호출 예정
-    setPost({
-      ...post,
-      title: editedTitle,
-      content: editedContent,
-    });
-    alert("수정이 완료되었습니다.");
-    setIsEditing(false);
-    setIsMenuOpen(false);
-  };
-
-  const handleDelete = () => {
-    if (window.confirm("정말 삭제하시겠습니까?")) {
-      alert("삭제되었습니다.");
+  // 3. API: 상세 데이터 가져오기
+  const fetchPostDetail = async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.get(`/api/board/${id}`);
+      setPost(response.data);
+      setEditedTitle(response.data.title);
+      setEditedContent(response.data.content);
+    } catch (err) {
+      console.error("상세 조회 실패:", err);
+      alert("게시글을 불러올 수 없습니다.");
       navigate('/board');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPostDetail();
+  }, [id]);
+
+  // 4. API: 수정 요청
+  const handleEditComplete = async () => {
+    if (!editedTitle.trim() || !editedContent.trim()) {
+      alert("제목과 내용을 모두 입력해주세요.");
+      return;
+    }
+
+    try {
+      await apiClient.put(`/api/board/${id}`, {
+        title: editedTitle,
+        content: editedContent,
+      });
+      alert("수정이 완료되었습니다.");
+      // 서버 데이터를 다시 불러와 화면 갱신
+      fetchPostDetail();
+      setIsEditing(false);
+    } catch (err) {
+      console.error("수정 실패:", err);
+      alert("수정 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 5. API: 삭제 요청
+  const handleDelete = async () => {
+    if (window.confirm("정말 삭제하시겠습니까?")) {
+      try {
+        await apiClient.delete(`/api/board/${id}`);
+        alert("삭제되었습니다.");
+        navigate('/board');
+      } catch (err) {
+        console.error("삭제 실패:", err);
+        alert("삭제 중 오류가 발생했습니다.");
+      }
     }
     setIsMenuOpen(false);
   };
 
+  const handleEditStart = () => {
+    setIsEditing(true);
+    setIsMenuOpen(false);
+  };
+
+  const handleEditCancel = () => {
+    if (post) {
+      setEditedTitle(post.title);
+      setEditedContent(post.content);
+    }
+    setIsEditing(false);
+  };
+
+  if (isLoading) return <div className="p-10 text-center font-bold text-[#5C7CFF]">로딩 중...</div>;
+  if (!post) return null;
+
   return (
     <main 
       className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[100px] font-sans relative text-left"
-      onClick={() => isMenuOpen && setIsMenuOpen(false)} // 외부 클릭 시 메뉴 닫기
+      onClick={() => isMenuOpen && setIsMenuOpen(false)}
     >
-      {/* 헤더: 규격 유지 */}
       <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
         <div className="flex h-[96px] items-end px-[16px] pb-[20px] pt-[40px]">
           <button type="button" onClick={() => navigate(-1)}>
@@ -79,11 +118,9 @@ const BoardDetailPage: React.FC = () => {
         </div>
       </header>
 
-      {/* 게시글 영역 */}
       <section className="px-[16px] pt-[20px]">
         <div className="rounded-[16px] border border-[#E2E8F0] bg-white p-[20px] shadow-sm relative">
           
-          {/* 유저 프로필 & 더보기 메뉴 */}
           <div className="flex items-center justify-between mb-[16px]">
             <div className="flex items-center gap-[10px]">
               <div className="h-[36px] w-[36px] rounded-full bg-[#5C7CFF] flex items-center justify-center text-white text-[14px] font-bold">
@@ -95,7 +132,6 @@ const BoardDetailPage: React.FC = () => {
               </div>
             </div>
             
-            {/* 더보기 버튼 (CSS로 구현) */}
             <div className="relative">
               <button 
                 className="flex flex-col gap-[3px] p-[10px] hover:bg-gray-50 rounded-full transition-colors"
@@ -109,11 +145,9 @@ const BoardDetailPage: React.FC = () => {
                 <div className="w-[4px] h-[4px] bg-[#94A3B8] rounded-full"></div>
               </button>
 
-              {/* 드롭다운 메뉴: 모드에 따라 내용 변경 */}
               {isMenuOpen && (
                 <div className="absolute right-0 mt-1 w-[120px] bg-white border border-[#E2E8F0] rounded-[12px] shadow-xl z-40 overflow-hidden text-[14px]">
                   {!isEditing ? (
-                    // 일반 모드 메뉴
                     <>
                       <button onClick={handleEditStart} className="w-full px-4 py-3 text-left font-medium text-[#475569] hover:bg-[#F8FAFC] border-b border-[#F1F5F9]">
                         수정하기
@@ -123,7 +157,6 @@ const BoardDetailPage: React.FC = () => {
                       </button>
                     </>
                   ) : (
-                    // 수정 모드 메뉴
                     <>
                       <button onClick={handleEditComplete} className="w-full px-4 py-3 text-left font-bold text-[#5C7CFF] hover:bg-[#F8FAFC] border-b border-[#F1F5F9]">
                         수정완료
@@ -138,9 +171,7 @@ const BoardDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 컨텐츠 영역: 모드에 따라 UI 전환 */}
           {!isEditing ? (
-            // 일반 보기 모드
             <>
               <h2 className="text-[18px] font-bold text-[#0F172A] mb-[12px] leading-snug">{post.title}</h2>
               <p className="text-[15px] leading-[1.6] text-[#334155] mb-[24px] whitespace-pre-wrap">
@@ -148,7 +179,6 @@ const BoardDetailPage: React.FC = () => {
               </p>
             </>
           ) : (
-            // ✨ 수정 모드 UI (Input/Textarea)
             <div className="flex flex-col gap-3 mb-6">
               <input 
                 type="text"
@@ -167,7 +197,6 @@ const BoardDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* 하단 좋아요/댓글/스크랩 (수정 모드에서는 숨김 처리 권장) */}
           {!isEditing && (
             <div className="flex items-center justify-between border-t border-[#F1F5F9] pt-[16px]">
               <div className="flex gap-[16px]">
