@@ -7,14 +7,28 @@ import FieldLabel from "../../components/fieldLabel";
 import Input from "../../components/input";
 import Textarea from "../../components/textarea";
 import ProjectCard from "../../components/projectCard";
+import { recruitsApi } from "../../api/recruits";
+import type { RecruitSummary } from "../../types";
+const menu = [
+  { label: "전체", value: "ALL" },
+  { label: "수업", value: "CLASS" },
+  { label: "프로젝트", value: "PROJECT" },
+  { label: "공모전", value: "CONTEST" },
+  { label: "스터디", value: "STUDY" },
+] as const;
 
-const menu = ["전체", "수업", "프로젝트", "공모전", "스터디"] as const;
-const tagMenu = ["전체", "기획", "개발", "디자인", "마케팅", "기타"] as const;
+const tagMenu = [
+  { label: "전체", value: "ALL" },
+  { label: "기획", value: "PLANNING" },
+  { label: "개발", value: "DEVELOPMENT" },
+  { label: "디자인", value: "DESIGN" },
+  { label: "마케팅", value: "MARKETING" },
+  { label: "기타", value: "ETC" },
+] as const;
 
 const ProjectPage = () => {
-  const [selectMenu, setSelectMenu] = useState<(typeof menu)[number]>("전체");
-  const [selectTagMenu, setSelectTagMenu] =
-    useState<(typeof tagMenu)[number]>("전체");
+  const [selectMenu, setSelectMenu] = useState("ALL");
+  const [selectTagMenu, setSelectTagMenu] = useState("ALL");
 
   const [sheetWidth, setSheetWidth] = useState<number>(430);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -22,6 +36,9 @@ const ProjectPage = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isApplyOpen, setIsApplyOpen] = useState(false);
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [data, setData] = useState<RecruitSummary[]>();
   const handleOpenSheet = (type: "register" | "apply") => {
     if (wrapperRef.current) {
       setSheetWidth(wrapperRef.current.offsetWidth);
@@ -42,7 +59,10 @@ const ProjectPage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+    type: "register" | "apply",
+  ) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
@@ -52,6 +72,15 @@ const ProjectPage = () => {
     };
 
     console.log("최종 데이터:", finalData);
+    if (type === "register") {
+      try {
+        await recruitsApi.createRecruit({ finalData });
+      } catch (error) {
+        console.log("모집글 등록 실패", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   const navigate = useNavigate();
@@ -78,6 +107,20 @@ const ProjectPage = () => {
       document.body.style.overflow = "";
     };
   }, [isRegisterOpen, isApplyOpen]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    (async () => {
+      try {
+        const data = await recruitsApi.getRecruits({});
+        setData(data.recruits);
+      } catch (error) {
+        console.log("프로젝트 불러오기 실패", error);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  });
 
   return (
     <div className="flex min-h-full flex-col" ref={wrapperRef}>
@@ -123,14 +166,16 @@ const ProjectPage = () => {
         {menu.map((menuItem) => {
           return (
             <button
-              key={menuItem}
+              key={menuItem.value}
               type="button"
               className={`cursor-pointer text-[14px] font-bold ${
-                menuItem === selectMenu ? "text-[#356AE6]" : "text-[#4A5565]"
+                menuItem.value === selectMenu
+                  ? "text-[#356AE6]"
+                  : "text-[#4A5565]"
               }`}
-              onClick={() => setSelectMenu(menuItem)}
+              onClick={() => setSelectMenu(menuItem.value)}
             >
-              {menuItem}
+              {menuItem.label}
             </button>
           );
         })}
@@ -139,33 +184,43 @@ const ProjectPage = () => {
       <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
         {tagMenu.map((tag) => (
           <button
-            key={tag}
+            key={tag.value}
             type="button"
             className={`cursor-pointer rounded-xl border px-3 py-[6px] text-[12px] font-bold ${
-              tag === selectTagMenu
+              tag.value === selectTagMenu
                 ? "border-[#356AE6] bg-[#356AE6] text-white"
                 : "border-[#E5E7EB] bg-white text-[#111827]"
             }`}
-            onClick={() => setSelectTagMenu(tag)}
+            onClick={() => setSelectTagMenu(tag.value)}
           >
-            {tag}
+            {tag.label}
           </button>
         ))}
       </div>
 
       <div className="flex-1 bg-[#F9FAFB] px-5 py-4">
-        <ProjectCard
-          category="공모전"
-          dDay="D-709"
-          title="부천시 영상 공모전 같이 하실 분"
-          description="저는 에펙 사용할 줄 알아요! 이왕이면 에펙 사용 가능 하신분을 구합니다 입상을 목표로 열심히 해봐요"
-          recruitCount={5}
-          techStacks={["Python", "TensorFlow", "FastAPI"]}
-          writer="박머신"
-          department="미디어과"
-          buttonLabel="지원하기"
-          onButtonClick={() => handleOpenSheet("apply")}
-        />
+        {!data ? (
+          <div className="flex justify-center">
+            아직 등록된 프로젝트가 없어요
+          </div>
+        ) : (
+          <>
+            {data.map((data) => (
+              <ProjectCard
+                category={data.category}
+                dDay={data.deadline}
+                title={data.title}
+                description=""
+                recruitCount={data.applicantCount}
+                techStacks={data.skills}
+                writer={data.author.nickname}
+                department={data.department}
+                buttonLabel="지원하기"
+                onButtonClick={() => handleOpenSheet("apply")}
+              />
+            ))}
+          </>
+        )}
       </div>
 
       {/* 프로젝트 등록 바텀시트 */}
@@ -200,9 +255,8 @@ function RegisterSheet({
   isRegisterOpen: boolean;
   sheetWidth: number;
 }) {
-  const [selectMenu, setSelectMenu] = useState<(typeof menu)[number]>("전체");
-  const [selectTagMenu, setSelectTagMenu] =
-    useState<(typeof tagMenu)[number]>("전체");
+  const [selectMenu, setSelectMenu] = useState("ALL");
+  const [selectTagMenu, setSelectTagMenu] = useState("ALL");
 
   return (
     <div
@@ -256,16 +310,16 @@ function RegisterSheet({
               <div className="flex gap-2">
                 {menu.map((tag) => (
                   <button
-                    key={tag}
+                    key={tag.value}
                     type="button"
                     className={`shrink-0 cursor-pointer rounded-xl border px-3 py-[6px] text-[12px] font-bold ${
-                      tag === selectMenu
+                      tag.value === selectMenu
                         ? "border-[#356AE6] bg-[#356AE6] text-white"
                         : "border-[#E5E7EB] bg-white text-[#111827]"
                     }`}
-                    onClick={() => setSelectMenu(tag)}
+                    onClick={() => setSelectMenu(tag.value)}
                   >
-                    {tag}
+                    {tag.label}
                   </button>
                 ))}
               </div>
@@ -276,16 +330,16 @@ function RegisterSheet({
               <div className="flex gap-2">
                 {tagMenu.map((tag) => (
                   <button
-                    key={tag}
+                    key={tag.value}
                     type="button"
                     className={`shrink-0 cursor-pointer rounded-xl border px-3 py-[6px] text-[12px] font-bold ${
-                      tag === selectTagMenu
+                      tag.value === selectTagMenu
                         ? "border-[#356AE6] bg-[#356AE6] text-white"
                         : "border-[#E5E7EB] bg-white text-[#111827]"
                     }`}
-                    onClick={() => setSelectTagMenu(tag)}
+                    onClick={() => setSelectTagMenu(tag.value)}
                   >
-                    {tag}
+                    {tag.label}
                   </button>
                 ))}
               </div>
