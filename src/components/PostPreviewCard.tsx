@@ -6,6 +6,7 @@ type PostPreviewCardProps = {
   likeCount: number;
   commentCount: number;
   date: string;
+  author?: string;
 };
 
 export default function PostPreviewCard({
@@ -13,6 +14,7 @@ export default function PostPreviewCard({
   likeCount,
   commentCount,
   date,
+  author,
 }: PostPreviewCardProps) {
   return (
     <div
@@ -32,23 +34,18 @@ export default function PostPreviewCard({
       </div>
 
       {/* 좋아요 + 댓글 */}
-      <div className="flex items-center gap-4 mt-3 text-gray-500">
-        <div className="flex items-center gap-1">
-          <img
-            src={heartIcon}
-            alt="like"
-            className="w-4 h-4"
-          />
-          <span className="text-sm">{likeCount}</span>
-        </div>
+      <div className="flex justify-between items-end">
+        {author && <span className="text-[12px] text-[#62748E]">{author}</span>}
+        <div className="flex items-center gap-2 mt-3 text-gray-500">
+          <div className="flex items-center gap-1">
+            <img src={heartIcon} alt="like" className="w-4 h-4" />
+            <span className="text-sm">{likeCount}</span>
+          </div>
 
-        <div className="flex items-center gap-1">
-          <img
-            src={commentIcon}
-            alt="comment"
-            className="w-4 h-4"
-          />
-          <span className="text-sm">{commentCount}</span>
+          <div className="flex items-center gap-1">
+            <img src={commentIcon} alt="comment" className="w-4 h-4" />
+            <span className="text-sm">{commentCount}</span>
+          </div>
         </div>
       </div>
     </div>

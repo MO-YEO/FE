@@ -17,6 +17,10 @@ export const PATH = {
   MY_LIKE: "/my/myLike",
   MY_SCRAP: "/my/myScrap",
   MY_APPLIED_PROJECT: "/my/myApplied-projects",
+  MY_RECRUITED_PROJECTS: "/my/recruited-projects",
+  MY_APPLICANTS: "/my/recruited-projects/applicants",
+  MY_PARTICIPATED_PROJECTS: "/my/participated-projects",
+
 
   MEMBER: "/member",
   INQUIRY: "/inquiry",
