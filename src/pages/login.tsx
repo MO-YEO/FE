@@ -1,9 +1,10 @@
-import React from 'react';
 import Button from '../components/button';
 import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
+    
   return (
 
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC] font-sans overflow-x-hidden p-6">
@@ -51,7 +52,9 @@ const Login: React.FC = () => {
             variant="primary"
             size="lg"
             className="h-[64px] w-full rounded-[20px] bg-[#5C7CFF] flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-200/50 border-none transition-all active:scale-[0.98]"
-            onClick={() => navigate('/home')}
+            onClick={() => {
+              window.location.href = "https://weepily-tinklier-marguerita.ngrok-free.dev/oauth2/authorization/google";
+            }}
           >
             <span style={{ color: 'white' }}>구글 로그인</span>
             <svg
