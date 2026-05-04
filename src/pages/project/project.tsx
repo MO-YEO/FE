@@ -11,7 +11,7 @@ import { recruitsApi } from "../../api/recruits";
 import type { RecruitSummary } from "../../types";
 const menu = [
   { label: "전체", value: "ALL" },
-  { label: "수업", value: "CLASS" },
+  { label: "수업", value: "ACADEMIC" },
   { label: "프로젝트", value: "PROJECT" },
   { label: "공모전", value: "CONTEST" },
   { label: "스터디", value: "STUDY" },
@@ -19,8 +19,8 @@ const menu = [
 
 const tagMenu = [
   { label: "전체", value: "ALL" },
-  { label: "기획", value: "PLANNING" },
-  { label: "개발", value: "DEVELOPMENT" },
+  { label: "기획", value: "PLAN" },
+  { label: "개발", value: "DEVELOP" },
   { label: "디자인", value: "DESIGN" },
   { label: "마케팅", value: "MARKETING" },
   { label: "기타", value: "ETC" },
@@ -67,14 +67,21 @@ const ProjectPage = () => {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    const finalData = {
-      ...data,
-    };
-
-    console.log("최종 데이터:", finalData);
     if (type === "register") {
+      const finalData = {
+        ...data,
+        tag: "",
+        skills:
+          (formData.get("skills") as string)
+            ?.split(",")
+            .map((skill) => skill.trim())
+            .filter(Boolean) || [],
+        totalHeadcount: Number(formData.get("totalHeadcount")),
+      };
+      console.log("최종 데이터:", finalData);
       try {
-        await recruitsApi.createRecruit({ finalData });
+        await recruitsApi.createRecruit(finalData);
+        handleCloseSheet("register");
       } catch (error) {
         console.log("모집글 등록 실패", error);
       } finally {
@@ -109,9 +116,9 @@ const ProjectPage = () => {
   }, [isRegisterOpen, isApplyOpen]);
 
   useEffect(() => {
-    setIsLoading(true);
     (async () => {
       try {
+        setIsLoading(true);
         const data = await recruitsApi.getRecruits({});
         setData(data.recruits);
       } catch (error) {
@@ -120,7 +127,7 @@ const ProjectPage = () => {
         setIsLoading(false);
       }
     })();
-  });
+  }, []);
 
   return (
     <div className="flex min-h-full flex-col" ref={wrapperRef}>
@@ -199,7 +206,7 @@ const ProjectPage = () => {
       </div>
 
       <div className="flex-1 bg-[#F9FAFB] px-5 py-4">
-        {!data ? (
+        {!data || data.length === 0 ? (
           <div className="flex justify-center">
             아직 등록된 프로젝트가 없어요
           </div>
@@ -226,7 +233,7 @@ const ProjectPage = () => {
       {/* 프로젝트 등록 바텀시트 */}
       <RegisterSheet
         onClick={() => handleCloseSheet("register")}
-        onSubmit={handleSubmit}
+        onSubmit={(e) => handleSubmit(e, "register")}
         isRegisterOpen={isRegisterOpen}
         sheetWidth={sheetWidth}
       />
@@ -234,7 +241,7 @@ const ProjectPage = () => {
       {/* 지원하기 바텀시트 */}
       <ApplySheet
         onClick={() => handleCloseSheet("apply")}
-        onSubmit={handleSubmit}
+        onSubmit={(e) => handleSubmit(e, "apply")}
         isApplyOpen={isApplyOpen}
         sheetWidth={sheetWidth}
       />
@@ -303,7 +310,7 @@ function RegisterSheet({
         >
           <div className="flex flex-col gap-[10px] overflow-y-auto px-4 py-4">
             <FieldLabel label="프로젝트 제목" required={true} />
-            <Input name="title" placeholder="예: 2024 공모전 팀원 모집" />
+            <Input name="title" placeholder="예: 2026 공모전 팀원 모집" />
 
             <FieldLabel label="카테고리" />
             <div className="shrink-0 overflow-x-auto px-4 py-2">
@@ -344,15 +351,20 @@ function RegisterSheet({
                 ))}
               </div>
             </div>
+            <input type="hidden" name="activityCategory" value={selectMenu} />
+            <input type="hidden" name="recruitCategory" value={selectTagMenu} />
+            <input type="hidden" name="type" value={selectMenu} />
+            <input type="hidden" name="category" value={selectTagMenu} />
             <FieldLabel label="프로젝트 설명" required={true} />
             <Textarea
-              name="description"
+              name="content"
               placeholder="프로젝트에 대해 설명해주세요"
             />
-
+            <FieldLabel label="모집 인원" required={true} />
+            <Input name="totalHeadcount" placeholder="예: 4" type="number" />
             <FieldLabel label="필요한 툴 / 기술 스택" required={false} />
             <Input
-              name="techStacks"
+              name="skills"
               placeholder="예: React, 포토샵, 노션 (쉼표로 구분해주세요!)"
             />
 
@@ -361,7 +373,7 @@ function RegisterSheet({
 
             <FieldLabel label="나의 정보" required={false} />
             <Input
-              name="myInfo"
+              name="department"
               placeholder="예: 박머신 미디어기술콘텐츠학과"
             />
           </div>
