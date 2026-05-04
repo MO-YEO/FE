@@ -104,7 +104,10 @@ const ProjectPage = () => {
     (async () => {
       try {
         setIsLoading(true);
-        const data = await recruitsApi.getRecruits({});
+        const data = await recruitsApi.getRecruits({
+          activityCategory: selectMenu == "ALL" ? "" : selectMenu,
+          recruitCategory: selectTagMenu == "ALL" ? "" : selectTagMenu,
+        });
         setData(data.recruits);
       } catch (error) {
         console.log("프로젝트 불러오기 실패", error);
@@ -112,7 +115,7 @@ const ProjectPage = () => {
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [selectMenu, selectTagMenu]);
 
   return (
     <div className="flex min-h-full flex-col" ref={wrapperRef}>
