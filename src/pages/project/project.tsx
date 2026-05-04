@@ -9,22 +9,7 @@ import Textarea from "../../components/textarea";
 import ProjectCard from "../../components/projectCard";
 import { recruitsApi } from "../../api/recruits";
 import type { RecruitSummary } from "../../types";
-const menu = [
-  { label: "전체", value: "ALL" },
-  { label: "수업", value: "ACADEMIC" },
-  { label: "프로젝트", value: "PROJECT" },
-  { label: "공모전", value: "CONTEST" },
-  { label: "스터디", value: "STUDY" },
-] as const;
-
-const tagMenu = [
-  { label: "전체", value: "ALL" },
-  { label: "기획", value: "PLAN" },
-  { label: "개발", value: "DEVELOP" },
-  { label: "디자인", value: "DESIGN" },
-  { label: "마케팅", value: "MARKETING" },
-  { label: "기타", value: "ETC" },
-] as const;
+import { ACTIVITY_CATEGORY, RECRUITCATEGORY } from "../../constants/category";
 
 const ProjectPage = () => {
   const [selectMenu, setSelectMenu] = useState("ALL");
@@ -170,7 +155,7 @@ const ProjectPage = () => {
       </header>
 
       <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
-        {menu.map((menuItem) => {
+        {RECRUITCATEGORY.map((menuItem) => {
           return (
             <button
               key={menuItem.value}
@@ -189,7 +174,7 @@ const ProjectPage = () => {
       </div>
 
       <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
-        {tagMenu.map((tag) => (
+        {ACTIVITY_CATEGORY.map((tag) => (
           <button
             key={tag.value}
             type="button"
@@ -315,7 +300,7 @@ function RegisterSheet({
             <FieldLabel label="카테고리" />
             <div className="shrink-0 overflow-x-auto px-4 py-2">
               <div className="flex gap-2">
-                {menu.map((tag) => (
+                {RECRUITCATEGORY.map((tag) => (
                   <button
                     key={tag.value}
                     type="button"
@@ -335,7 +320,7 @@ function RegisterSheet({
             <FieldLabel label="세부 카테고리" />
             <div className="shrink-0 overflow-x-auto px-4 py-2">
               <div className="flex gap-2">
-                {tagMenu.map((tag) => (
+                {ACTIVITY_CATEGORY.map((tag) => (
                   <button
                     key={tag.value}
                     type="button"
