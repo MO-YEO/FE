@@ -202,11 +202,12 @@ const ProjectPage = () => {
           <>
             {data.map((data) => (
               <ProjectCard
+                key={data.recruitId}
                 category={data.category}
                 dDay={data.deadline}
                 title={data.title}
-                description=""
-                recruitCount={data.applicantCount}
+                description={data.content}
+                recruitCount={data.totalHeadcount}
                 techStacks={data.skills}
                 writer={data.author.nickname}
                 department={data.department}
