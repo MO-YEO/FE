@@ -10,6 +10,7 @@ import ProjectCard from "../../components/projectCard";
 import { recruitsApi } from "../../api/recruits";
 import type { RecruitSummary } from "../../types";
 import { ACTIVITY_CATEGORY, RECRUITCATEGORY } from "../../constants/category";
+import useDebounce from "../../hooks/useDebounce";
 
 const ProjectPage = () => {
   const [selectMenu, setSelectMenu] = useState("ALL");
@@ -22,6 +23,9 @@ const ProjectPage = () => {
   const [isApplyOpen, setIsApplyOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [search, setSearch] = useState("");
+  const debouncedValue = useDebounce(search, 300);
 
   const [data, setData] = useState<RecruitSummary[]>();
   const handleOpenSheet = (type: "register" | "apply") => {
@@ -107,6 +111,7 @@ const ProjectPage = () => {
         const data = await recruitsApi.getRecruits({
           activityCategory: selectMenu == "ALL" ? "" : selectMenu,
           recruitCategory: selectTagMenu == "ALL" ? "" : selectTagMenu,
+          keyword: debouncedValue,
         });
         setData(data.recruits);
       } catch (error) {
@@ -115,7 +120,7 @@ const ProjectPage = () => {
         setIsLoading(false);
       }
     })();
-  }, [selectMenu, selectTagMenu]);
+  }, [selectMenu, selectTagMenu, debouncedValue]);
 
   return (
     <div className="flex min-h-full flex-col" ref={wrapperRef}>
@@ -153,6 +158,8 @@ const ProjectPage = () => {
           <input
             className="h-11 rounded-lg border border-[#E5E7EB] p-3 focus:outline-none"
             placeholder="프로젝트 검색..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </header>
