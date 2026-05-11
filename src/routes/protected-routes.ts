@@ -1,26 +1,24 @@
-// src/routes/protected-routes.ts
 import { lazy } from "react";
 import { PATH } from "../components/path";
 
 // 컴포넌트 Lazy 로딩
 const HomePage = lazy(() => import("../pages/home"));
 const BoardPage = lazy(() => import("../pages/board/board"));
-const ProjectPage = lazy(() => import("../pages/project/project")); // projects.tsx
-const NotFoundPage = lazy(() => import("../pages/notFound")); // notFound.tsx
-const MyPage = lazy(() => import("../pages/my/my")); // pages/my/my.tsx
-const MyPostsPage = lazy(() => import("../pages/my/myPost")); // pages/my/myPost.tsx
-const MyLikePage = lazy(() => import("../pages/my/myLike")); // pages/my/myLike.tsx
-const MyScrapPage = lazy(() => import("../pages/my/myScrap")); // pages/my/myScrap.tsx
+// ✅ 상세 페이지 컴포넌트 임포트 확인 (파일명 주의!)
+const BoardDetailPage = lazy(() => import("../pages/board/boardDetail")); 
+const ProjectPage = lazy(() => import("../pages/project/project"));
+const MyPage = lazy(() => import("../pages/my/my"));
+const MyPostsPage = lazy(() => import("../pages/my/myPost"));
+const MyLikePage = lazy(() => import("../pages/my/myLike"));
+const MyScrapPage = lazy(() => import("../pages/my/myScrap"));
 const MyAppliedProjectPage = lazy(() => import("../pages/my/myAppliedProject"));
- // pages/my/myAppliedProject.tsx
 const MyRecruitedProjectsPage = lazy(() => import("../pages/my/myRecruitedProject"));
 const MyApplicantsPage = lazy(() => import("../pages/my/myApplicants"));
 const MyParticipatedProjectsPage = lazy(() => import("../pages/my/myParticipatedProject"));
- // pages/my/myRecruitedProjects.tsx
-
 const MemberPage = lazy(() => import("../pages/member"));
 const SignupPage = lazy(() => import("../pages/signUp"));
 const InquiryPage = lazy(() => import("../pages/Inquiry"));
+const NotFoundPage = lazy(() => import("../pages/notFound"));
 
 export const protectedRoutes = [
   {
@@ -30,6 +28,11 @@ export const protectedRoutes = [
   {
     path: PATH.BOARD,
     Component: BoardPage,
+  },
+  // ✅ 여기에 상세 페이지 라우트를 명시적으로 추가해야 합니다!
+  {
+    path: PATH.BOARD_DETAIL, // "/board/:id"
+    Component: BoardDetailPage,
   },
   {
     path: PATH.PROJECTS,
@@ -43,7 +46,6 @@ export const protectedRoutes = [
     path: PATH.MEMBER,
     Component: MemberPage,
   },
-  // MyPage 서브 라우팅
   {
     path: PATH.MY,
     Component: MyPage,
@@ -68,7 +70,6 @@ export const protectedRoutes = [
     path: PATH.MY_RECRUITED_PROJECTS,
     Component: MyRecruitedProjectsPage,
   },
-  
   {
     path: PATH.MY_APPLICANTS,
     Component: MyApplicantsPage,
@@ -77,13 +78,13 @@ export const protectedRoutes = [
     path: PATH.MY_PARTICIPATED_PROJECTS,
     Component: MyParticipatedProjectsPage,
   },
-  // 404 페이지도 로그인 한 사람에게 보여주도록 Protected에 추가
   {
-    path: PATH.NOT_FOUND,
-    Component: NotFoundPage,
-  },
-   {
     path: PATH.INQUIRY,
     Component: InquiryPage,
+  },
+  // ⚠️ 중요: 모든 구체적인 경로 다음에 와야 합니다.
+  {
+    path: PATH.NOT_FOUND, // "*"
+    Component: NotFoundPage,
   },
 ];
