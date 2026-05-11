@@ -1,218 +1,226 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { apiClient } from '../../api/client';
 import backIcon from "../../assets/back.svg";
-import { apiClient } from '../../api/client'; // ✅ 작성하신 apiClient 임포트
+import likeIcon from "../../assets/like.svg";
 
+/** --- Types --- */
 interface PostDetail {
-  id: string | number;
-  title: string;
-  content: string;
-  author: string;
-  time: string;
-  likeCount: number;
-  commentCount: number;
+  postId: number; title: string; content: string; createdAt: string;
+  author: { nickname: string }; likeCount: number; commentCount: number;
+  mine: boolean; liked: boolean;
+}
+
+interface Comment {
+  commentId: number; content: string; createdAt: string; mine: boolean;
+  author: { memberId: number; nickname: string };
 }
 
 const BoardDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  
-  // 1. 상태 관리
+
   const [post, setPost] = useState<PostDetail | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 2. 수정용 로컬 상태
-  const [editedTitle, setEditedTitle] = useState("");
-  const [editedContent, setEditedContent] = useState("");
+  const [commentContent, setCommentContent] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editCommentValue, setEditCommentValue] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
 
-  // 3. API: 상세 데이터 가져오기
-  const fetchPostDetail = async () => {
+  const fetchData = async () => {
+    if (!id) return;
     try {
       setIsLoading(true);
-      const response = await apiClient.get(`/api/board/${id}`);
-      setPost(response.data);
-      setEditedTitle(response.data.title);
-      setEditedContent(response.data.content);
-    } catch (err) {
-      console.error("상세 조회 실패:", err);
-      alert("게시글을 불러올 수 없습니다.");
-      navigate('/board');
-    } finally {
-      setIsLoading(false);
-    }
+      const [pRes, cRes] = await Promise.all([
+        apiClient.get(`/api/boards/posts/${id}`),
+        apiClient.get(`/api/boards/posts/${id}/comments`)
+      ]);
+      const pData = pRes.data?.result || pRes.data;
+      const cData = cRes.data?.result || cRes.data || [];
+
+      setPost({ ...pData, liked: pData.liked ?? pData.likedByMe ?? false });
+      setComments(Array.isArray(cData) ? cData : []);
+      setEditTitle(pData.title);
+      setEditContent(pData.content);
+    } catch (err) { console.error(err); }
+    finally { setIsLoading(false); }
   };
 
-  useEffect(() => {
-    fetchPostDetail();
-  }, [id]);
+  useEffect(() => { fetchData(); }, [id]);
 
-  // 4. API: 수정 요청
-  const handleEditComplete = async () => {
-    if (!editedTitle.trim() || !editedContent.trim()) {
-      alert("제목과 내용을 모두 입력해주세요.");
-      return;
-    }
-
+  const handleLikeToggle = async () => {
+    if (!post) return;
     try {
-      await apiClient.put(`/api/board/${id}`, {
-        title: editedTitle,
-        content: editedContent,
-      });
-      alert("수정이 완료되었습니다.");
-      // 서버 데이터를 다시 불러와 화면 갱신
-      fetchPostDetail();
-      setIsEditing(false);
-    } catch (err) {
-      console.error("수정 실패:", err);
-      alert("수정 중 오류가 발생했습니다.");
-    }
+      const res = post.liked 
+        ? await apiClient.delete(`/api/boards/posts/${id}/like`)
+        : await apiClient.post(`/api/boards/posts/${id}/like`);
+      const result = res.data?.result || res.data;
+      setPost(prev => prev ? { 
+        ...prev, 
+        liked: result.liked ?? result.likedByMe ?? !prev.liked,
+        likeCount: result.likeCount ?? (prev.liked ? prev.likeCount - 1 : prev.likeCount + 1)
+      } : prev);
+    } catch (err) { alert("좋아요 처리 실패"); }
   };
 
-  // 5. API: 삭제 요청
-  const handleDelete = async () => {
-    if (window.confirm("정말 삭제하시겠습니까?")) {
-      try {
-        await apiClient.delete(`/api/board/${id}`);
-        alert("삭제되었습니다.");
+  const handlePostAction = async (type: 'delete' | 'update') => {
+    try {
+      if (type === 'delete') {
+        if (!window.confirm("삭제하시겠습니까?")) return;
+        await apiClient.delete(`/api/boards/posts/${id}`);
         navigate('/board');
-      } catch (err) {
-        console.error("삭제 실패:", err);
-        alert("삭제 중 오류가 발생했습니다.");
+      } else {
+        await apiClient.put(`/api/boards/posts/${id}`, { title: editTitle, content: editContent, images: [] });
+        setIsEditModalOpen(false);
+        fetchData();
       }
-    }
-    setIsMenuOpen(false);
+    } catch (err) { alert("실패"); }
   };
 
-  const handleEditStart = () => {
-    setIsEditing(true);
-    setIsMenuOpen(false);
+  const handleCommentAction = async (type: 'add' | 'edit' | 'delete', cId?: number) => {
+    try {
+      if (type === 'add') {
+        if (!commentContent.trim()) return;
+        await apiClient.post(`/api/boards/posts/${id}/comments`, { content: commentContent });
+        setCommentContent('');
+      } else if (type === 'edit') {
+        await apiClient.put(`/api/boards/comments/${cId}`, { content: editCommentValue });
+        setEditingCommentId(null);
+      } else {
+        if (!window.confirm("삭제하시겠습니까?")) return;
+        await apiClient.delete(`/api/boards/comments/${cId}`);
+      }
+      fetchData();
+    } catch (err) { alert("실패"); }
   };
 
-  const handleEditCancel = () => {
-    if (post) {
-      setEditedTitle(post.title);
-      setEditedContent(post.content);
-    }
-    setIsEditing(false);
-  };
-
-  if (isLoading) return <div className="p-10 text-center font-bold text-[#5C7CFF]">로딩 중...</div>;
-  if (!post) return null;
+  if (isLoading) return <LoadingView />;
+  if (!post) return <div className="p-10 text-center">글이 없습니다.</div>;
 
   return (
-    <main 
-      className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[100px] font-sans relative text-left"
-      onClick={() => isMenuOpen && setIsMenuOpen(false)}
-    >
-      <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
-        <div className="flex h-[96px] items-end px-[16px] pb-[20px] pt-[40px]">
-          <button type="button" onClick={() => navigate(-1)}>
-            <img src={backIcon} alt="뒤로가기" className="h-[24px] w-[24px]" />
+    <div className="flex justify-center bg-white min-h-screen">
+      <main className="relative w-full max-w-[400px] bg-[#F8FAFC] pb-[100px] shadow-2xl">
+        <header className="border-b border-[#E5E7EB] bg-white flex h-[96px] items-end px-[20px] pb-[20px] sticky top-0 z-40">
+          <button onClick={() => navigate(-1)} className="p-1"><img src={backIcon} alt="뒤로" className="w-6 h-6" /></button>
+          <div className="flex-1 text-center font-bold text-[18px]">상세보기</div>
+          <button onClick={handleLikeToggle} className="flex items-center gap-1.5 active:scale-90 px-1">
+            <span className={`text-[14px] font-bold ${post.liked ? 'text-[#EF4444]' : 'text-[#64748B]'}`}>{post.likeCount}</span>
+            <img src={likeIcon} alt="좋아요" className={`w-[22px] h-[22px] transition-all ${post.liked ? "invert-[40%] sepia-[82%] saturate-[4127%] hue-rotate-[343deg] brightness-[96%] contrast-[95%]" : "opacity-30 grayscale"}`} />
           </button>
-          <div className="flex flex-1 justify-center">
-            <span className="text-[20px] font-bold leading-[28px] text-[#000000]">게시판</span>
-          </div>
-          <div className="w-[24px]" />
-        </div>
-      </header>
+        </header>
 
-      <section className="px-[16px] pt-[20px]">
-        <div className="rounded-[16px] border border-[#E2E8F0] bg-white p-[20px] shadow-sm relative">
-          
-          <div className="flex items-center justify-between mb-[16px]">
-            <div className="flex items-center gap-[10px]">
-              <div className="h-[36px] w-[36px] rounded-full bg-[#5C7CFF] flex items-center justify-center text-white text-[14px] font-bold">
-                {post.author[0]}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[15px] font-bold text-[#1E293B]">{post.author}</span>
-                <span className="text-[12px] text-[#94A3B8]">{post.time}</span>
-              </div>
-            </div>
-            
-            <div className="relative">
-              <button 
-                className="flex flex-col gap-[3px] p-[10px] hover:bg-gray-50 rounded-full transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMenuOpen(!isMenuOpen);
-                }}
-              >
-                <div className="w-[4px] h-[4px] bg-[#94A3B8] rounded-full"></div>
-                <div className="w-[4px] h-[4px] bg-[#94A3B8] rounded-full"></div>
-                <div className="w-[4px] h-[4px] bg-[#94A3B8] rounded-full"></div>
-              </button>
-
-              {isMenuOpen && (
-                <div className="absolute right-0 mt-1 w-[120px] bg-white border border-[#E2E8F0] rounded-[12px] shadow-xl z-40 overflow-hidden text-[14px]">
-                  {!isEditing ? (
-                    <>
-                      <button onClick={handleEditStart} className="w-full px-4 py-3 text-left font-medium text-[#475569] hover:bg-[#F8FAFC] border-b border-[#F1F5F9]">
-                        수정하기
-                      </button>
-                      <button onClick={handleDelete} className="w-full px-4 py-3 text-left font-medium text-[#EF4444] hover:bg-[#FEF2F2]">
-                        삭제하기
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button onClick={handleEditComplete} className="w-full px-4 py-3 text-left font-bold text-[#5C7CFF] hover:bg-[#F8FAFC] border-b border-[#F1F5F9]">
-                        수정완료
-                      </button>
-                      <button onClick={handleEditCancel} className="w-full px-4 py-3 text-left font-medium text-[#64748B] hover:bg-gray-50">
-                        취소하기
-                      </button>
-                    </>
-                  )}
+        {/* 본문 섹션 */}
+        <section className="px-[20px] pt-6 text-left">
+          <div className="bg-white rounded-[24px] p-7 shadow-sm border border-[#F1F5F9] mb-4">
+            <div className="flex items-center justify-between mb-6">
+              <UserChip nickname={post.author.nickname} date={post.createdAt} />
+              {post.mine && (
+                <div className="flex gap-2">
+                  <button onClick={() => setIsEditModalOpen(true)} className="text-[13px] font-bold text-[#64748B]">수정</button>
+                  <button onClick={() => handlePostAction('delete')} className="text-[13px] font-bold text-[#EF4444]">삭제</button>
                 </div>
               )}
             </div>
+            <h1 className="text-[22px] font-extrabold text-[#111827] mb-5 leading-snug">{post.title}</h1>
+            <article className="text-[16px] leading-[1.8] text-[#334155] whitespace-pre-wrap mb-4">{post.content}</article>
           </div>
 
-          {!isEditing ? (
-            <>
-              <h2 className="text-[18px] font-bold text-[#0F172A] mb-[12px] leading-snug">{post.title}</h2>
-              <p className="text-[15px] leading-[1.6] text-[#334155] mb-[24px] whitespace-pre-wrap">
-                {post.content}
-              </p>
-            </>
-          ) : (
-            <div className="flex flex-col gap-3 mb-6">
-              <input 
-                type="text"
-                value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-                className="w-full text-[16px] font-bold p-3 border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#5C7CFF] bg-[#F9FAFB]"
-                placeholder="제목을 입력하세요"
-              />
-              <textarea 
-                value={editedContent}
-                onChange={(e) => setEditedContent(e.target.value)}
-                rows={8}
-                className="w-full text-[15px] p-3 border border-[#E2E8F0] rounded-[10px] focus:outline-none focus:border-[#5C7CFF] bg-[#F9FAFB] resize-none leading-relaxed"
-                placeholder="내용을 입력하세요"
-              />
+          <div className="bg-white rounded-[24px] px-6 py-2 shadow-sm border border-[#F1F5F9] mb-10">
+            <h3 className="font-bold text-[16px] text-[#1E293B] mt-5 mb-2 px-1">댓글 {comments.length}</h3>
+            <div className="flex flex-col">
+              {comments.map((c) => (
+                <CommentItem key={c.commentId} comment={c} isEditing={editingCommentId === c.commentId} editValue={editCommentValue} setEditValue={setEditCommentValue} onEditStart={() => { setEditingCommentId(c.commentId); setEditCommentValue(c.content); }} onEditCancel={() => setEditingCommentId(null)} onEditSave={() => handleCommentAction('edit', c.commentId)} onDelete={() => handleCommentAction('delete', c.commentId)} />
+              ))}
             </div>
-          )}
+          </div>
+        </section>
 
-          {!isEditing && (
-            <div className="flex items-center justify-between border-t border-[#F1F5F9] pt-[16px]">
-              <div className="flex gap-[16px]">
-                <button className="flex items-center gap-[6px] text-[13px] font-semibold text-[#64748B]">
-                  <span>❤️</span> {post.likeCount}
-                </button>
-                <button className="flex items-center gap-[6px] text-[13px] font-semibold text-[#64748B]">
-                  <span>💬</span> {post.commentCount}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-    </main>
+        {/* ✅ MobileLayout의 Footer와 동일한 규격 적용 */}
+        <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 flex h-16 w-full max-w-[400px] border-t border-black bg-[#FFFFFF] items-center px-[20px] z-50">
+          <div className="flex w-full items-center gap-3">
+            <input
+              className="flex-1 h-[40px] bg-[#F1F5F9] rounded-full px-5 text-[14px] outline-none border border-transparent focus:bg-white focus:border-[#2563EB]/20 transition-all"
+              placeholder="댓글을 작성해주세요"
+              value={commentContent}
+              onChange={e => setCommentContent(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleCommentAction('add')}
+            />
+            <button
+              onClick={() => handleCommentAction('add')}
+              className="shrink-0 text-[#2563EB] font-bold text-[15px] px-1 active:scale-95 transition-transform"
+            >
+              등록
+            </button>
+          </div>
+        </footer>
+
+        {isEditModalOpen && (
+          <EditModal title={editTitle} content={editContent} setTitle={setEditTitle} setContent={setEditContent} onCancel={() => setIsEditModalOpen(false)} onSave={() => handlePostAction('update')} />
+        )}
+      </main>
+    </div>
   );
 };
+
+/** --- Helper Components --- */
+const UserChip = ({ nickname, date }: any) => (
+  <div className="flex items-center gap-3">
+    <div className="w-10 h-10 rounded-full bg-[#DBEAFE] flex items-center justify-center font-bold text-[#2563EB]">{nickname?.[0]}</div>
+    <div className="flex flex-col text-left">
+      <span className="font-bold text-[15px]">{nickname}</span>
+      <span className="text-[12px] text-[#94A3B8]">{new Date(date).toLocaleDateString()}</span>
+    </div>
+  </div>
+);
+
+const CommentItem = ({ comment, isEditing, editValue, setEditValue, onEditStart, onEditCancel, onEditSave, onDelete }: any) => (
+  <div className="py-5 border-b border-[#F1F5F9] last:border-0 text-left">
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center gap-2">
+        <span className={`font-bold text-[14px] ${comment.mine ? 'text-[#2563EB]' : 'text-[#334155]'}`}>{comment.author?.nickname}</span>
+        <span className="text-[11px] text-[#94A3B8]">{new Date(comment.createdAt).toLocaleDateString()}</span>
+      </div>
+      {comment.mine && !isEditing && (
+        <div className="flex gap-2 text-[11px] font-bold">
+          <button onClick={onEditStart} className="text-[#64748B]">수정</button>
+          <button onClick={onDelete} className="text-[#EF4444]">삭제</button>
+        </div>
+      )}
+    </div>
+    {isEditing ? (
+      <div className="flex flex-col gap-2 mt-2">
+        <textarea className="w-full p-3 bg-[#F1F5F9] rounded-xl text-[14px] outline-none border border-gray-200" value={editValue} onChange={e => setEditValue(e.target.value)} />
+        <div className="flex justify-end gap-2 text-[12px] font-bold">
+          <button onClick={onEditCancel} className="text-gray-400">취소</button>
+          <button onClick={onEditSave} className="text-[#2563EB]">저장</button>
+        </div>
+      </div>
+    ) : <p className="text-[14px] text-[#475569] leading-relaxed">{comment.content}</p>}
+  </div>
+);
+
+const EditModal = ({ title, content, setTitle, setContent, onCancel, onSave }: any) => (
+  <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-5">
+    <div className="w-full max-w-[360px] bg-white rounded-[24px] p-7 shadow-xl">
+      <div className="flex justify-between items-center mb-6">
+        <button onClick={onCancel} className="text-gray-400">취소</button>
+        <h2 className="font-bold text-[18px]">글 수정</h2>
+        <button onClick={onSave} className="text-[#2563EB] font-bold">완료</button>
+      </div>
+      <input className="w-full text-[18px] font-bold border-b border-gray-100 pb-3 mb-4 outline-none" value={title} onChange={e => setTitle(e.target.value)} />
+      <textarea className="w-full h-[280px] text-[16px] leading-relaxed outline-none resize-none" value={content} onChange={e => setContent(e.target.value)} />
+    </div>
+  </div>
+);
+
+const LoadingView = () => (
+  <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
+    <div className="text-[#2563EB] font-bold animate-pulse">데이터를 불러오는 중...</div>
+  </div>
+);
 
 export default BoardDetailPage;
