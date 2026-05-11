@@ -4,17 +4,20 @@ import PostCard from '../../components/PostCard';
 import backIcon from "../../assets/back.svg";
 import plusIcon from "../../assets/PlusButton.svg"; 
 import { apiClient } from '../../api/client'; 
-// ✅ 방금 만든 모달 임포트
 import BoardWriteModal from './BoardWriteModal';
 
 interface Post {
-  id: number;
+  postId: number;
   title: string;
-  content: string;
-  author: string;
-  time: string;
+  author: {
+    nickname: string;
+    memberId: number;
+  };
+  createdAt: string;
   likeCount: number;
   commentCount: number;
+  likedByMe: boolean;
+  bookmarkedByMe: boolean; 
 }
 
 const Board: React.FC = () => {
@@ -23,15 +26,15 @@ const Board: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // ✅ 모달 오픈 상태 관리
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchPosts = async () => {
     try {
       setIsLoading(true);
-      const response = await apiClient.get('/api/board/list'); 
-      setPosts(response.data);
+      const response = await apiClient.get('/api/boards/posts'); 
+      if (response.data && response.data.posts) {
+        setPosts(response.data.posts);
+      }
     } catch (err: any) {
       console.error("게시글 불러오기 실패:", err);
       setError("게시글을 불러오는 중 문제가 발생했습니다.");
@@ -44,6 +47,29 @@ const Board: React.FC = () => {
     fetchPosts();
   }, []);
 
+  const handleBookmarkToggle = async (e: React.MouseEvent, postId: number, isBookmarked: boolean) => {
+    e.stopPropagation();
+
+    try {
+      if (isBookmarked) {
+        await apiClient.delete(`/api/boards/posts/${postId}/bookmark`);
+      } else {
+        await apiClient.post(`/api/boards/posts/${postId}/bookmark`, {});
+      }
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.postId === postId 
+            ? { ...post, bookmarkedByMe: !isBookmarked } 
+            : post
+        )
+      );
+    } catch (err: any) {
+      console.error("북마크 처리 실패:", err);
+      alert("북마크 처리에 실패했습니다.");
+    }
+  };
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[88px] font-sans relative">
       <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
@@ -54,7 +80,6 @@ const Board: React.FC = () => {
           <div className="flex flex-1 justify-center">
             <span className="text-[20px] font-bold leading-[28px] text-[#000000]">게시판</span>
           </div>
-          {/* ✅ 클릭 시 navigate 대신 모달 오픈! */}
           <button 
             type="button" 
             onClick={() => setIsModalOpen(true)}
@@ -88,18 +113,28 @@ const Board: React.FC = () => {
           ) : (
             posts.map((post) => (
               <div 
-                key={post.id} 
-                onClick={() => navigate(`/board/${post.id}`)}
+                key={post.postId} 
+                onClick={() => navigate(`/board/${post.postId}`)}
                 className="cursor-pointer transition-transform active:scale-[0.98]"
               >
-                <PostCard {...post} />
+                <PostCard 
+                  title={post.title}
+                  author={post.author.nickname}
+                  time={new Date(post.createdAt).toLocaleDateString()}
+                  likeCount={post.likeCount}
+                  commentCount={post.commentCount}
+                  content=""
+                  isBookmarked={post.bookmarkedByMe} 
+                  onBookmarkClick={(e: React.MouseEvent) => 
+                    handleBookmarkToggle(e, post.postId, post.bookmarkedByMe)
+                  } 
+                />
               </div>
             ))
           )}
         </div>
       </section>
 
-      {/* ✅ 모달 컴포넌트 배치 */}
       <BoardWriteModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 

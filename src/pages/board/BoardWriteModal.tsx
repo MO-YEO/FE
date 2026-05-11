@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { apiClient } from '../../api/client';
-import closeIcon from "../../assets/close.svg"; // 닫기 아이콘이 있다면 임포트
+import closeIcon from "../../assets/close.svg";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRefresh: () => void; // 등록 성공 후 리스트 갱신용
+  onRefresh: () => void;
 }
 
 const BoardWriteModal: React.FC<ModalProps> = ({ isOpen, onClose, onRefresh }) => {
@@ -22,20 +22,26 @@ const BoardWriteModal: React.FC<ModalProps> = ({ isOpen, onClose, onRefresh }) =
 
     try {
       setIsSubmitting(true);
-      // ✅ 백엔드 API 엔드포인트 (팀원분과 상의한 주소로 변경하세요)
-      await apiClient.post('/api/board/write', {
+      
+      // ✅ API 명세서에 따른 수정 ()
+      // 1. URL 변경: /api/boards/posts
+      // 2. Body 데이터: title, content 외에 images 배열 추가
+      await apiClient.post('/api/boards/posts', {
         title: title,
-        content: content
+        content: content,
+        images: [] // 명세서상의 images[] 요청 대응
       });
 
       alert("게시글이 성공적으로 등록되었습니다!");
-      setTitle(''); // 입력창 초기화
+      setTitle(''); 
       setContent('');
-      onRefresh(); // 부모 컴포넌트의 fetchPosts 실행
-      onClose();   // 모달 닫기
-    } catch (err) {
+      onRefresh(); 
+      onClose();   
+    } catch (err: any) {
       console.error("등록 실패:", err);
-      alert("등록 중 오류가 발생했습니다.");
+      // 백엔드 에러 메시지가 있다면 출력, 없으면 기본 메시지
+      const errorMessage = err.response?.data?.message || "등록 중 오류가 발생했습니다.";
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -45,7 +51,6 @@ const BoardWriteModal: React.FC<ModalProps> = ({ isOpen, onClose, onRefresh }) =
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
-      {/* 바텀시트 느낌의 모달 */}
       <div className="w-full max-w-[430px] animate-slide-up rounded-t-[24px] bg-white p-6 shadow-2xl sm:rounded-[24px]">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-[20px] font-bold text-[#111827]">새 게시글 작성</h2>

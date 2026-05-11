@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import React, { useEffect } from 'react';
 
 const Login: React.FC = () => {
-    const navigate = useNavigate();
-    
+  const navigate = useNavigate();
+  
   return (
-
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC] font-sans overflow-x-hidden p-6">
       <div className="w-[382px] h-[812px] bg-white rounded-[40px] shadow-2xl border border-[#E5E7EB] px-8 pt-20 pb-10 flex flex-col items-center relative">
 
-        {/* 3. 로고 섹션 */}
+        {/* 로고 섹션 */}
         <div className="flex flex-col items-center mb-16">
           <div className="w-[72px] h-[72px] bg-[#5C7CFF] rounded-[24px] flex items-center justify-center mb-5 shadow-lg shadow-blue-100/60">
             <img
@@ -29,7 +28,7 @@ const Login: React.FC = () => {
           </p>
         </div>
 
-        {/* 4. 메인 카피 섹션 */}
+        {/* 메인 카피 섹션 */}
         <div className="text-center mb-16">
           <h2 className="text-[34px] font-extrabold text-[#1F2937] leading-[1.25] tracking-tight">
             검증된 팀원을<br />
@@ -53,7 +52,7 @@ const Login: React.FC = () => {
             size="lg"
             className="h-[64px] w-full rounded-[20px] bg-[#5C7CFF] flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-200/50 border-none transition-all active:scale-[0.98]"
             onClick={() => {
-              window.location.href = "https://weepily-tinklier-marguerita.ngrok-free.dev/oauth2/authorization/google";
+              window.location.href = "http://3.37.55.120.nip.io:8080/oauth2/authorization/google";
             }}
           >
             <span style={{ color: 'white' }}>구글 로그인</span>
@@ -79,7 +78,6 @@ const Login: React.FC = () => {
       <footer className="mt-6 text-[#6A7282] text-[12px] font-medium text-center opacity-60">
         © 2026 MO-YEO. All rights reserved.
       </footer>
-
     </div>
   );
 };
