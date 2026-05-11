@@ -1,3 +1,4 @@
+//api/boards.ts
 import { apiClient } from './client';
 import type { BoardListResponse } from '../types';
 

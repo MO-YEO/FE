@@ -11,27 +11,86 @@ export interface PageInfo {
 export interface MyProfileResponse {
   memberId: number;
   email: string;
+  contactEmail: string;
+  emailVerified: boolean;
   nickname: string;
-  departmentName: string;
-  githubUrl: string;
-  blogUrl: string;
-  baekjoonId: string;
-  content: string;
-  tags: string[];
   role: string;
+  intro: string;
+  githubUrl: string;
+  profileImageUrl: string;
+  techStacks: string[];
+  activityCategories: string[];
+  phoneNumber: string;
+}
+
+export interface UpdateMyProfileRequest {
+  nickname: string;
+  profileImageUrl: string;
+  role: string;
+  contactEmail: string;
+  phoneNumber: string;
+  githubUrl: string;
+  intro: string;
+  techStacks: string[];
+  activityCategories: string[];
+}
+
+export interface Member {
+  memberId: number;
+  nickname: string;
+  role: string;
+  intro: string;
+  githubUrl: string;
+  profileImageUrl: string;
+  techStacks: string[];
+  activityCategories: string[];
+}
+
+export interface TeamProfileRegisterRequest {
+  nickname: string;
+  role: string;
+  contactEmail: string;
+  phoneNumber: string;
+  githubUrl: string;
+  intro: string;
+  profileImageUrl: string;
+  techStacks: string[];
+  activityCategories: string[];
+}
+
+export interface TeamProfileRegisterResponse {
+  memberId: number;
+  email: string;
+  contactEmail: string;
+  emailVerified: boolean;
+  nickname: string;
+  role: string;
+  intro: string;
+  githubUrl: string;
+  profileImageUrl: string;
+  techStacks: string[];
+  activityCategories: string[];
+  phoneNumber: string;
+  teamProfileRegistered: boolean;
 }
 
 export interface MemberDetail {
   memberId: number;
   nickname: string;
-  departmentName: string;
-  tags: string[];
-  content: string;
+  departmentName?: string;
+  role?: string;
+  intro?: string;
+  content?: string;
+  githubUrl?: string;
+  profileImageUrl?: string;
+  techStacks?: string[];
+  activityCategories?: string[];
+  tags?: string[];
   isBookmarked?: boolean;
 }
 
 export interface MemberListResponse {
-  members: MemberDetail[];
+  items: Member[];
   pageInfo: PageInfo;
 }
 

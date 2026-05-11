@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import PostPreviewCard from "../../components/PostPreviewCard";
 import ReviewModal from "../../components/reviewModal";
 import ProfileEditModal from "../../components/profileEditModal";
@@ -15,6 +19,7 @@ import chevronRightIcon from "../../assets/chevronRight.svg";
 import { membersApi } from "../../api/member";
 import { recruitsApi } from "../../api/recruits";
 import { boardsApi } from "../../api/boards";
+import type { UpdateMyProfileRequest } from "../../types";
 
 type ReviewMember = {
   id: number;
@@ -31,8 +36,17 @@ type ProfileEditType = {
   githubUrl: string;
 };
 
+type ProfileFormFromModal = {
+  name: string;
+  role: string;
+  email: string;
+  bio: string;
+  techStacks: string[];
+};
+
 export default function MyPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedProjectTitle, setSelectedProjectTitle] = useState("");
@@ -65,17 +79,42 @@ export default function MyPage() {
   });
 
   const { data: scrappedPosts } = useQuery({
-    queryKey: ["myScrappedPosts"],
-    queryFn: () => boardsApi.getScrappedPosts({ size: 1 }),
+  queryKey: ["myScrappedPosts"],
+  queryFn: () => boardsApi.getScrappedPosts({ size: 1 }),
+  retry: false,
   });
 
   const { data: likedPosts } = useQuery({
     queryKey: ["myLikedPosts"],
     queryFn: () => boardsApi.getLikedPosts({ size: 1 }),
+    retry: false,
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: membersApi.updateMyProfile,
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData(["myProfile"], updatedProfile);
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+
+      setEditableProfile({
+        name: updatedProfile.nickname ?? "",
+        role: updatedProfile.role || "가톨릭대 재학생",
+        email: updatedProfile.contactEmail || updatedProfile.email || "",
+        bio: updatedProfile.intro || "",
+        techStacks: updatedProfile.techStacks ?? [],
+        githubUrl: updatedProfile.githubUrl ?? "",
+      });
+
+      setIsEditModalOpen(false);
+    },
+    onError: (error) => {
+      console.error("프로필 수정 실패:", error);
+      alert("프로필 수정에 실패했습니다.");
+    },
   });
 
   const profileInitial =
-  ((profile?.nickname ?? editableProfile.name)?.trim().charAt(0)) || "?";
+    ((profile?.nickname ?? editableProfile.name)?.trim().charAt(0)) || "?";
 
   useEffect(() => {
     if (!profile) return;
@@ -83,9 +122,9 @@ export default function MyPage() {
     setEditableProfile({
       name: profile.nickname ?? "",
       role: profile.role || "가톨릭대 재학생",
-      email: profile.email ?? "",
-      bio: profile.content || "",
-      techStacks: profile.tags ?? [],
+      email: profile.contactEmail || profile.email || "",
+      bio: profile.intro || "",
+      techStacks: profile.techStacks ?? [],
       githubUrl: profile.githubUrl ?? "",
     });
   }, [profile]);
@@ -107,6 +146,22 @@ export default function MyPage() {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/logout`;
   };
 
+  const handleSaveProfile = (updatedProfile: ProfileFormFromModal) => {
+    const payload: UpdateMyProfileRequest = {
+      nickname: updatedProfile.name,
+      profileImageUrl: profile?.profileImageUrl ?? "",
+      role: updatedProfile.role,
+      contactEmail: updatedProfile.email,
+      phoneNumber: profile?.phoneNumber ?? "",
+      githubUrl: editableProfile.githubUrl || profile?.githubUrl || "",
+      intro: updatedProfile.bio,
+      techStacks: updatedProfile.techStacks,
+      activityCategories: profile?.activityCategories ?? [],
+    };
+
+    updateProfileMutation.mutate(payload);
+  };
+
   const stats = useMemo(
     () => [
       {
@@ -125,7 +180,7 @@ export default function MyPage() {
         path: PATH.MY_LIKE,
       },
     ],
-    [scrappedPosts, likedPosts]
+    [scrappedPosts, likedPosts],
   );
 
   const participatedProjects = [
@@ -182,23 +237,36 @@ export default function MyPage() {
                 <>
                   <div className="flex items-start justify-between gap-[12px]">
                     <div className="flex min-w-0 flex-1 items-start gap-[14px]">
-                      <div className="flex h-[80px] w-[80px] shrink-0 items-center justify-center rounded-full bg-[#2563EB] text-[28px] font-bold text-white">
-                        {profileInitial}
-                      </div>
+                      {profile?.profileImageUrl ? (
+                        <img
+                          src={profile.profileImageUrl}
+                          alt="프로필 이미지"
+                          className="h-[80px] w-[80px] shrink-0 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-[80px] w-[80px] shrink-0 items-center justify-center rounded-full bg-[#2563EB] text-[28px] font-bold text-white">
+                          {profileInitial}
+                        </div>
+                      )}
 
                       <div className="min-w-0 flex-1 pt-[4px]">
                         <div className="text-[18px] font-bold leading-[26px] text-[#111827]">
-                          {(profile?.nickname ?? editableProfile.name) || "사용자"}
+                          {(profile?.nickname ?? editableProfile.name) ||
+                            "사용자"}
                         </div>
 
                         <div className="mt-[6px] whitespace-pre-line text-[14px] leading-[20px] text-[#475569]">
-                          {profile?.role || editableProfile.role || "가톨릭대 재학생"}
+                          {profile?.role ||
+                            editableProfile.role ||
+                            "가톨릭대 재학생"}
                         </div>
 
                         <div className="mt-[8px] flex items-center gap-[8px] text-[12px] leading-[18px] text-[#94A3B8]">
                           <img src={mailIcon} alt="" className="h-[18px] w-[18px]" />
                           <span className="truncate">
-                            {profile?.email ?? editableProfile.email}
+                            {profile?.contactEmail ||
+                              profile?.email ||
+                              editableProfile.email}
                           </span>
                         </div>
                       </div>
@@ -215,11 +283,13 @@ export default function MyPage() {
                   </div>
 
                   <p className="mt-[20px] text-[14px] leading-[20px] text-[#45556C]">
-                    {profile?.content || editableProfile.bio || "등록된 자기소개가 없습니다."}
+                    {profile?.intro ||
+                      editableProfile.bio ||
+                      "등록된 자기소개가 없습니다."}
                   </p>
 
                   <div className="mt-[16px] flex flex-wrap gap-[10px]">
-                    {(profile?.tags ?? editableProfile.techStacks ?? []).map(
+                    {(profile?.techStacks ?? editableProfile.techStacks ?? []).map(
                       (stack: string) => (
                         <span
                           key={stack}
@@ -227,7 +297,7 @@ export default function MyPage() {
                         >
                           {stack}
                         </span>
-                      )
+                      ),
                     )}
                   </div>
                 </>
@@ -242,7 +312,9 @@ export default function MyPage() {
                     type="button"
                     onClick={() => navigate(item.path)}
                     className={`flex min-h-[96px] flex-col items-center justify-center ${
-                      index !== stats.length - 1 ? "border-r border-[#E2E8F0]" : ""
+                      index !== stats.length - 1
+                        ? "border-r border-[#E2E8F0]"
+                        : ""
                     }`}
                   >
                     <span className="h-[28px] text-[22px] font-bold leading-[28px] text-[#3B82F6]">
@@ -295,7 +367,9 @@ export default function MyPage() {
 
                         <span
                           className={`shrink-0 rounded-[14px] px-[14px] py-[6px] text-[12px] font-bold leading-[20px] text-white shadow-[0_2px_6px_rgba(29,155,240,0.25)] ${
-                            project.status === "OPEN" ? "bg-[#1D9BF0]" : "bg-[#94A3B8]"
+                            project.status === "OPEN"
+                              ? "bg-[#1D9BF0]"
+                              : "bg-[#94A3B8]"
                           }`}
                         >
                           {project.status === "OPEN" ? "모집중" : "마감"}
@@ -314,7 +388,8 @@ export default function MyPage() {
                           }
                           className="text-right text-[12px] font-semibold leading-[20px] text-[#2563EB]"
                         >
-                          {project.applicantCount}/{project.totalHeadcount} 지원자 확인하기
+                          {project.applicantCount}/{project.totalHeadcount} 지원자
+                          확인하기
                         </button>
                       </div>
                     </article>
@@ -460,13 +535,7 @@ export default function MyPage() {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         initialProfile={editableProfile}
-        onSave={(updatedProfile) => {
-          setEditableProfile((prev) => ({
-            ...prev,
-            ...updatedProfile,
-          }));
-          setIsEditModalOpen(false);
-        }}
+        onSave={handleSaveProfile}
       />
     </>
   );
