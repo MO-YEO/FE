@@ -391,8 +391,26 @@ function RegisterSheet({
               name="content"
               placeholder="프로젝트에 대해 설명해주세요"
             />
-            <FieldLabel label="모집 인원" required={true} />
-            <Input name="totalHeadcount" placeholder="예: 4" type="number" />
+            <div className="flex gap-3">
+              <div className="flex flex-col gap-[10px]">
+                <FieldLabel label="현재 인원" required={true} />
+                <Input
+                  name="applicantCount"
+                  placeholder="예: 4"
+                  type="number"
+                />
+              </div>
+
+              <div className="flex flex-col gap-[10px]">
+                <FieldLabel label="모집 인원" required={true} />
+                <Input
+                  name="totalHeadcount"
+                  placeholder="예: 4"
+                  type="number"
+                />
+              </div>
+            </div>
+
             <FieldLabel label="필요한 툴 / 기술 스택" required={false} />
             <Input
               name="skills"
@@ -403,10 +421,7 @@ function RegisterSheet({
             <Input name="deadline" placeholder="예: 2026/12/12" />
 
             <FieldLabel label="나의 정보" required={false} />
-            <Input
-              name="department"
-              placeholder="예: 박머신 미디어기술콘텐츠학과"
-            />
+            <Input name="department" placeholder="예: 미디어기술콘텐츠학과" />
           </div>
 
           <div className="border-t border-[#E2E8F0] bg-white px-5 py-5">
