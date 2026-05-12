@@ -44,6 +44,7 @@ export interface Member {
   profileImageUrl: string;
   techStacks: string[];
   activityCategories: string[];
+  isBookmarked?: boolean;
 }
 
 export interface TeamProfileRegisterRequest {
@@ -120,6 +121,47 @@ export interface RecruitSummary {
   author: Author;
 }
 
+export interface MyRecruitSummary {
+  recruitId: number;
+  type: string;
+  category: string;
+  tag: string;
+  department: string;
+  title: string;
+  status: "OPEN" | "CLOSED";
+  skills: string[];
+  appliedByMe: boolean;
+  applicantCount: number;
+  totalHeadcount: number;
+  deadline: string;
+  createdAt: string;
+  author: Author;
+  activityCategory: string;
+  recruitCategory: string;
+}
+
+
+export interface MyRecruitListResponse {
+  recruits: MyRecruitSummary[];
+  pageInfo: PageInfo;
+}
+
+export interface AppliedRecruitSummary {
+  recruitId: number;
+  title: string;
+  type: string;
+  status: "OPEN" | "CLOSED";
+  skills: string[];
+  applicationStatus: string;
+  deadline: string;
+  createdAt: string;
+}
+
+export interface AppliedRecruitListResponse {
+  recruits: AppliedRecruitSummary[];
+  pageInfo: PageInfo;
+}
+
 export interface RecruitListResponse {
   recruits: RecruitSummary[];
   pageInfo: PageInfo;
@@ -130,20 +172,58 @@ export interface RecruitDetail extends RecruitSummary {
   contactUrl: string;
 }
 
+export interface RecruitApplicant {
+  applicationId: number;
+  applicant: {
+    memberId: number;
+    nickname: string;
+    contactEmail: string;
+  };
+  status: string;
+  createdAt: string;
+}
+
+export interface RecruitApplicationsResponse {
+  applications: RecruitApplicant[];
+  pageInfo: PageInfo;
+}
+
+export interface RecruitApplicant {
+  applicationId: number;
+  applicant: {
+    memberId: number;
+    nickname: string;
+    contactEmail: string;
+  };
+  status: string;
+  createdAt: string;
+}
+
+export interface RecruitApplicationsResponse {
+  applications: RecruitApplicant[];
+  pageInfo: PageInfo;
+}
+
 // ------------------------
 // Board Types
 // ------------------------
 export interface BoardPostSummary {
   postId: number;
   title: string;
-  content: string;
+  content?: string;
   createdAt: string;
   likeCount: number;
   commentCount: number;
-  isLiked: boolean;
-  isBookmarked: boolean;
-  authorName: string;
-  authorId: number;
+  likedByMe?: boolean;
+  bookmarkedByMe?: boolean;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
+  authorName?: string;
+  authorId?: number;
+  author?: {
+    memberId: number;
+    nickname: string;
+  };
 }
 
 export interface BoardListResponse {

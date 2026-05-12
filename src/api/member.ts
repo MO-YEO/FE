@@ -53,5 +53,13 @@ export const membersApi = {
     );
     return data;
   },
-};
+
+  bookmarkMember: async (memberId: number) => {
+    const { data } = await apiClient.post(
+      `/api/members/${memberId}/bookmark`,
+      {},
+    );
+    return data;
+  },
+  };
 

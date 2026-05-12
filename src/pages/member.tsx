@@ -82,6 +82,46 @@ export default function TeamMemberPage() {
     }
   };
 
+  const [myMemberId, setMyMemberId] = useState<number | null>(null);
+
+  const handleBookmarkMember = async (memberId: number) => {
+  if (memberId === myMemberId) {
+    alert("본인 프로필은 북마크할 수 없습니다.");
+    return;
+  }
+
+  const targetMember = members.find((member) => member.memberId === memberId);
+
+  if (!targetMember) {
+    console.error("북마크 대상 멤버를 찾을 수 없습니다:", memberId);
+    return;
+  }
+
+  if (targetMember.isBookmarked) {
+    return;
+  }
+
+  try {
+    console.log("팀원 북마크 요청 memberId:", memberId);
+
+    await membersApi.bookmarkMember(memberId);
+
+    setMembers((prev) =>
+      prev.map((member) =>
+        member.memberId === memberId
+          ? {
+              ...member,
+              isBookmarked: true,
+            }
+          : member,
+      ),
+    );
+  } catch (error) {
+    console.error("팀원 북마크 실패:", error);
+    alert("팀원 북마크에 실패했습니다.");
+  }
+};
+
   useEffect(() => {
     const updateSheetWidth = () => {
       if (wrapperRef.current) {
@@ -108,6 +148,19 @@ export default function TeamMemberPage() {
   useEffect(() => {
     fetchMembers();
   }, [selectedCategory, page]);
+
+  useEffect(() => {
+  const fetchMyProfile = async () => {
+    try {
+      const profile = await membersApi.getMyProfile();
+      setMyMemberId(profile.memberId);
+    } catch (error) {
+      console.error("내 프로필 조회 실패:", error);
+    }
+  };
+
+  fetchMyProfile();
+}, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -304,8 +357,10 @@ export default function TeamMemberPage() {
                 techStacks={member.techStacks}
                 rating={0}
                 profileInitial={member.nickname?.charAt(0) ?? "?"}
-                isBookmarked={false}
+                isBookmarked={member.isBookmarked ?? false}
                 githubUrl={member.githubUrl}
+                isMe={member.memberId === myMemberId}
+                onBookmarkClick={() => handleBookmarkMember(member.memberId)}
               />
             ))}
           </div>

@@ -1,40 +1,36 @@
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import PostCard from "../../components/PostCard";
 import backIcon from "../../assets/back.svg";
+import { boardsApi } from "../../api/boards";
 
 export default function MyLike() {
   const navigate = useNavigate();
 
-  const likedPosts = [
-    {
-      id: 1,
-      title: "오늘 도서관가실분",
-      content: "5시부터 같이 공부하고 밥도먹어요",
-      writer: "꿀범",
-      date: "14:31",
-      likeCount: 1,
-      commentCount: 2,
-    },
-    {
-      id: 2,
-      title: "오늘 도서관가실분",
-      content:
-        "전체 목록에서 보이는 내용은 최대 두 줄로 하고 그 이상은 말줄임표로 보이게 하면 더 깔끔할 것 같아요.",
-      writer: "꿀범",
-      date: "14:31",
-      likeCount: 1,
-      commentCount: 2,
-    },
-    {
-      id: 3,
-      title: "오늘 도서관가실분",
-      content: "좋아요가 없는 경우는 좋아요 생략, 댓글 없는 경우는 댓글 생략",
-      writer: "꿀범",
-      date: "14:31",
-      likeCount: 1,
-      commentCount: 0,
-    },
-  ];
+  const {
+    data: likedPosts,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["myLikedPostsPage"],
+    queryFn: () => boardsApi.getLikedPosts({ page: 0, size: 20 }),
+    retry: false,
+  });
+
+  const formatDate = (date?: string) => {
+    if (!date) return "";
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return date;
+    }
+
+    return parsedDate.toLocaleDateString("ko-KR", {
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[88px]">
@@ -55,19 +51,44 @@ export default function MyLike() {
       </header>
 
       <section className="px-[16px] pt-[16px]">
-        <div className="flex flex-col gap-[12px]">
-          {likedPosts.map((post) => (
-            <PostCard
-              key={post.id}
-              title={post.title}
-              content={post.content}
-              author={post.writer}
-              time={post.date}
-              likeCount={post.likeCount}
-              commentCount={post.commentCount}
-            />
-          ))}
-        </div>
+        {isLoading && (
+          <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[32px] text-center text-[14px] text-[#94A3B8] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+            좋아요한 게시물을 불러오는 중입니다.
+          </div>
+        )}
+
+        {isError && !isLoading && (
+          <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[32px] text-center text-[14px] text-[#EF4444] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+            좋아요한 게시물을 불러오지 못했습니다.
+          </div>
+        )}
+
+        {!isLoading && !isError && !likedPosts?.posts?.length && (
+          <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[18px] text-center text-[14px] font-medium leading-[20px] text-[#64748B] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+            좋아요한 게시물이 없습니다.
+          </div>
+        )}
+
+        {!isLoading && !isError && likedPosts?.posts?.length ? (
+          <div className="flex flex-col gap-[12px]">
+            {likedPosts.posts.map((post) => (
+              <div
+                key={post.postId}
+                onClick={() => navigate(`/board/${post.postId}`)}
+                className="cursor-pointer"
+              >
+                <PostCard
+                  title={post.title}
+                  content={post.content ?? ""}
+                  author={post.author?.nickname ?? post.authorName ?? "작성자"}
+                  time={formatDate(post.createdAt)}
+                  likeCount={post.likeCount}
+                  commentCount={post.commentCount}
+                />
+              </div>
+            ))}
+          </div>
+        ) : null}
       </section>
     </main>
   );

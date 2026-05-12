@@ -11,6 +11,7 @@ type TeamMemberCardProps = {
   rating: number;
   profileInitial?: string;
   isBookmarked?: boolean;
+  isMe?: boolean;
   onBookmarkClick?: () => void;
 };
 
@@ -23,6 +24,7 @@ export default function TeamMemberCard({
   githubUrl,
   profileInitial,
   isBookmarked = false,
+  isMe = false,
   onBookmarkClick,
 }: TeamMemberCardProps) {
   const displayInitial = profileInitial || name.trim().charAt(0) || "?";
@@ -59,14 +61,29 @@ export default function TeamMemberCard({
 
         <button
           type="button"
-          onClick={onBookmarkClick}
+          onClick={(e) => {
+            e.stopPropagation();
+
+            if (isMe) {
+              alert("본인 프로필은 북마크할 수 없습니다.");
+              return;
+            }
+
+            onBookmarkClick?.();
+          }}
           aria-label="북마크"
+          disabled={isMe}
+          className={`flex h-[28px] w-[28px] items-center justify-center ${
+            isMe ? "cursor-not-allowed opacity-30" : "cursor-pointer"
+          }`}
         >
           <img
             src={bookmarkIcon}
             alt="북마크"
-            className={`h-[24px] w-[24px] object-contain ${
-              isBookmarked ? "opacity-100" : "opacity-70"
+            className={`h-[24px] w-[24px] object-contain transition ${
+              isBookmarked
+                ? "opacity-100 [filter:brightness(0)_saturate(100%)_invert(39%)_sepia(96%)_saturate(2039%)_hue-rotate(207deg)_brightness(102%)_contrast(101%)]"
+                : "opacity-35"
             }`}
           />
         </button>
