@@ -27,15 +27,22 @@ const ProjectPage = () => {
   const [search, setSearch] = useState("");
   const debouncedValue = useDebounce(search, 300);
 
+  const [selectedRecruitId, setSelectedRecruitId] = useState<number | null>(
+    null,
+  );
+
   const [data, setData] = useState<RecruitSummary[]>();
-  const handleOpenSheet = (type: "register" | "apply") => {
+
+  const handleOpenSheet = (type: "register" | "apply", id?: number) => {
     if (wrapperRef.current) {
       setSheetWidth(wrapperRef.current.offsetWidth);
     }
 
     if (type === "register") {
       setIsRegisterOpen(true);
-    } else {
+    }
+    if (type === "apply" && id) {
+      setSelectedRecruitId(id);
       setIsApplyOpen(true);
     }
   };
@@ -56,6 +63,9 @@ const ProjectPage = () => {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
+    console.log("최종 데이터:", data);
+
+    //프로젝트 등록하기 폼 제출
     if (type === "register") {
       const finalData = {
         ...data,
@@ -75,6 +85,30 @@ const ProjectPage = () => {
         console.log("모집글 등록 실패", error);
       } finally {
         setIsLoading(false);
+      }
+    }
+
+    //지원하기 폼 제출
+    if (type === "apply") {
+      const finalData = {
+        ...data,
+        // requiredSkills:
+        //   (formData.get("requiredSkills") as string)
+        //     ?.split(",")
+        //     .map((skill) => skill.trim())
+        //     .filter(Boolean) || [],
+      };
+      console.log("최종 데이터:", finalData);
+      if (selectedRecruitId) {
+        try {
+          await recruitsApi.apply(selectedRecruitId, finalData);
+          handleCloseSheet("apply");
+          setSelectedRecruitId(null);
+        } catch (error) {
+          console.log("프로젝트 지원 실패", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     }
   };
@@ -104,6 +138,7 @@ const ProjectPage = () => {
     };
   }, [isRegisterOpen, isApplyOpen]);
 
+  //프로젝트 검색/조회 api
   useEffect(() => {
     (async () => {
       try {
@@ -219,7 +254,7 @@ const ProjectPage = () => {
                 writer={data.author.nickname}
                 department={data.department}
                 buttonLabel="지원하기"
-                onButtonClick={() => handleOpenSheet("apply")}
+                onButtonClick={() => handleOpenSheet("apply", data.recruitId)}
               />
             ))}
           </>
@@ -398,9 +433,10 @@ function RegisterSheet({
   );
 }
 
+//지원하기 폼
 const fields = [
   {
-    id: "nickname",
+    id: "name",
     title: "이름",
     placeholder: "김가톨릭",
     required: true,
@@ -412,25 +448,25 @@ const fields = [
     required: true,
   },
   {
-    id: "intro",
+    id: "introduction",
     title: "자기소개",
     placeholder: "자기소개를 입력하세요",
     required: true,
   },
   {
-    id: "skill",
+    id: "requiredSkills",
     title: "사용 가능한 툴 / 기술스택",
     placeholder: "예: React, 포토샵, 노션 (쉼표로 구분해주세요!)",
     required: true,
   },
   {
-    id: "phone",
+    id: "phoneNumber",
     title: "연락처",
     placeholder: "010-0000-0000",
     required: true,
   },
   {
-    id: "email",
+    id: "contactEmail",
     title: "이메일",
     placeholder: "example@email.com",
     required: false,
@@ -508,11 +544,7 @@ function ApplySheet({
                     placeholder={field.placeholder}
                   />
                 ) : (
-                  <input
-                    name={field.id}
-                    className="w-full rounded-lg border border-[#E2E8F0] bg-white px-4 py-[14px] text-[14px] focus:outline-none"
-                    placeholder={field.placeholder}
-                  />
+                  <Input name={field.id} placeholder={field.placeholder} />
                 )}
               </div>
             ))}
@@ -533,7 +565,7 @@ function ApplySheet({
                 type="submit"
                 className="h-[45px] flex-1 cursor-pointer rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white"
               >
-                등록하기
+                지원하기
               </button>
             </div>
           </div>
