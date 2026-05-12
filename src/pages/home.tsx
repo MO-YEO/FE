@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PostPreviewCard from "../components/PostPreviewCard";
 import logo from "../assets/MO-YEOlogo.svg";
@@ -6,22 +6,19 @@ import projectIcon from "../assets/project.svg";
 import postIcon from "../assets/post.svg";
 import Input from "../components/input";
 import { useQuery } from "@tanstack/react-query";
-// ✅ API 연동을 위한 임포트 (경로는 프로젝트 구조에 맞춰 확인해주세요)
 import { recruitsApi } from "../api/recruits";
 import { boardsApi } from "../api/boards";
 import { membersApi } from "../api/member";
 
-// ✅ 아이콘 에셋
 import Member from "../assets/footer/member.svg?react";
 import HomeBoard from "../assets/homeBoard.svg?react";
 import Time from "../assets/time.svg?react";
 
-// 1. 프로젝트 카드 컴포넌트 (디자인 규격 유지)
 interface ProjectCardProps {
   title: string;
   author: string;
   members: number;
-  maxMembers: number; // API 연동을 위해 최대 인원 추가
+  maxMembers: number;
   time: string;
   onClick: () => void;
 }
@@ -64,12 +61,28 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 const Home: React.FC = () => {
   const navigate = useNavigate();
 
-  // 2. API 데이터 연동 (TanStack Query 사용)
+  // 1. 내 프로필 정보 가져오기
   const { data: profile } = useQuery({
     queryKey: ['myProfile'],
     queryFn: membersApi.getMyProfile,
     retry: 0,
   });
+
+  // ✅ [신규 추가] 가톨릭대 이메일 검증 로직
+  useEffect(() => {
+    if (profile && profile.email) {
+      const emailDomain = "@catholic.ac.kr";
+      if (!profile.email.endsWith(emailDomain)) {
+        alert("가톨릭대학교 학생 메일(@catholic.ac.kr)로만 이용 가능한 서비스입니다.\n가톨릭대 메일로 다시 로그인해 주세요.");
+        
+        // 로컬 토큰 삭제 (자동 로그인 방지)
+        localStorage.removeItem("access_token");
+        
+        // 로그인 페이지로 강제 이동
+        navigate("/login", { replace: true });
+      }
+    }
+  }, [profile, navigate]);
 
   const { data: recentRecruits, isLoading: recruitsLoading } = useQuery({
     queryKey: ['recruits', 'recent'],
@@ -83,15 +96,12 @@ const Home: React.FC = () => {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[100px] relative">
-      
-      {/* 3. 블루 헤더 섹션 (로고 및 프로필 연동) */}
       <header className="bg-[#2F6BFF] pt-5 pb-12 px-6 shadow-lg relative z-10">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center justify-start gap-3">
             <img src={logo} alt="MO-YEO Logo" className="w-[35px] h-[35px] shrink-0" />
             <h1 className="text-white text-[28px] font-bold leading-none">MO-YEO</h1>
           </div>
-          {/* 프로필 데이터가 있을 때만 표시 */}
           {profile && (
             <div 
               className="text-white text-[12px] font-bold bg-white/20 px-3 py-1.5 rounded-full cursor-pointer"
@@ -101,13 +111,11 @@ const Home: React.FC = () => {
             </div>
           )}
         </div>
-
         <div className="relative">
           <Input placeholder="프로젝트, 팀원 검색..." />
         </div>
       </header>
 
-      {/* 4. 퀵 메뉴 */}
       <section className="grid grid-cols-2 gap-3 px-5 pt-[30px] relative text-white">
         <button
           onClick={() => navigate("/members")}
@@ -127,7 +135,6 @@ const Home: React.FC = () => {
         </button>
       </section>
 
-      {/* 5. 최근 프로젝트 섹션 (API 데이터 맵핑) */}
       <section className="px-5 mt-10 text-left">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
@@ -156,7 +163,6 @@ const Home: React.FC = () => {
         )}
       </section>
 
-      {/* 6. 최근 게시글 섹션 (API 데이터 맵핑) */}
       <section className="px-5 mt-10 text-left">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
