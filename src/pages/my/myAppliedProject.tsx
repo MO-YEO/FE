@@ -1,60 +1,68 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import backIcon from "../../assets/back.svg";
 import ProjectCard from "../../components/projectCard";
-
-type AppliedProject = {
-  id: number;
-  category: string;
-  dDay: string;
-  title: string;
-  description: string;
-  recruitCount: number;
-  techStacks: string[];
-  writer: string;
-  department: string;
-};
+import { recruitsApi } from "../../api/recruits";
 
 export default function MyAppliedProject() {
   const navigate = useNavigate();
 
-  const [appliedProjects, setAppliedProjects] = useState<AppliedProject[]>([
-    {
-      id: 1,
-      category: "공모전",
-      dDay: "D-7",
-      title: "2026 ICT 공모전 팀원 모집",
-      description: "프론트엔드 중심으로 함께 공모전을 준비할 팀원을 모집합니다.",
-      recruitCount: 5,
-      techStacks: ["React", "TypeScript", "Figma"],
-      writer: "김가톨릭",
-      department: "미디어기술콘텐츠학과",
-    },
-    {
-      id: 2,
-      category: "스터디",
-      dDay: "D-3",
-      title: "정처기 한방 합격 스터디",
-      description: "정처기 필기와 실기를 함께 준비할 스터디원을 구합니다.",
-      recruitCount: 6,
-      techStacks: ["CS", "알고리즘", "정처기"],
-      writer: "릴리",
-      department: "미디어기술콘텐츠학과",
-    },
-    {
-      id: 3,
-      category: "프로젝트",
-      dDay: "D-10",
-      title: "AI 면접 서비스 MVP 개발",
-      description: "프론트엔드와 기획 중심으로 빠르게 MVP를 제작할 팀원을 찾고 있습니다.",
-      recruitCount: 4,
-      techStacks: ["React", "Vite", "OpenAI API"],
-      writer: "이영희",
-      department: "컴퓨터정보공학부",
-    },
-  ]);
-
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+
+  const {
+    data: appliedRecruits,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["myAppliedProjectsPage"],
+    queryFn: () => recruitsApi.getAppliedRecruits({ page: 0, size: 20 }),
+  });
+
+  const calculateDday = (deadline?: string) => {
+    if (!deadline) return "D-?";
+
+    const today = new Date();
+    const endDate = new Date(deadline);
+
+    today.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+
+    const diffTime = endDate.getTime() - today.getTime();
+    const diffDay = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDay > 0) return `D-${diffDay}`;
+    if (diffDay === 0) return "D-DAY";
+    return "마감";
+  };
+
+  const getCategoryText = (type?: string) => {
+    if (type === "PROJECT") return "프로젝트";
+    if (type === "STUDY") return "스터디";
+    if (type === "CONTEST") return "공모전";
+    if (type === "CLASS") return "수업";
+    return type || "모집";
+  };
+
+  const getDescription = (applicationStatus?: string) => {
+    if (applicationStatus === "APPLIED") {
+      return "지원이 완료된 모집글입니다.";
+    }
+
+    if (applicationStatus === "ACCEPTED") {
+      return "합격 처리된 모집글입니다.";
+    }
+
+    if (applicationStatus === "REJECTED") {
+      return "불합격 처리된 모집글입니다.";
+    }
+
+    if (applicationStatus === "CANCELED") {
+      return "지원이 취소된 모집글입니다.";
+    }
+
+    return "내가 지원한 모집글입니다.";
+  };
 
   const handleOpenCancelModal = (projectId: number) => {
     setSelectedProjectId(projectId);
@@ -67,9 +75,7 @@ export default function MyAppliedProject() {
   const handleConfirmCancel = () => {
     if (selectedProjectId === null) return;
 
-    setAppliedProjects((prev) =>
-      prev.filter((project) => project.id !== selectedProjectId)
-    );
+    alert("지원취소 API가 아직 연결되지 않았습니다.");
     setSelectedProjectId(null);
   };
 
@@ -93,29 +99,43 @@ export default function MyAppliedProject() {
         </header>
 
         <section className="px-[16px] pt-[16px]">
-          <div className="flex flex-col gap-[12px]">
-            {appliedProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                category={project.category}
-                dDay={project.dDay}
-                title={project.title}
-                description={project.description}
-                recruitCount={project.recruitCount}
-                techStacks={project.techStacks}
-                writer={project.writer}
-                department={project.department}
-                buttonLabel="지원취소"
-                onButtonClick={() => handleOpenCancelModal(project.id)}
-              />
-            ))}
+          {isLoading && (
+            <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[32px] text-center text-[14px] text-[#94A3B8] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+              지원한 프로젝트를 불러오는 중입니다.
+            </div>
+          )}
 
-            {appliedProjects.length === 0 && (
-              <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[18px] text-center text-[14px] font-medium leading-[20px] text-[#64748B] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
-                지원한 프로젝트가 없습니다.
-              </div>
-            )}
-          </div>
+          {isError && !isLoading && (
+            <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[32px] text-center text-[14px] text-[#EF4444] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+              지원한 프로젝트를 불러오지 못했습니다.
+            </div>
+          )}
+
+          {!isLoading && !isError && !appliedRecruits?.recruits?.length && (
+            <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[18px] text-center text-[14px] font-medium leading-[20px] text-[#64748B] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+              지원한 프로젝트가 없습니다.
+            </div>
+          )}
+
+          {!isLoading && !isError && appliedRecruits?.recruits?.length ? (
+            <div className="flex flex-col gap-[12px]">
+              {appliedRecruits.recruits.map((project) => (
+                <ProjectCard
+                  key={project.recruitId}
+                  category={getCategoryText(project.type)}
+                  dDay={calculateDday(project.deadline)}
+                  title={project.title}
+                  description={getDescription(project.applicationStatus)}
+                  recruitCount={0}
+                  techStacks={project.skills ?? []}
+                  writer="작성자"
+                  department=""
+                  buttonLabel="지원취소"
+                  onButtonClick={() => handleOpenCancelModal(project.recruitId)}
+                />
+              ))}
+            </div>
+          ) : null}
         </section>
       </main>
 

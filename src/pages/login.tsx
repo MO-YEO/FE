@@ -52,6 +52,7 @@ const Login: React.FC = () => {
             size="lg"
             className="h-[64px] w-full rounded-[20px] bg-[#5C7CFF] flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-200/50 border-none transition-all active:scale-[0.98]"
             onClick={() => {
+              
               window.location.href = "http://3.37.55.120.nip.io:8080/oauth2/authorization/google";
             }}
           >
@@ -83,3 +84,4 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+

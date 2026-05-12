@@ -1,10 +1,17 @@
-import { apiClient } from './client';
-import type { MemberListResponse, MyProfileResponse, MemberDetail } from '../types';
+import { apiClient } from "./client";
+import type {
+  MemberListResponse,
+  MyProfileResponse,
+  MemberDetail,
+  UpdateMyProfileRequest,
+  TeamProfileRegisterRequest,
+  TeamProfileRegisterResponse,
+} from "../types";
 
 export const membersApi = {
   /** 1. 내 프로필 정보 조회 */
   getMyProfile: async () => {
-    const { data } = await apiClient.get<MyProfileResponse>('/api/members/me');
+    const { data } = await apiClient.get<MyProfileResponse>("/api/members/me");
     return data;
   },
 
@@ -34,7 +41,18 @@ export const membersApi = {
 
   /** 4. 타 사용자 상세 프로필 조회 */
   getMemberDetail: async (memberId: number) => {
-    const { data } = await apiClient.get<MemberDetail>(`/api/members/${memberId}`);
+    const { data } = await apiClient.get<MemberDetail>(
+      `/api/members/${memberId}`,
+    );
     return data;
   },
-};
+
+  bookmarkMember: async (memberId: number) => {
+    const { data } = await apiClient.post(
+      `/api/members/${memberId}/bookmark`,
+      {},
+    );
+    return data;
+  },
+  };
+

@@ -1,5 +1,10 @@
 import { apiClient } from './client';
-import type { RecruitListResponse, RecruitDetail } from '../types';
+import type {
+  RecruitListResponse,
+  RecruitDetail,
+  MyRecruitListResponse,
+  AppliedRecruitListResponse,
+} from "../types";
 
 export const recruitsApi = {
   // 프로젝트 목록 필터링 조회
@@ -29,15 +34,33 @@ export const recruitsApi = {
 
   // 내가 모집 중인 글 조회
   getMyRecruits: async (params?: { page?: number; size?: number }) => {
-    const { data } = await apiClient.get<RecruitListResponse>('/api/recruits/me', { params });
+    const { data } = await apiClient.get<MyRecruitListResponse>(
+      "/api/recruits/me",
+      { params },
+    );
     return data;
   },
 
   // 내가 지원 완료한 프로젝트 조회 (통계용)
   getAppliedRecruits: async (params?: { page?: number; size?: number }) => {
-    const { data } = await apiClient.get<RecruitListResponse>('/api/recruits/applied', { params });
+    const { data } = await apiClient.get<AppliedRecruitListResponse>(
+      "/api/recruits/applied",
+      { params },
+    );
     return data;
   },
+
+  getRecruitApplications: async (
+    recruitId: number,
+    params?: { page?: number; size?: number },
+  ) => {
+    const { data } = await apiClient.get(
+      `/api/recruits/${recruitId}/applications`,
+      { params },
+    );
+    return data;
+  },
+
 
   // 프로젝트 지원하기 (ApplySheet 연동)
   apply: async (recruitId: number, payload?: any) => {
