@@ -55,7 +55,6 @@ export default function profileEditModal({
         .map((item) => item.trim())
         .filter(Boolean),
     });
-    onClose();
   };
 
   return (

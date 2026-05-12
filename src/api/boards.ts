@@ -1,3 +1,4 @@
+//api/boards.ts
 import { apiClient } from './client';
 import type { BoardListResponse } from '../types';
 
@@ -16,7 +17,10 @@ export const boardsApi = {
 
   // 스크랩한 게시물 조회 (마이페이지 통계용)
   getScrappedPosts: async (params?: { page?: number; size?: number }) => {
-    const { data } = await apiClient.get<BoardListResponse>('/api/boards/posts/scraps', { params });
+    const { data } = await apiClient.get<BoardListResponse>(
+      "/api/boards/posts/bookmarks",
+      { params },
+    );
     return data;
   },
 

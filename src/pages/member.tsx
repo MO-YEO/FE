@@ -4,11 +4,14 @@ import backIcon from "../assets/back.svg";
 import plusIcon from "../assets/plus.svg";
 import closeIcon from "../assets/close.svg";
 import FieldLabel from "../components/fieldLabel";
+import { membersApi } from "../api/member";
+import type { Member, TeamProfileRegisterRequest } from "../types";
 
 type Category = "전체" | "수업" | "프로젝트" | "스터디" | "공모전";
 type InterestCategory = "전체" | "수업" | "프로젝트" | "공모전" | "스터디";
 
 const categories: Category[] = ["전체", "수업", "프로젝트", "스터디", "공모전"];
+
 const interestCategories: InterestCategory[] = [
   "전체",
   "수업",
@@ -17,42 +20,14 @@ const interestCategories: InterestCategory[] = [
   "스터디",
 ];
 
-const members = [
-  {
-    id: 1,
-    name: "김백엔드",
-    role: "Backend Developer",
-    description:
-      "Java/Spring 백엔드 개발자입니다. MSA 아키텍처에 관심이 많습니다.",
-    techStacks: ["Spring", "MySQL", "AWS", "Docker"],
-    rating: 95,
-    profileInitial: "김",
-    isBookmarked: false,
-    githubUrl: "https://github.com/",
-  },
-  {
-    id: 2,
-    name: "이프론트",
-    role: "Frontend Developer",
-    description: "UI/UX에 관심 많은 프론트엔드 개발자입니다.",
-    techStacks: ["React", "TypeScript", "Next.js", "Tailwind"],
-    rating: 92,
-    profileInitial: "이",
-    isBookmarked: true,
-    githubUrl: "https://github.com/",
-  },
-  {
-    id: 3,
-    name: "박풀스택",
-    role: "Full Stack Developer",
-    description: "풀스택 개발에 도전하고 있습니다!",
-    techStacks: ["MERN Stack", "GraphQL", "PostgreSQL"],
-    rating: 88,
-    profileInitial: "박",
-    isBookmarked: false,
-    githubUrl: "https://github.com/",
-  },
-];
+// 팀원 목록 조회용 query enum
+const categoryToApiValue: Record<Category, string | undefined> = {
+  전체: undefined,
+  수업: "CLASS",
+  프로젝트: "PROJECT",
+  스터디: "STUDY",
+  공모전: "CONTEST",
+};
 
 export default function TeamMemberPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>("전체");
@@ -60,6 +35,15 @@ export default function TeamMemberPage() {
   const [selectedInterest, setSelectedInterest] =
     useState<InterestCategory>("전체");
   const [sheetWidth, setSheetWidth] = useState<number>(430);
+
+  const [members, setMembers] = useState<Member[]>([]);
+  const [totalElements, setTotalElements] = useState(0);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
@@ -72,6 +56,71 @@ export default function TeamMemberPage() {
     phone: "",
     github: "",
   });
+
+  const fetchMembers = async () => {
+    try {
+      setIsLoading(true);
+      setIsError(false);
+
+      const data = await membersApi.getMembers({
+        activityCategory: categoryToApiValue[selectedCategory],
+        page,
+        size: 10,
+      });
+
+      setMembers(data.items);
+      setTotalElements(data.pageInfo.totalElements);
+      setTotalPages(data.pageInfo.totalPages);
+    } catch (error) {
+      console.error("팀원 목록 조회 실패:", error);
+      setMembers([]);
+      setTotalElements(0);
+      setTotalPages(1);
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const [myMemberId, setMyMemberId] = useState<number | null>(null);
+
+  const handleBookmarkMember = async (memberId: number) => {
+  if (memberId === myMemberId) {
+    alert("본인 프로필은 북마크할 수 없습니다.");
+    return;
+  }
+
+  const targetMember = members.find((member) => member.memberId === memberId);
+
+  if (!targetMember) {
+    console.error("북마크 대상 멤버를 찾을 수 없습니다:", memberId);
+    return;
+  }
+
+  if (targetMember.isBookmarked) {
+    return;
+  }
+
+  try {
+    console.log("팀원 북마크 요청 memberId:", memberId);
+
+    await membersApi.bookmarkMember(memberId);
+
+    setMembers((prev) =>
+      prev.map((member) =>
+        member.memberId === memberId
+          ? {
+              ...member,
+              isBookmarked: true,
+            }
+          : member,
+      ),
+    );
+  } catch (error) {
+    console.error("팀원 북마크 실패:", error);
+    alert("팀원 북마크에 실패했습니다.");
+  }
+};
 
   useEffect(() => {
     const updateSheetWidth = () => {
@@ -90,10 +139,28 @@ export default function TeamMemberPage() {
 
   useEffect(() => {
     document.body.style.overflow = isRegisterOpen ? "hidden" : "";
+
     return () => {
       document.body.style.overflow = "";
     };
   }, [isRegisterOpen]);
+
+  useEffect(() => {
+    fetchMembers();
+  }, [selectedCategory, page]);
+
+  useEffect(() => {
+  const fetchMyProfile = async () => {
+    try {
+      const profile = await membersApi.getMyProfile();
+      setMyMemberId(profile.memberId);
+    } catch (error) {
+      console.error("내 프로필 조회 실패:", error);
+    }
+  };
+
+  fetchMyProfile();
+}, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -106,6 +173,7 @@ export default function TeamMemberPage() {
     if (wrapperRef.current) {
       setSheetWidth(wrapperRef.current.offsetWidth);
     }
+
     setIsRegisterOpen(true);
   };
 
@@ -113,10 +181,94 @@ export default function TeamMemberPage() {
     setIsRegisterOpen(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleCategoryClick = (category: Category) => {
+    setSelectedCategory(category);
+    setPage(0);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("등록 데이터", { ...form, interest: selectedInterest });
-    setIsRegisterOpen(false);
+
+    if (isSubmitting) return;
+
+    if (!form.name.trim()) {
+      alert("이름을 입력해주세요.");
+      return;
+    }
+
+    if (!form.role.trim()) {
+      alert("역할/포지션을 입력해주세요.");
+      return;
+    }
+
+    if (!form.bio.trim()) {
+      alert("자기소개를 입력해주세요.");
+      return;
+    }
+
+    if (!form.skills.trim()) {
+      alert("기술스택을 입력해주세요.");
+      return;
+    }
+
+    if (!form.email.trim()) {
+      alert("이메일을 입력해주세요.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const payload: TeamProfileRegisterRequest = {
+        nickname: form.name.trim(),
+        role: form.role.trim(),
+        contactEmail: form.email.trim(),
+        phoneNumber: form.phone.trim(),
+        githubUrl: form.github.trim(),
+        intro: form.bio.trim(),
+        profileImageUrl: "",
+        techStacks: form.skills
+          .split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean),
+        activityCategories:
+          selectedInterest === "전체" ? [] : [selectedInterest],
+      };
+
+      await membersApi.registerTeamProfile(payload);
+
+      alert("팀원 프로필이 등록되었습니다.");
+
+      setIsRegisterOpen(false);
+
+      setForm({
+        name: "",
+        role: "",
+        bio: "",
+        skills: "",
+        email: "",
+        phone: "",
+        github: "",
+      });
+
+      setSelectedInterest("전체");
+      setPage(0);
+
+      const data = await membersApi.getMembers({
+        activityCategory: categoryToApiValue[selectedCategory],
+        page: 0,
+        size: 10,
+      });
+
+      setMembers(data.items);
+      setTotalElements(data.pageInfo.totalElements);
+      setTotalPages(data.pageInfo.totalPages);
+    } catch (error) {
+      console.error("팀원 등록 실패:", error);
+      alert("팀원 등록에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -156,7 +308,7 @@ export default function TeamMemberPage() {
               <button
                 key={category}
                 type="button"
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => handleCategoryClick(category)}
                 className={`whitespace-nowrap rounded-[8px] border px-3 py-1 text-[12px] font-medium leading-4 transition ${
                   isSelected
                     ? "border-[#356AE6] bg-[#356AE6] text-white"
@@ -173,24 +325,74 @@ export default function TeamMemberPage() {
       {/* 본문 */}
       <main className="px-4 pt-4 pb-6">
         <p className="mb-4 text-[14px] font-medium leading-5 text-[#6B7280]">
-          3명의 팀원
+          {totalElements}명의 팀원
         </p>
 
-        <div className="flex flex-col gap-3">
-          {members.map((member) => (
-            <TeamMemberCard
-              key={member.id}
-              name={member.name}
-              role={member.role}
-              description={member.description}
-              techStacks={member.techStacks}
-              rating={member.rating}
-              profileInitial={member.profileInitial}
-              isBookmarked={member.isBookmarked}
-              githubUrl={member.githubUrl}
-            />
-          ))}
-        </div>
+        {isLoading && (
+          <div className="rounded-[12px] bg-white px-4 py-8 text-center text-[14px] text-[#6B7280]">
+            팀원 목록을 불러오는 중입니다.
+          </div>
+        )}
+
+        {isError && !isLoading && (
+          <div className="rounded-[12px] bg-white px-4 py-8 text-center text-[14px] text-[#EF4444]">
+            팀원 목록을 불러오지 못했습니다.
+          </div>
+        )}
+
+        {!isLoading && !isError && members.length === 0 && (
+          <div className="rounded-[12px] bg-white px-4 py-8 text-center text-[14px] text-[#6B7280]">
+            등록된 팀원이 없습니다.
+          </div>
+        )}
+
+        {!isLoading && !isError && members.length > 0 && (
+          <div className="flex flex-col gap-3">
+            {members.map((member) => (
+              <TeamMemberCard
+                key={member.memberId}
+                name={member.nickname}
+                role={member.role}
+                description={member.intro}
+                techStacks={member.techStacks}
+                rating={0}
+                profileInitial={member.nickname?.charAt(0) ?? "?"}
+                isBookmarked={member.isBookmarked ?? false}
+                githubUrl={member.githubUrl}
+                isMe={member.memberId === myMemberId}
+                onBookmarkClick={() => handleBookmarkMember(member.memberId)}
+              />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && !isError && totalPages > 1 && (
+          <div className="mt-5 flex items-center justify-center gap-3">
+            <button
+              type="button"
+              disabled={page === 0}
+              onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+              className="h-[36px] rounded-[8px] border border-[#E5E7EB] bg-white px-4 text-[13px] font-medium text-[#374151] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              이전
+            </button>
+
+            <span className="text-[13px] font-medium text-[#6B7280]">
+              {page + 1} / {totalPages}
+            </span>
+
+            <button
+              type="button"
+              disabled={page + 1 >= totalPages}
+              onClick={() =>
+                setPage((prev) => Math.min(prev + 1, totalPages - 1))
+              }
+              className="h-[36px] rounded-[8px] border border-[#E5E7EB] bg-white px-4 text-[13px] font-medium text-[#374151] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              다음
+            </button>
+          </div>
+        )}
       </main>
 
       {/* 바텀시트 */}
@@ -208,7 +410,9 @@ export default function TeamMemberPage() {
           }`}
           style={{
             width: `${sheetWidth}px`,
-            transform: `translateX(-50%) translateY(${isRegisterOpen ? "0" : "100%"})`,
+            transform: `translateX(-50%) translateY(${
+              isRegisterOpen ? "0" : "100%"
+            })`,
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -248,6 +452,7 @@ export default function TeamMemberPage() {
                 name="role"
                 value={form.role}
                 onChange={handleChange}
+                placeholder="예: Frontend Developer"
                 className="h-[45px] w-full rounded-[10px] border border-[#E2E8F0] px-4 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF]"
               />
 
@@ -326,16 +531,18 @@ export default function TeamMemberPage() {
                 <button
                   type="button"
                   onClick={handleCloseSheet}
-                  className="h-[45px] flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#314158]"
+                  disabled={isSubmitting}
+                  className="h-[45px] flex-1 rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#314158] disabled:opacity-60"
                 >
                   취소
                 </button>
 
                 <button
                   type="submit"
-                  className="h-[45px] flex-1 rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white"
+                  disabled={isSubmitting}
+                  className="h-[45px] flex-1 rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white disabled:opacity-60"
                 >
-                  등록하기
+                  {isSubmitting ? "등록 중..." : "등록하기"}
                 </button>
               </div>
             </div>

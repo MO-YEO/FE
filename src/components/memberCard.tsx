@@ -1,4 +1,3 @@
-import bookmarkIcon from "../assets/member_bookmark.svg";
 import githubIcon from "../assets/github.svg";
 
 type TeamMemberCardProps = {
@@ -10,8 +9,6 @@ type TeamMemberCardProps = {
   githubUrl?: string;
   rating: number;
   profileInitial?: string;
-  isBookmarked?: boolean;
-  onBookmarkClick?: () => void;
 };
 
 export default function TeamMemberCard({
@@ -22,8 +19,6 @@ export default function TeamMemberCard({
   githubLabel = "GitHub",
   githubUrl,
   profileInitial,
-  isBookmarked = false,
-  onBookmarkClick,
 }: TeamMemberCardProps) {
   const displayInitial = profileInitial || name.trim().charAt(0) || "?";
 
@@ -56,20 +51,6 @@ export default function TeamMemberCard({
             </span>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={onBookmarkClick}
-          aria-label="북마크"
-        >
-          <img
-            src={bookmarkIcon}
-            alt="북마크"
-            className={`h-[24px] w-[24px] object-contain ${
-              isBookmarked ? "opacity-100" : "opacity-70"
-            }`}
-          />
-        </button>
       </div>
 
       <p className="mt-3 w-full break-words text-[14px] font-normal leading-[20px] text-[#45556C]">
