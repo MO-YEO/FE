@@ -237,13 +237,13 @@ const ProjectPage = () => {
         ))}
       </div>
 
-      <div className="flex-1 bg-[#F9FAFB] px-5 py-4">
+      <div className="flex-1 bg-[#F9FAFB] px-5 py-4 pb-20 ">
         {!data || data.length === 0 ? (
           <div className="flex justify-center">
             아직 등록된 프로젝트가 없어요
           </div>
         ) : (
-          <>
+          <div className="flex flex-col gap-4">
             {data.map((data) => (
               <ProjectCard
                 key={data.recruitId}
@@ -259,7 +259,7 @@ const ProjectPage = () => {
                 onButtonClick={() => handleOpenSheet("apply", data.recruitId)}
               />
             ))}
-          </>
+          </div>
         )}
       </div>
 
