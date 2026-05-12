@@ -1,4 +1,4 @@
-export const RECRUITCATEGORY = [
+export const ACTIVITY_CATEGORY = [
   { label: "전체", value: "ALL" },
   { label: "수업", value: "ACADEMIC" },
   { label: "프로젝트", value: "PROJECT" },
@@ -6,7 +6,7 @@ export const RECRUITCATEGORY = [
   { label: "스터디", value: "STUDY" },
 ] as const;
 
-export const ACTIVITY_CATEGORY = [
+export const RECRUIT_CATEGORY = [
   { label: "전체", value: "ALL" },
   { label: "기획", value: "PLAN" },
   { label: "개발", value: "DEVELOP" },

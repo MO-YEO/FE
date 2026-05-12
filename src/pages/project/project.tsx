@@ -9,7 +9,7 @@ import Textarea from "../../components/textarea";
 import ProjectCard from "../../components/projectCard";
 import { recruitsApi } from "../../api/recruits";
 import type { RecruitSummary } from "../../types";
-import { ACTIVITY_CATEGORY, RECRUITCATEGORY } from "../../constants/category";
+import { ACTIVITY_CATEGORY, RECRUIT_CATEGORY } from "../../constants/category";
 import useDebounce from "../../hooks/useDebounce";
 
 const ProjectPage = () => {
@@ -144,6 +144,7 @@ const ProjectPage = () => {
     (async () => {
       try {
         setIsLoading(true);
+        console.log(selectMenu, selectTagMenu);
         const data = await recruitsApi.getRecruits({
           activityCategory: selectMenu == "ALL" ? "" : selectMenu,
           recruitCategory: selectTagMenu == "ALL" ? "" : selectTagMenu,
@@ -201,7 +202,7 @@ const ProjectPage = () => {
       </header>
 
       <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
-        {RECRUITCATEGORY.map((menuItem) => {
+        {ACTIVITY_CATEGORY.map((menuItem) => {
           return (
             <button
               key={menuItem.value}
@@ -220,7 +221,7 @@ const ProjectPage = () => {
       </div>
 
       <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
-        {ACTIVITY_CATEGORY.map((tag) => (
+        {RECRUIT_CATEGORY.map((tag) => (
           <button
             key={tag.value}
             type="button"
@@ -347,7 +348,7 @@ function RegisterSheet({
             <FieldLabel label="카테고리" />
             <div className="shrink-0 overflow-x-auto px-4 py-2">
               <div className="flex gap-2">
-                {RECRUITCATEGORY.map((tag) => (
+                {ACTIVITY_CATEGORY.map((tag) => (
                   <button
                     key={tag.value}
                     type="button"
@@ -367,7 +368,7 @@ function RegisterSheet({
             <FieldLabel label="세부 카테고리" />
             <div className="shrink-0 overflow-x-auto px-4 py-2">
               <div className="flex gap-2">
-                {ACTIVITY_CATEGORY.map((tag) => (
+                {RECRUIT_CATEGORY.map((tag) => (
                   <button
                     key={tag.value}
                     type="button"

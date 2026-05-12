@@ -1,5 +1,5 @@
 import bookmarkIcon from "../assets/bookmark.svg";
-import { ACTIVITY_CATEGORY } from "../constants/category";
+import { RECRUIT_CATEGORY } from "../constants/category";
 
 type ProjectCardProps = {
   category: string;
@@ -27,8 +27,7 @@ export default function ProjectCard({
   onButtonClick,
 }: ProjectCardProps) {
   const categoryLabel =
-    ACTIVITY_CATEGORY.find((item) => item.value === category)?.label ||
-    category;
+    RECRUIT_CATEGORY.find((item) => item.value === category)?.label || category;
   return (
     <div className="bg-white flex flex-col gap-3 p-4 rounded-[14px] shadow-sm border border-[#D0D0D0]">
       <div className="flex items-start justify-between">
