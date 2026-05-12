@@ -111,7 +111,7 @@ export interface RecruitSummary {
   tag: string;
   department: string;
   title: string;
-  status: 'OPEN' | 'CLOSED';
+  status: "OPEN" | "CLOSED";
   skills: string[];
   appliedByMe: boolean;
   applicantCount: number;
@@ -119,6 +119,7 @@ export interface RecruitSummary {
   deadline: string;
   createdAt: string;
   author: Author;
+  content: string;
 }
 
 export interface MyRecruitSummary {

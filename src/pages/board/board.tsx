@@ -27,11 +27,19 @@ const Board: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // ✅ 검색어 상태 추가
+  const [searchKeyword, setSearchKeyword] = useState("");
 
-  const fetchPosts = async () => {
+  // ✅ 검색어가 포함된 게시글 가져오기 (keyword 파라미터 추가)
+  const fetchPosts = async (keyword: string = "") => {
     try {
       setIsLoading(true);
-      const response = await apiClient.get('/api/boards/posts'); 
+      // 백엔드 명세에 맞춰 쿼리 스트링으로 키워드 전달 (예: ?keyword=검색어)
+      const response = await apiClient.get('/api/boards/posts', {
+        params: { keyword: keyword }
+      }); 
+      
       if (response.data && response.data.posts) {
         setPosts(response.data.posts);
       }
@@ -47,9 +55,24 @@ const Board: React.FC = () => {
     fetchPosts();
   }, []);
 
+  // ✅ 엔터 키를 눌렀을 때 검색 실행
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      fetchPosts(searchKeyword);
+    }
+  };
+
+  // ✅ 입력창이 비워지면 자동으로 전체 목록 다시 불러오기
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchKeyword(value);
+    if (value === "") {
+      fetchPosts("");
+    }
+  };
+
   const handleBookmarkToggle = async (e: React.MouseEvent, postId: number, isBookmarked: boolean) => {
     e.stopPropagation();
-
     try {
       if (isBookmarked) {
         await apiClient.delete(`/api/boards/posts/${postId}/bookmark`);
@@ -92,9 +115,13 @@ const Board: React.FC = () => {
 
       <section className="px-[16px] pt-[16px]">
         <div className="relative mb-[16px]">
+          {/* ✅ 검색 입력창 업데이트 */}
           <input 
             type="text" 
-            placeholder="🔍 게시글 검색..." 
+            value={searchKeyword}
+            onChange={handleSearchChange}
+            onKeyDown={handleSearchKeyDown}
+            placeholder="🔍 검색 후 엔터를 눌러주세요" 
             className="w-full h-[48px] pl-12 pr-4 bg-white border border-[#E2E8F0] rounded-[14px] text-[15px] focus:outline-none focus:border-[#2563EB] shadow-sm transition-colors"
           />
         </div>
@@ -109,7 +136,9 @@ const Board: React.FC = () => {
           ) : error ? (
             <div className="py-20 text-center text-gray-500">{error}</div>
           ) : posts.length === 0 ? (
-            <div className="py-20 text-center text-gray-400 font-medium">등록된 게시글이 없습니다.</div>
+            <div className="py-20 text-center text-gray-400 font-medium">
+              {searchKeyword ? `'${searchKeyword}'에 대한 검색 결과가 없습니다.` : "등록된 게시글이 없습니다."}
+            </div>
           ) : (
             posts.map((post) => (
               <div 
