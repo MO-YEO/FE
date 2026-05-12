@@ -76,6 +76,7 @@ const ProjectPage = () => {
             .map((skill) => skill.trim())
             .filter(Boolean) || [],
         totalHeadcount: Number(formData.get("totalHeadcount")),
+        applicantCount: Number(formData.get("applicantCount")),
       };
       console.log("최종 데이터:", finalData);
       try {
