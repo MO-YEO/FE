@@ -1,4 +1,5 @@
 import bookmarkIcon from "../assets/bookmark.svg";
+import { RECRUIT_CATEGORY } from "../constants/category";
 
 type ProjectCardProps = {
   category: string;
@@ -25,12 +26,14 @@ export default function ProjectCard({
   buttonLabel,
   onButtonClick,
 }: ProjectCardProps) {
+  const categoryLabel =
+    RECRUIT_CATEGORY.find((item) => item.value === category)?.label || category;
   return (
     <div className="bg-white flex flex-col gap-3 p-4 rounded-[14px] shadow-sm border border-[#D0D0D0]">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <button className="text-[10px] text-[#2F6BFF] font-bold bg-[#EFF6FF] px-2 py-1 rounded-lg">
-            {category}
+            {categoryLabel}
           </button>
 
           <button className="text-[10px] text-[#EF4400] font-bold bg-[#FEF2F2] px-2 py-1 rounded-lg">
@@ -39,11 +42,7 @@ export default function ProjectCard({
         </div>
 
         <button type="button" className="shrink-0">
-          <img
-            src={bookmarkIcon}
-            alt="스크랩"
-            className="h-[15px] w-[15px]"
-          />
+          <img src={bookmarkIcon} alt="스크랩" className="h-[15px] w-[15px]" />
         </button>
       </div>
 
@@ -51,9 +50,7 @@ export default function ProjectCard({
         {title}
       </p>
 
-      <p className="text-[14px] text-[#374151] leading-[22px]">
-        {description}
-      </p>
+      <p className="text-[14px] text-[#374151] leading-[22px]">{description}</p>
 
       <div>
         <p className="text-[12px] text-[#4B5563]">모집인원: {recruitCount}명</p>
