@@ -7,8 +7,6 @@ import ReviewModal from "../../components/reviewModal";
 import { recruitsApi } from "../../api/recruits";
 import { reviewsApi } from "../../api/reviews";
 
-const USE_MOCK_DATA = false;
-
 type ReviewMember = {
   id: number;
   name: string;
@@ -20,53 +18,6 @@ type ReviewValue = {
   rating: number;
   reviewText: string;
 };
-
-type MockParticipatedProject = {
-  recruitId: number;
-  category: string;
-  deadline: string;
-  title: string;
-  description: string;
-  totalHeadcount: number;
-  skills: string[];
-  writer: string;
-  department: string;
-  members: ReviewMember[];
-};
-
-const mockParticipatedProjects: MockParticipatedProject[] = [
-  {
-    recruitId: 101,
-    category: "프로젝트",
-    deadline: "2026-04-10",
-    title: "AI 면접 서비스 MVP 개발",
-    description: "프론트엔드와 백엔드가 함께 진행한 프로젝트입니다.",
-    totalHeadcount: 4,
-    skills: ["React", "TypeScript", "Spring"],
-    writer: "김가톨릭",
-    department: "컴퓨터정보공학부",
-    members: [
-      { id: 2, name: "방찬희", role: "Backend" },
-      { id: 3, name: "김수진", role: "Designer" },
-      { id: 4, name: "박민수", role: "Frontend" },
-    ],
-  },
-  {
-    recruitId: 102,
-    category: "스터디",
-    deadline: "2026-04-25",
-    title: "정처기 한방 합격 스터디",
-    description: "정처기 필기와 실기를 함께 준비한 스터디입니다.",
-    totalHeadcount: 5,
-    skills: ["CS", "알고리즘", "정처기"],
-    writer: "릴리",
-    department: "미디어기술콘텐츠학과",
-    members: [
-      { id: 5, name: "이영희", role: "스터디원" },
-      { id: 6, name: "최민호", role: "스터디원" },
-    ],
-  },
-];
 
 export default function MyParticipatedProject() {
   const navigate = useNavigate();
@@ -85,13 +36,10 @@ export default function MyParticipatedProject() {
     isError,
   } = useQuery({
     queryKey: ["myParticipatedProjectsPage"],
-    queryFn: () => recruitsApi.getMyRecruits({ page: 0, size: 20 }),
-    enabled: !USE_MOCK_DATA,
+    queryFn: () => recruitsApi.getAppliedRecruits({ page: 0, size: 20 }),
   });
 
-  const projects = USE_MOCK_DATA
-    ? mockParticipatedProjects
-    : participatedProjects?.recruits ?? [];
+  const projects = participatedProjects?.recruits ?? [];
 
   const openReviewModal = (
     recruitId: number,
@@ -99,7 +47,9 @@ export default function MyParticipatedProject() {
     members: ReviewMember[],
   ) => {
     if (!members.length) {
-      alert("리뷰를 작성할 팀원 정보가 없습니다.");
+      alert(
+        "리뷰를 작성할 팀원 정보가 없습니다. 백엔드 응답에 팀원 목록이 필요합니다.",
+      );
       return;
     }
 
@@ -124,19 +74,6 @@ export default function MyParticipatedProject() {
 
     try {
       setIsSubmittingReview(true);
-
-      if (USE_MOCK_DATA) {
-        console.log("리뷰 작성 더미 제출");
-        console.log("recruitPostId:", selectedRecruitId);
-        console.log("reviews:", reviews);
-        alert("더미 리뷰 제출 완료! 콘솔을 확인해주세요.");
-        closeReviewModal();
-        return;
-      }
-
-      console.log("리뷰 작성 실제 제출");
-      console.log("recruitPostId:", selectedRecruitId);
-      console.log("reviews:", reviews);
 
       await Promise.all(
         reviews.map((review) =>
@@ -176,37 +113,24 @@ export default function MyParticipatedProject() {
     return "마감";
   };
 
-  const getCategoryText = (project: any) => {
-    return (
-      project.recruitCategory ||
-      project.activityCategory ||
-      project.category ||
-      project.type ||
-      "프로젝트"
-    );
+  const getCategoryText = (type?: string) => {
+    if (type === "PROJECT") return "프로젝트";
+    if (type === "STUDY") return "스터디";
+    if (type === "CONTEST") return "공모전";
+    if (type === "CLASS") return "수업";
+    return type || "프로젝트";
+  };
+
+  const getApplicationStatusText = (status?: string) => {
+    if (status === "APPLIED") return "지원 완료";
+    if (status === "ACCEPTED") return "합격";
+    if (status === "REJECTED") return "불합격";
+    if (status === "CANCELED") return "지원 취소";
+    return status || "지원 완료";
   };
 
   const getDescription = (project: any) => {
-    if (project.description) return project.description;
-    if (project.content) return project.content;
-    if (project.tag) return project.tag;
-    if (project.department) {
-      return `${project.department}에서 진행 중인 프로젝트입니다.`;
-    }
-
-    return "내가 참여한 프로젝트입니다.";
-  };
-
-  const getWriter = (project: any) => {
-    return project.writer || project.author?.nickname || "작성자";
-  };
-
-  const getDepartment = (project: any) => {
-    return project.department || project.author?.departmentName || "";
-  };
-
-  const getTotalHeadcount = (project: any) => {
-    return project.totalHeadcount || project.recruitCount || 0;
+    return `지원 상태: ${getApplicationStatusText(project.applicationStatus)}`;
   };
 
   const getMembers = (project: any): ReviewMember[] => {
@@ -234,16 +158,6 @@ export default function MyParticipatedProject() {
       }));
     }
 
-    if (project.author?.memberId) {
-      return [
-        {
-          id: project.author.memberId,
-          name: project.author.nickname ?? "팀원",
-          role: project.category ?? project.role ?? "팀원",
-        },
-      ];
-    }
-
     return [];
   };
 
@@ -267,47 +181,47 @@ export default function MyParticipatedProject() {
         </header>
 
         <section className="px-[16px] py-[16px]">
-          {!USE_MOCK_DATA && isLoading && (
+          {isLoading && (
             <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[32px] text-center text-[14px] text-[#94A3B8] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
               참여한 프로젝트를 불러오는 중입니다.
             </div>
           )}
 
-          {!USE_MOCK_DATA && isError && !isLoading && (
+          {isError && !isLoading && (
             <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[32px] text-center text-[14px] text-[#EF4444] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
               참여한 프로젝트를 불러오지 못했습니다.
             </div>
           )}
 
-          {!isLoading && !isError && !projects.length && (
+          {!isLoading && !isError && projects.length === 0 && (
             <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[18px] text-center text-[14px] font-medium leading-[20px] text-[#64748B] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
               참여한 프로젝트가 없습니다.
             </div>
           )}
 
-          {projects.length > 0 && (
+          {!isLoading && !isError && projects.length > 0 && (
             <div className="flex flex-col gap-[12px]">
-              {projects.map((project: any) => (
-                <ProjectCard
-                  key={project.recruitId}
-                  category={getCategoryText(project)}
-                  dDay={calculateDday(project.deadline)}
-                  title={project.title}
-                  description={getDescription(project)}
-                  recruitCount={getTotalHeadcount(project)}
-                  techStacks={project.skills ?? []}
-                  writer={getWriter(project)}
-                  department={getDepartment(project)}
-                  buttonLabel="팀원 리뷰달기"
-                  onButtonClick={() =>
-                    openReviewModal(
-                      project.recruitId,
-                      project.title,
-                      getMembers(project),
-                    )
-                  }
-                />
-              ))}
+              {projects.map((project: any) => {
+                const members = getMembers(project);
+
+                return (
+                  <ProjectCard
+                    key={project.recruitId}
+                    category={getCategoryText(project.type)}
+                    dDay={calculateDday(project.deadline)}
+                    title={project.title}
+                    description={getDescription(project)}
+                    recruitCount={0}
+                    techStacks={project.skills ?? []}
+                    writer="작성자"
+                    department=""
+                    buttonLabel="리뷰쓰기"
+                    onButtonClick={() =>
+                      openReviewModal(project.recruitId, project.title, members)
+                    }
+                  />
+                );
+              })}
             </div>
           )}
         </section>

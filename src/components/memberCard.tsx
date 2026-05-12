@@ -1,4 +1,3 @@
-import bookmarkIcon from "../assets/member_bookmark.svg";
 import githubIcon from "../assets/github.svg";
 
 type TeamMemberCardProps = {
@@ -10,9 +9,6 @@ type TeamMemberCardProps = {
   githubUrl?: string;
   rating: number;
   profileInitial?: string;
-  isBookmarked?: boolean;
-  isMe?: boolean;
-  onBookmarkClick?: () => void;
 };
 
 export default function TeamMemberCard({
@@ -23,9 +19,6 @@ export default function TeamMemberCard({
   githubLabel = "GitHub",
   githubUrl,
   profileInitial,
-  isBookmarked = false,
-  isMe = false,
-  onBookmarkClick,
 }: TeamMemberCardProps) {
   const displayInitial = profileInitial || name.trim().charAt(0) || "?";
 
@@ -58,35 +51,6 @@ export default function TeamMemberCard({
             </span>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-
-            if (isMe) {
-              alert("본인 프로필은 북마크할 수 없습니다.");
-              return;
-            }
-
-            onBookmarkClick?.();
-          }}
-          aria-label="북마크"
-          disabled={isMe}
-          className={`flex h-[28px] w-[28px] items-center justify-center ${
-            isMe ? "cursor-not-allowed opacity-30" : "cursor-pointer"
-          }`}
-        >
-          <img
-            src={bookmarkIcon}
-            alt="북마크"
-            className={`h-[24px] w-[24px] object-contain transition ${
-              isBookmarked
-                ? "opacity-100 [filter:brightness(0)_saturate(100%)_invert(39%)_sepia(96%)_saturate(2039%)_hue-rotate(207deg)_brightness(102%)_contrast(101%)]"
-                : "opacity-35"
-            }`}
-          />
-        </button>
       </div>
 
       <p className="mt-3 w-full break-words text-[14px] font-normal leading-[20px] text-[#45556C]">
