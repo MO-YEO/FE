@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import PostPreviewCard from "../../components/PostPreviewCard";
-import ReviewModal from "../../components/reviewModal";
 import ProfileEditModal from "../../components/profileEditModal";
 import { PATH } from "../../components/path";
 import backIcon from "../../assets/back.svg";
@@ -15,12 +18,8 @@ import chevronRightIcon from "../../assets/chevronRight.svg";
 import { membersApi } from "../../api/member";
 import { recruitsApi } from "../../api/recruits";
 import { boardsApi } from "../../api/boards";
-
-type ReviewMember = {
-  id: number;
-  name: string;
-  role: string;
-};
+import { authApi } from "../../api/auth";
+import type { UpdateMyProfileRequest } from "../../types";
 
 type ProfileEditType = {
   name: string;
@@ -31,12 +30,17 @@ type ProfileEditType = {
   githubUrl: string;
 };
 
+type ProfileFormFromModal = {
+  name: string;
+  role: string;
+  email: string;
+  bio: string;
+  techStacks: string[];
+};
+
 export default function MyPage() {
   const navigate = useNavigate();
-
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [selectedProjectTitle, setSelectedProjectTitle] = useState("");
-  const [selectedMembers, setSelectedMembers] = useState<ReviewMember[]>([]);
+  const queryClient = useQueryClient();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -54,28 +58,61 @@ export default function MyPage() {
     queryFn: membersApi.getMyProfile,
   });
 
+  // 내가 작성한 모집글 목록
   const { data: myRecruits, isLoading: isRecruitsLoading } = useQuery({
     queryKey: ["myRecruits"],
-    queryFn: () => recruitsApi.getMyRecruits({ size: 5 }),
+    queryFn: () => recruitsApi.getMyRecruits({ page: 0, size: 5 }),
   });
+
+  // 내가 지원한 모집글 목록
+  const { data: appliedRecruits, isLoading: isAppliedRecruitsLoading } =
+    useQuery({
+      queryKey: ["appliedRecruits"],
+      queryFn: () => recruitsApi.getAppliedRecruits({ page: 0, size: 5 }),
+    });
 
   const { data: myPosts, isLoading: isPostsLoading } = useQuery({
     queryKey: ["myPosts"],
-    queryFn: () => boardsApi.getMyPosts({ size: 5 }),
+    queryFn: () => boardsApi.getMyPosts({ page: 0, size: 5 }),
   });
 
   const { data: scrappedPosts } = useQuery({
     queryKey: ["myScrappedPosts"],
-    queryFn: () => boardsApi.getScrappedPosts({ size: 1 }),
+    queryFn: () => boardsApi.getScrappedPosts({ page: 0, size: 1 }),
+    retry: false,
   });
 
   const { data: likedPosts } = useQuery({
     queryKey: ["myLikedPosts"],
-    queryFn: () => boardsApi.getLikedPosts({ size: 1 }),
+    queryFn: () => boardsApi.getLikedPosts({ page: 0, size: 1 }),
+    retry: false,
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: membersApi.updateMyProfile,
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData(["myProfile"], updatedProfile);
+      queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+
+      setEditableProfile({
+        name: updatedProfile.nickname ?? "",
+        role: updatedProfile.role || "가톨릭대 재학생",
+        email: updatedProfile.contactEmail || updatedProfile.email || "",
+        bio: updatedProfile.intro || "",
+        techStacks: updatedProfile.techStacks ?? [],
+        githubUrl: updatedProfile.githubUrl ?? "",
+      });
+
+      setIsEditModalOpen(false);
+    },
+    onError: (error) => {
+      console.error("프로필 수정 실패:", error);
+      alert("프로필 수정에 실패했습니다.");
+    },
   });
 
   const profileInitial =
-  ((profile?.nickname ?? editableProfile.name)?.trim().charAt(0)) || "?";
+    ((profile?.nickname ?? editableProfile.name)?.trim().charAt(0)) || "?";
 
   useEffect(() => {
     if (!profile) return;
@@ -83,35 +120,76 @@ export default function MyPage() {
     setEditableProfile({
       name: profile.nickname ?? "",
       role: profile.role || "가톨릭대 재학생",
-      email: profile.email ?? "",
-      bio: profile.content || "",
-      techStacks: profile.tags ?? [],
+      email: profile.contactEmail || profile.email || "",
+      bio: profile.intro || "",
+      techStacks: profile.techStacks ?? [],
       githubUrl: profile.githubUrl ?? "",
     });
   }, [profile]);
 
-  const openReviewModal = (projectTitle: string, members: ReviewMember[]) => {
-    setSelectedProjectTitle(projectTitle);
-    setSelectedMembers(members);
-    setIsReviewModalOpen(true);
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      console.error("로그아웃 API 실패:", error);
+    } finally {
+      localStorage.removeItem("access_token");
+      queryClient.clear();
+      navigate("/login", { replace: true });
+    }
   };
 
-  const closeReviewModal = () => {
-    setIsReviewModalOpen(false);
-    setSelectedProjectTitle("");
-    setSelectedMembers([]);
+  const handleSaveProfile = async (updatedProfile: ProfileFormFromModal) => {
+    const payload: UpdateMyProfileRequest = {
+      nickname: updatedProfile.name,
+      profileImageUrl: profile?.profileImageUrl ?? "https://example.com/profile.png",
+      role: updatedProfile.role,
+      contactEmail: updatedProfile.email,
+      phoneNumber: profile?.phoneNumber ?? "010-0000-0000",
+      githubUrl: editableProfile.githubUrl || profile?.githubUrl || "https://github.com/example",
+      intro: updatedProfile.bio,
+      techStacks: updatedProfile.techStacks,
+      activityCategories: profile?.activityCategories?.length
+        ? profile.activityCategories
+        : ["프로젝트"],
+    };
+
+    console.log("프로필 수정 payload:", payload);
+
+    try {
+      const me = await membersApi.getMyProfile();
+      console.log("수정 직전 내 프로필 조회 성공:", me);
+
+      await updateProfileMutation.mutateAsync(payload);
+    } catch (error) {
+      console.error("프로필 수정 전/수정 중 에러:", error);
+    }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/logout`;
+  const formatDate = (date?: string) => {
+    if (!date) return "";
+    return date.split("T")[0];
+  };
+
+  const getStatusText = (status?: string) => {
+    if (status === "OPEN") return "모집중";
+    if (status === "CLOSED") return "마감";
+    return status || "상태 없음";
+  };
+
+  const getApplicationStatusText = (status?: string) => {
+    if (status === "APPLIED") return "지원완료";
+    if (status === "ACCEPTED") return "합격";
+    if (status === "REJECTED") return "불합격";
+    if (status === "CANCELED") return "지원취소";
+    return status || "지원완료";
   };
 
   const stats = useMemo(
     () => [
       {
         label: "지원한\n프로젝트",
-        value: 0,
+        value: appliedRecruits?.pageInfo?.totalElements || 0,
         path: PATH.MY_APPLIED_PROJECT,
       },
       {
@@ -125,32 +203,8 @@ export default function MyPage() {
         path: PATH.MY_LIKE,
       },
     ],
-    [scrappedPosts, likedPosts]
+    [appliedRecruits, scrappedPosts, likedPosts],
   );
-
-  const participatedProjects = [
-    {
-      id: 1,
-      title: "2026 정처기 한방에 끝내자 스터디원 모집",
-      role: "Frontend",
-      reviewText: "팀원 리뷰달기 >",
-      members: [
-        { id: 1, name: "김철수", role: "Backend Developer" },
-        { id: 2, name: "이영희", role: "Designer" },
-        { id: 3, name: "박민수", role: "Frontend Developer" },
-      ],
-    },
-    {
-      id: 2,
-      title: "2026 ICT 공모전 팀원 모집",
-      role: "Frontend",
-      reviewText: "팀원 리뷰달기 >",
-      members: [
-        { id: 4, name: "최수진", role: "PM" },
-        { id: 5, name: "정민호", role: "Backend Developer" },
-      ],
-    },
-  ];
 
   return (
     <>
@@ -182,23 +236,36 @@ export default function MyPage() {
                 <>
                   <div className="flex items-start justify-between gap-[12px]">
                     <div className="flex min-w-0 flex-1 items-start gap-[14px]">
-                      <div className="flex h-[80px] w-[80px] shrink-0 items-center justify-center rounded-full bg-[#2563EB] text-[28px] font-bold text-white">
-                        {profileInitial}
-                      </div>
+                      {profile?.profileImageUrl ? (
+                        <img
+                          src={profile.profileImageUrl}
+                          alt="프로필 이미지"
+                          className="h-[80px] w-[80px] shrink-0 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-[80px] w-[80px] shrink-0 items-center justify-center rounded-full bg-[#2563EB] text-[28px] font-bold text-white">
+                          {profileInitial}
+                        </div>
+                      )}
 
                       <div className="min-w-0 flex-1 pt-[4px]">
                         <div className="text-[18px] font-bold leading-[26px] text-[#111827]">
-                          {(profile?.nickname ?? editableProfile.name) || "사용자"}
+                          {(profile?.nickname ?? editableProfile.name) ||
+                            "사용자"}
                         </div>
 
                         <div className="mt-[6px] whitespace-pre-line text-[14px] leading-[20px] text-[#475569]">
-                          {profile?.role || editableProfile.role || "가톨릭대 재학생"}
+                          {profile?.role ||
+                            editableProfile.role ||
+                            "가톨릭대 재학생"}
                         </div>
 
                         <div className="mt-[8px] flex items-center gap-[8px] text-[12px] leading-[18px] text-[#94A3B8]">
                           <img src={mailIcon} alt="" className="h-[18px] w-[18px]" />
                           <span className="truncate">
-                            {profile?.email ?? editableProfile.email}
+                            {profile?.contactEmail ||
+                              profile?.email ||
+                              editableProfile.email}
                           </span>
                         </div>
                       </div>
@@ -215,11 +282,13 @@ export default function MyPage() {
                   </div>
 
                   <p className="mt-[20px] text-[14px] leading-[20px] text-[#45556C]">
-                    {profile?.content || editableProfile.bio || "등록된 자기소개가 없습니다."}
+                    {profile?.intro ||
+                      editableProfile.bio ||
+                      "등록된 자기소개가 없습니다."}
                   </p>
 
                   <div className="mt-[16px] flex flex-wrap gap-[10px]">
-                    {(profile?.tags ?? editableProfile.techStacks ?? []).map(
+                    {(profile?.techStacks ?? editableProfile.techStacks ?? []).map(
                       (stack: string) => (
                         <span
                           key={stack}
@@ -227,7 +296,7 @@ export default function MyPage() {
                         >
                           {stack}
                         </span>
-                      )
+                      ),
                     )}
                   </div>
                 </>
@@ -242,7 +311,9 @@ export default function MyPage() {
                     type="button"
                     onClick={() => navigate(item.path)}
                     className={`flex min-h-[96px] flex-col items-center justify-center ${
-                      index !== stats.length - 1 ? "border-r border-[#E2E8F0]" : ""
+                      index !== stats.length - 1
+                        ? "border-r border-[#E2E8F0]"
+                        : ""
                     }`}
                   >
                     <span className="h-[28px] text-[22px] font-bold leading-[28px] text-[#3B82F6]">
@@ -262,7 +333,7 @@ export default function MyPage() {
                 <div className="flex items-center gap-[8px]">
                   <img src={projectIcon} alt="" className="h-[22px] w-[22px]" />
                   <h2 className="text-[16px] font-bold leading-[24px] text-[#111827]">
-                    내가 모집한 프로젝트
+                    내가 모집한 모집글
                   </h2>
                 </div>
 
@@ -281,7 +352,7 @@ export default function MyPage() {
                     로딩 중...
                   </div>
                 ) : myRecruits?.recruits?.length ? (
-                  myRecruits.recruits.map((project: any) => (
+                  myRecruits.recruits.map((project) => (
                     <article
                       key={project.recruitId}
                       className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[14px] shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
@@ -291,20 +362,36 @@ export default function MyPage() {
                           <h3 className="truncate text-[15px] font-bold leading-[24px] text-[#1E293B]">
                             {project.title}
                           </h3>
+
+                          <div className="mt-[8px] flex flex-wrap gap-[6px]">
+                            {project.skills?.map((skill: string) => (
+                              <span
+                                key={skill}
+                                className="rounded-[8px] bg-[#EFF6FF] px-[8px] py-[4px] text-[11px] font-medium leading-[14px] text-[#1447E6]"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
                         </div>
 
                         <span
                           className={`shrink-0 rounded-[14px] px-[14px] py-[6px] text-[12px] font-bold leading-[20px] text-white shadow-[0_2px_6px_rgba(29,155,240,0.25)] ${
-                            project.status === "OPEN" ? "bg-[#1D9BF0]" : "bg-[#94A3B8]"
+                            project.status === "OPEN"
+                              ? "bg-[#1D9BF0]"
+                              : "bg-[#94A3B8]"
                           }`}
                         >
-                          {project.status === "OPEN" ? "모집중" : "마감"}
+                          {getStatusText(project.status)}
                         </span>
                       </div>
 
                       <div className="mt-[14px] flex items-end justify-between gap-[12px]">
                         <div className="text-[12px] leading-[20px] text-[#62748E]">
-                          역할: {project.category || "개발"}
+                          {project.recruitCategory ||
+                            project.activityCategory ||
+                            project.category ||
+                            "모집글"}
                         </div>
 
                         <button
@@ -314,14 +401,19 @@ export default function MyPage() {
                           }
                           className="text-right text-[12px] font-semibold leading-[20px] text-[#2563EB]"
                         >
-                          {project.applicantCount}/{project.totalHeadcount} 지원자 확인하기
+                          {project.applicantCount}/{project.totalHeadcount} 지원자
+                          확인하기
                         </button>
+                      </div>
+
+                      <div className="mt-[8px] text-[11px] leading-[16px] text-[#94A3B8]">
+                        마감일 {formatDate(project.deadline)}
                       </div>
                     </article>
                   ))
                 ) : (
                   <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[14px] text-center text-[13px] text-[#94A3B8] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
-                    내가 모집한 프로젝트가 없습니다.
+                    작성한 모집글이 없습니다.
                   </div>
                 )}
               </div>
@@ -346,30 +438,70 @@ export default function MyPage() {
               </div>
 
               <div className="flex flex-col gap-[12px]">
-                {participatedProjects.map((project) => (
-                  <article
-                    key={project.id}
-                    className="rounded-[14px] border border-[#E2E8F0] bg-white px-[20px] py-[18px] shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
-                  >
-                    <h3 className="truncate text-[15px] font-bold leading-[24px] text-[#1E293B]">
-                      {project.title}
-                    </h3>
+                {isAppliedRecruitsLoading ? (
+                  <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[14px] text-center text-[13px] text-[#94A3B8] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+                    로딩 중...
+                  </div>
+                ) : appliedRecruits?.recruits?.length ? (
+                  appliedRecruits.recruits.map((project) => (
+                    <article
+                      key={project.recruitId}
+                      className="rounded-[14px] border border-[#E2E8F0] bg-white px-[20px] py-[18px] shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
+                    >
+                      <div className="flex items-start justify-between gap-[12px]">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-[15px] font-bold leading-[24px] text-[#1E293B]">
+                            {project.title}
+                          </h3>
 
-                    <div className="mt-[18px] flex items-end justify-between gap-[12px]">
-                      <div className="text-[12px] leading-[20px] text-[#64748B]">
-                        역할: {project.role}
+                          <div className="mt-[8px] flex flex-wrap gap-[6px]">
+                            {project.skills?.map((skill: string) => (
+                              <span
+                                key={skill}
+                                className="rounded-[8px] bg-[#EFF6FF] px-[8px] py-[4px] text-[11px] font-medium leading-[14px] text-[#1447E6]"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <span
+                          className={`shrink-0 rounded-[14px] px-[12px] py-[5px] text-[11px] font-bold leading-[18px] text-white ${
+                            project.status === "OPEN"
+                              ? "bg-[#1D9BF0]"
+                              : "bg-[#94A3B8]"
+                          }`}
+                        >
+                          {getStatusText(project.status)}
+                        </span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => openReviewModal(project.title, project.members)}
-                        className="text-[12px] font-semibold leading-[20px] text-[#2563EB]"
-                      >
-                        {project.reviewText}
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                      <div className="mt-[14px] flex items-end justify-between gap-[12px]">
+                        <div className="text-[12px] leading-[20px] text-[#64748B]">
+                          지원 상태:{" "}
+                          {getApplicationStatusText(project.applicationStatus)}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/projects/${project.recruitId}`)}
+                          className="text-[12px] font-semibold leading-[20px] text-[#2563EB]"
+                        >
+                          상세보기 &gt;
+                        </button>
+                      </div>
+
+                      <div className="mt-[8px] text-[11px] leading-[16px] text-[#94A3B8]">
+                        마감일 {formatDate(project.deadline)}
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[14px] text-center text-[13px] text-[#94A3B8] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+                    지원한 모집글이 없습니다.
+                  </div>
+                )}
               </div>
             </section>
 
@@ -397,7 +529,7 @@ export default function MyPage() {
                     로딩 중...
                   </div>
                 ) : myPosts?.posts?.length ? (
-                  myPosts.posts.map((post: any) => (
+                  myPosts.posts.map((post) => (
                     <div
                       key={post.postId}
                       onClick={() => navigate(`/board/${post.postId}`)}
@@ -446,27 +578,11 @@ export default function MyPage() {
         </section>
       </main>
 
-      <ReviewModal
-        isOpen={isReviewModalOpen}
-        onClose={closeReviewModal}
-        projectTitle={selectedProjectTitle}
-        members={selectedMembers}
-        onSubmit={(reviews) => {
-          console.log("리뷰 제출 데이터:", reviews);
-        }}
-      />
-
       <ProfileEditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         initialProfile={editableProfile}
-        onSave={(updatedProfile) => {
-          setEditableProfile((prev) => ({
-            ...prev,
-            ...updatedProfile,
-          }));
-          setIsEditModalOpen(false);
-        }}
+        onSave={handleSaveProfile}
       />
     </>
   );
