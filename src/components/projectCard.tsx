@@ -9,9 +9,12 @@ type ProjectCardProps = {
   recruitCount: number;
   techStacks: string[];
   writer: string;
+  applicationStatus?: string;
   department: string;
   buttonLabel: string;
   onButtonClick?: () => void;
+  currentCount?: number;
+  totalCount?: number;
 };
 
 export default function ProjectCard({
@@ -22,59 +25,107 @@ export default function ProjectCard({
   recruitCount,
   techStacks,
   writer,
+  applicationStatus,
   department,
   buttonLabel,
   onButtonClick,
+  currentCount,
+  totalCount,
 }: ProjectCardProps) {
   const categoryLabel =
     RECRUIT_CATEGORY.find((item) => item.value === category)?.label || category;
-  return (
-    <div className="bg-white flex flex-col gap-3 p-4 rounded-[14px] shadow-sm border border-[#D0D0D0]">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <button className="text-[10px] text-[#2F6BFF] font-bold bg-[#EFF6FF] px-2 py-1 rounded-lg">
-            {categoryLabel}
-          </button>
 
-          <button className="text-[10px] text-[#EF4400] font-bold bg-[#FEF2F2] px-2 py-1 rounded-lg">
+  const recruitCountText =
+    typeof currentCount === "number" && typeof totalCount === "number"
+      ? `${currentCount}/${totalCount}`
+      : `${recruitCount}명`;
+
+  const getApplicationStatusLabel = (status?: string) => {
+    if (status === "APPLIED") return "지원 완료";
+    if (status === "ACCEPTED") return "승인 완료";
+    if (status === "REJECTED") return "거절";
+    if (status === "CANCELED") return "지원 취소";
+    return status;
+  };
+
+  const getApplicationStatusClassName = (status?: string) => {
+    if (status === "ACCEPTED") {
+      return "bg-[#EFF6FF] text-[#2563EB]";
+    }
+
+    if (status === "REJECTED") {
+      return "bg-[#FEF2F2] text-[#DC2626]";
+    }
+
+    if (status === "CANCELED") {
+      return "bg-[#F1F5F9] text-[#64748B]";
+    }
+
+    return "bg-[#F0FDF4] text-[#16A34A]";
+  };
+
+  return (
+    <div className="flex flex-col gap-3 rounded-[14px] border border-[#D0D0D0] bg-white p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-lg bg-[#EFF6FF] px-2 py-1 text-[10px] font-bold text-[#2F6BFF]">
+            {categoryLabel}
+          </span>
+
+          <span className="rounded-lg bg-[#FEF2F2] px-2 py-1 text-[10px] font-bold text-[#EF4400]">
             {dDay}
-          </button>
+          </span>
         </div>
 
-        <button type="button" className="shrink-0">
-          <img src={bookmarkIcon} alt="스크랩" className="h-[15px] w-[15px]" />
-        </button>
+        {applicationStatus ? (
+          <span
+            className={`shrink-0 rounded-[8px] px-2 py-1 text-[10px] font-bold leading-4 ${getApplicationStatusClassName(
+              applicationStatus,
+            )}`}
+          >
+            {getApplicationStatusLabel(applicationStatus)}
+          </span>
+        ) : (
+          <button type="button" className="shrink-0">
+            <img src={bookmarkIcon} alt="스크랩" className="h-[15px] w-[15px]" />
+          </button>
+        )}
       </div>
 
-      <p className="font-bold text-[16px] text-[#111827] leading-[24px]">
+      <p className="text-[16px] font-bold leading-[24px] text-[#111827]">
         {title}
       </p>
 
-      <p className="text-[14px] text-[#374151] leading-[22px]">{description}</p>
+      <p className="text-[14px] leading-[22px] text-[#374151]">{description}</p>
 
       <div>
-        <p className="text-[12px] text-[#4B5563]">모집인원: {recruitCount}명</p>
+        <p className="text-[12px] text-[#4B5563]">
+          모집인원: {recruitCountText}
+        </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {techStacks.map((stack) => (
-          <button
-            key={stack}
-            className="text-[10px] text-[#0069A8] bg-[#F0F9FF] px-2 py-1 rounded-lg"
-          >
-            {stack}
-          </button>
-        ))}
-      </div>
+      {techStacks.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {techStacks.map((stack) => (
+            <span
+              key={stack}
+              className="rounded-lg bg-[#F0F9FF] px-2 py-1 text-[10px] text-[#0069A8]"
+            >
+              {stack}
+            </span>
+          ))}
+        </div>
+      )}
 
-      <div className="border-t border-[#D0D0D0] flex justify-between items-center pt-3">
-        <div className="text-[#9D9D9D] text-[12px] leading-[18px]">
+      <div className="flex items-center justify-between border-t border-[#D0D0D0] pt-3">
+        <div className="text-[12px] leading-[18px] text-[#9D9D9D]">
           <p>{writer}</p>
           <p>{department}</p>
         </div>
 
         <button
-          className="bg-[#2F6BFF] rounded-lg px-4 py-2 text-[12px] text-white font-bold leading-none shadow-sm cursor-pointer"
+          type="button"
+          className="cursor-pointer rounded-lg bg-[#2F6BFF] px-4 py-2 text-[12px] font-bold leading-none text-white shadow-sm"
           onClick={onButtonClick}
         >
           {buttonLabel}

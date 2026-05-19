@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import backIcon from "../../assets/back.svg";
 import ProjectCard from "../../components/projectCard";
 import { recruitsApi } from "../../api/recruits";
 
 export default function MyAppliedProject() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
 
@@ -17,6 +18,29 @@ export default function MyAppliedProject() {
   } = useQuery({
     queryKey: ["myAppliedProjectsPage"],
     queryFn: () => recruitsApi.getAppliedRecruits({ page: 0, size: 20 }),
+  });
+
+  const cancelApplicationMutation = useMutation({
+    mutationFn: (recruitId: number) =>
+      recruitsApi.cancelRecruitApplication(recruitId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["myAppliedProjectsPage"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["appliedRecruits"],
+      });
+
+      alert("지원이 취소되었습니다.");
+      setSelectedProjectId(null);
+    },
+
+    onError: (error) => {
+      console.error("지원 취소 실패:", error);
+      alert("지원 취소에 실패했습니다.");
+    },
   });
 
   const calculateDday = (deadline?: string) => {
@@ -41,6 +65,7 @@ export default function MyAppliedProject() {
     if (type === "STUDY") return "스터디";
     if (type === "CONTEST") return "공모전";
     if (type === "CLASS") return "수업";
+    if (type === "ACADEMIC") return "수업";
     return type || "모집";
   };
 
@@ -64,19 +89,35 @@ export default function MyAppliedProject() {
     return "내가 지원한 모집글입니다.";
   };
 
-  const handleOpenCancelModal = (projectId: number) => {
+  const getButtonLabel = (applicationStatus?: string) => {
+    if (applicationStatus === "ACCEPTED") return "승인됨";
+    if (applicationStatus === "REJECTED") return "거절됨";
+    if (applicationStatus === "CANCELED") return "취소됨";
+    return "지원취소";
+  };
+
+  const canCancel = (applicationStatus?: string) => {
+    return applicationStatus === "APPLIED" || !applicationStatus;
+  };
+
+  const handleOpenCancelModal = (projectId: number, applicationStatus?: string) => {
+    if (!canCancel(applicationStatus)) {
+      alert("이미 처리된 지원은 취소할 수 없습니다.");
+      return;
+    }
+
     setSelectedProjectId(projectId);
   };
 
   const handleCloseCancelModal = () => {
+    if (cancelApplicationMutation.isPending) return;
     setSelectedProjectId(null);
   };
 
   const handleConfirmCancel = () => {
     if (selectedProjectId === null) return;
 
-    alert("지원취소 API가 아직 연결되지 않았습니다.");
-    setSelectedProjectId(null);
+    cancelApplicationMutation.mutate(selectedProjectId);
   };
 
   return (
@@ -119,19 +160,24 @@ export default function MyAppliedProject() {
 
           {!isLoading && !isError && appliedRecruits?.recruits?.length ? (
             <div className="flex flex-col gap-[12px]">
-              {appliedRecruits.recruits.map((project) => (
+              {appliedRecruits.recruits.map((project: any) => (
                 <ProjectCard
                   key={project.recruitId}
                   category={getCategoryText(project.type)}
                   dDay={calculateDday(project.deadline)}
                   title={project.title}
                   description={getDescription(project.applicationStatus)}
-                  recruitCount={0}
+                  recruitCount={project.totalHeadcount ?? 0}
                   techStacks={project.skills ?? []}
                   writer="작성자"
                   department=""
-                  buttonLabel="지원취소"
-                  onButtonClick={() => handleOpenCancelModal(project.recruitId)}
+                  buttonLabel={getButtonLabel(project.applicationStatus)}
+                  onButtonClick={() =>
+                    handleOpenCancelModal(
+                      project.recruitId,
+                      project.applicationStatus,
+                    )
+                  }
                 />
               ))}
             </div>
@@ -150,7 +196,8 @@ export default function MyAppliedProject() {
               <button
                 type="button"
                 onClick={handleCloseCancelModal}
-                className="flex-1 rounded-[10px] border border-[#D1D5DB] bg-white py-[12px] text-[14px] font-medium text-[#374151]"
+                disabled={cancelApplicationMutation.isPending}
+                className="flex-1 rounded-[10px] border border-[#D1D5DB] bg-white py-[12px] text-[14px] font-medium text-[#374151] disabled:opacity-50"
               >
                 아니오
               </button>
@@ -158,9 +205,10 @@ export default function MyAppliedProject() {
               <button
                 type="button"
                 onClick={handleConfirmCancel}
-                className="flex-1 rounded-[10px] bg-[#2F6BFF] py-[12px] text-[14px] font-semibold text-white"
+                disabled={cancelApplicationMutation.isPending}
+                className="flex-1 rounded-[10px] bg-[#2F6BFF] py-[12px] text-[14px] font-semibold text-white disabled:opacity-50"
               >
-                예
+                {cancelApplicationMutation.isPending ? "취소 중..." : "예"}
               </button>
             </div>
           </div>

@@ -6,6 +6,7 @@ import ProjectCard from "../../components/projectCard";
 import ReviewModal from "../../components/reviewModal";
 import { recruitsApi } from "../../api/recruits";
 import { reviewsApi } from "../../api/reviews";
+import { membersApi } from "../../api/member";
 
 type ReviewMember = {
   id: number;
@@ -30,13 +31,20 @@ export default function MyParticipatedProject() {
   const [selectedMembers, setSelectedMembers] = useState<ReviewMember[]>([]);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
+  const { data: myProfile } = useQuery({
+    queryKey: ["myProfile"],
+    queryFn: membersApi.getMyProfile,
+  });
+
+  const myMemberId = myProfile?.memberId;
+
   const {
     data: participatedProjects,
     isLoading,
     isError,
   } = useQuery({
     queryKey: ["myParticipatedProjectsPage"],
-    queryFn: () => recruitsApi.getAppliedRecruits({ page: 0, size: 20 }),
+    queryFn: () => recruitsApi.getParticipatingRecruits({ page: 0, size: 20 }),
   });
 
   const projects = participatedProjects?.recruits ?? [];
@@ -47,9 +55,7 @@ export default function MyParticipatedProject() {
     members: ReviewMember[],
   ) => {
     if (!members.length) {
-      alert(
-        "리뷰를 작성할 팀원 정보가 없습니다. 백엔드 응답에 팀원 목록이 필요합니다.",
-      );
+      alert("리뷰를 작성할 팀원 정보가 없습니다.");
       return;
     }
 
@@ -118,44 +124,91 @@ export default function MyParticipatedProject() {
     if (type === "STUDY") return "스터디";
     if (type === "CONTEST") return "공모전";
     if (type === "CLASS") return "수업";
+    if (type === "ACADEMIC") return "수업";
     return type || "프로젝트";
   };
 
-  const getApplicationStatusText = (status?: string) => {
-    if (status === "APPLIED") return "지원 완료";
-    if (status === "ACCEPTED") return "합격";
-    if (status === "REJECTED") return "불합격";
-    if (status === "CANCELED") return "지원 취소";
-    return status || "지원 완료";
+  const getDescription = (project: any) => {
+    if (project.status === "CLOSED") {
+      return "마감된 참여 프로젝트입니다.";
+    }
+
+    if (project.status === "OPEN") {
+      return "현재 참여 중인 프로젝트입니다.";
+    }
+
+    return "내가 참여한 프로젝트입니다.";
   };
 
-  const getDescription = (project: any) => {
-    return `지원 상태: ${getApplicationStatusText(project.applicationStatus)}`;
+  const getApprovedCount = (project: any) => {
+    return (
+      project.approvedCount ??
+      project.acceptedCount ??
+      project.currentHeadcount ??
+      project.participantCount ??
+      project.memberCount ??
+      0
+    );
+  };
+
+  const getTotalHeadcount = (project: any) => {
+    return project.totalHeadcount ?? project.recruitCount ?? 0;
+  };
+
+  const excludeMe = (members: ReviewMember[]) => {
+    if (!myMemberId) return members;
+
+    return members.filter((member) => member.id !== myMemberId);
   };
 
   const getMembers = (project: any): ReviewMember[] => {
+    if (project.participants?.length) {
+      return excludeMe(
+        project.participants.map((member: any) => ({
+          id: member.memberId ?? member.id,
+          name:
+            member.nickname ??
+            member.name ??
+            `팀원 ${member.memberId ?? member.id}`,
+          role: member.role ?? "팀원",
+        })),
+      );
+    }
+
     if (project.members?.length) {
-      return project.members.map((member: any) => ({
-        id: member.memberId ?? member.id,
-        name: member.nickname ?? member.name ?? "팀원",
-        role: member.role ?? "팀원",
-      }));
+      return excludeMe(
+        project.members.map((member: any) => ({
+          id: member.memberId ?? member.id,
+          name:
+            member.nickname ??
+            member.name ??
+            `팀원 ${member.memberId ?? member.id}`,
+          role: member.role ?? "팀원",
+        })),
+      );
     }
 
     if (project.teamMembers?.length) {
-      return project.teamMembers.map((member: any) => ({
-        id: member.memberId ?? member.id,
-        name: member.nickname ?? member.name ?? "팀원",
-        role: member.role ?? "팀원",
-      }));
+      return excludeMe(
+        project.teamMembers.map((member: any) => ({
+          id: member.memberId ?? member.id,
+          name:
+            member.nickname ??
+            member.name ??
+            `팀원 ${member.memberId ?? member.id}`,
+          role: member.role ?? "팀원",
+        })),
+      );
     }
 
-    if (project.participants?.length) {
-      return project.participants.map((member: any) => ({
-        id: member.memberId ?? member.id,
-        name: member.nickname ?? member.name ?? "팀원",
-        role: member.role ?? "팀원",
-      }));
+    if (project.participantIds?.length) {
+      return excludeMe(
+        project.participantIds.map((memberId: number) => ({
+          id: memberId,
+          name: `팀원 ${memberId}`,
+          role: "팀원",
+        })),
+      );
     }
 
     return [];
@@ -211,11 +264,14 @@ export default function MyParticipatedProject() {
                     dDay={calculateDday(project.deadline)}
                     title={project.title}
                     description={getDescription(project)}
-                    recruitCount={0}
+                    recruitCount={getTotalHeadcount(project)}
+                    currentCount={getApprovedCount(project)}
+                    totalCount={getTotalHeadcount(project)}
                     techStacks={project.skills ?? []}
                     writer="작성자"
                     department=""
                     buttonLabel="리뷰쓰기"
+                    applicationStatus={project.applicationStatus ?? "ACCEPTED"}
                     onButtonClick={() =>
                       openReviewModal(project.recruitId, project.title, members)
                     }
