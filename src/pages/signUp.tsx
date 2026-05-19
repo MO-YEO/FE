@@ -11,8 +11,7 @@ const SignUpPage = () => {
   const [input, setInput] = useState("");
   const navigate = useNavigate();
 
-  /** 🚀 테스트 기간 동안은 기존 유저 체크(리다이렉트)를 하지 않습니다. */
-  /*
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -22,7 +21,7 @@ const SignUpPage = () => {
     };
     checkUser();
   }, [navigate]);
-  */
+  
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && input.trim() !== "") {
