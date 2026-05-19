@@ -67,9 +67,7 @@ const ProjectPage = () => {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    console.log("최종 데이터:", data);
-
-    //프로젝트 등록하기 폼 제출
+    // 프로젝트 등록하기 폼 제출
     if (type === "register") {
       const finalData = {
         ...data,
@@ -82,10 +80,12 @@ const ProjectPage = () => {
         totalHeadcount: Number(formData.get("totalHeadcount")),
         applicantCount: Number(formData.get("applicantCount")),
       };
-      console.log("최종 데이터:", finalData);
+      console.log("최종 등록 데이터:", finalData);
       try {
+        setIsLoading(true);
         await recruitsApi.createRecruit(finalData);
         handleCloseSheet("register");
+        // 등록 후 최신 목록으로 갱신하기 위해 강제 상태 변경 트리거 가능
       } catch (error) {
         console.log("모집글 등록 실패", error);
       } finally {
@@ -93,24 +93,26 @@ const ProjectPage = () => {
       }
     }
 
-    //지원하기 폼 제출
+    // 지원하기 폼 제출
     if (type === "apply") {
       const finalData = {
         ...data,
-        // requiredSkills:
-        //   (formData.get("requiredSkills") as string)
-        //     ?.split(",")
-        //     .map((skill) => skill.trim())
-        //     .filter(Boolean) || [],
+        // ✨ 스웨거 명세에 맞춰 requiredSkills를 배열이 아닌 단순 string 구조로 그대로 전송
+        requiredSkills: formData.get("requiredSkills") as string,
       };
-      console.log("최종 데이터:", finalData);
+
+      console.log("백엔드 매핑 최종 지원 데이터:", finalData);
+
       if (selectedRecruitId) {
         try {
+          setIsLoading(true);
           await recruitsApi.apply(selectedRecruitId, finalData);
           handleCloseSheet("apply");
           setSelectedRecruitId(null);
+          alert("성공적으로 프로젝트에 지원되었습니다! 🎉");
         } catch (error) {
           console.log("프로젝트 지원 실패", error);
+          alert("지원에 실패했습니다. 입력 양식을 확인해주세요.");
         } finally {
           setIsLoading(false);
         }
@@ -260,7 +262,7 @@ const ProjectPage = () => {
 
       <div className="flex-1 bg-[#F9FAFB] px-5 py-4 pb-20 ">
         {!data || data.length === 0 ? (
-          <div className="flex justify-center">
+          <div className="flex justify-center text-gray-400 text-sm mt-8">
             아직 등록된 프로젝트가 없어요
           </div>
         ) : (
@@ -419,10 +421,11 @@ function ApplySheet({
             {fields.map((field) => (
               <div key={field.id} className="flex w-full flex-col gap-2">
                 <FieldLabel label={field.title} required={field.required} />
-                {field.id === "intro" ? (
+                {/* 💡 조건부 렌더링 검증 조건 수정 완료: id가 introduction인 경우 텍스트에어리어 컴포넌트 맵핑 */}
+                {field.id === "introduction" ? (
                   <textarea
                     name={field.id}
-                    className="h-27 w-full resize-none rounded-lg border border-[#E2E8F0] bg-white px-4 py-[14px] text-[14px] focus:outline-none"
+                    className="h-28 w-full resize-none rounded-lg border border-[#E2E8F0] bg-white px-4 py-[14px] text-[14px] focus:outline-none focus:border-[#356AE6]"
                     placeholder={field.placeholder}
                   />
                 ) : (
