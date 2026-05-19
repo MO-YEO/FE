@@ -33,22 +33,9 @@ export default function ProjectCard({
   buttonLabel,
   onButtonClick,
   author,
-  recruitId,
   selectedProject,
 }: ProjectCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
-
-  const [formData, setFormData] = useState({
-    type: "",
-    category: "",
-    tag: "",
-    department: "",
-    title: "",
-    content: "",
-    skills: [] as string[],
-    totalHeadcount: 1,
-    deadline: "",
-  });
 
   const handleOpenSheet = () => {
     if (wrapperRef.current) {
@@ -67,7 +54,15 @@ export default function ProjectCard({
   const [sheetWidth, setSheetWidth] = useState<number>(430);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
-  const handleDeleteProject = () => {};
+  const handleDeleteProject = async () => {
+    try {
+      if (!window.confirm("삭제하시겠습니까?")) return;
+      await recruitsApi.deleteRecruit(selectedProject.recruitId);
+      window.location.reload();
+    } catch (err) {
+      console.log("프로젝트 삭제 실패", err);
+    }
+  };
 
   useEffect(() => {
     const updateSheetWidth = () => {
@@ -109,22 +104,11 @@ export default function ProjectCard({
       console.log(selectedProject.recruitId);
       await recruitsApi.patchRecruit(selectedProject.recruitId, finalData);
       handleCloseSheet();
+      window.location.reload();
     } catch (error) {
       console.log("프로젝트 수정 실패", error);
     }
   };
-
-  useEffect(() => {
-    if (recruitId) {
-      (async () => {
-        try {
-          await recruitsApi.deleteRecruit(recruitId);
-        } catch (error) {
-          console.log("프로젝트 삭제 실패", error);
-        }
-      })();
-    }
-  }, []);
 
   return (
     <div className="bg-white flex flex-col gap-3 p-4 rounded-[14px] shadow-sm border border-[#D0D0D0]">
@@ -147,7 +131,12 @@ export default function ProjectCard({
               >
                 수정
               </button>
-              <button className="text-[12px] cursor-pointer">삭제</button>
+              <button
+                className="text-[12px] cursor-pointer"
+                onClick={handleDeleteProject}
+              >
+                삭제
+              </button>
             </div>
           )}
           <button type="button" className="shrink-0">
