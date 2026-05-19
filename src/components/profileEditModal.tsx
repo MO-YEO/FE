@@ -13,10 +13,10 @@ type ProfileEditModalProps = {
   isOpen: boolean;
   onClose: () => void;
   initialProfile: ProfileForm;
-  onSave: (profile: ProfileForm) => void;
+  onSave: (profile: ProfileForm) => void | Promise<void>;
 };
 
-export default function profileEditModal({
+export default function ProfileEditModal({
   isOpen,
   onClose,
   initialProfile,
@@ -34,27 +34,35 @@ export default function profileEditModal({
     if (!isOpen) return;
 
     setForm({
-      name: initialProfile.name,
-      role: initialProfile.role,
-      email: initialProfile.email,
-      bio: initialProfile.bio,
-      techStacksText: initialProfile.techStacks.join(", "),
+      name: initialProfile.name ?? "",
+      role: initialProfile.role ?? "",
+      email: initialProfile.email ?? "",
+      bio: initialProfile.bio ?? "",
+      techStacksText: initialProfile.techStacks?.join(", ") ?? "",
     });
   }, [isOpen, initialProfile]);
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
-    onSave({
+  const parseTechStacks = (value: string) => {
+    return value
+      .split(/[,，\n]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  };
+
+  const handleSave = async () => {
+    const nextProfile: ProfileForm = {
       name: form.name.trim(),
       role: form.role.trim(),
       email: form.email.trim(),
       bio: form.bio.trim(),
-      techStacks: form.techStacksText
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-    });
+      techStacks: parseTechStacks(form.techStacksText),
+    };
+
+    console.log("모달에서 만든 techStacks:", nextProfile.techStacks);
+
+    await onSave(nextProfile);
   };
 
   return (
@@ -141,7 +149,7 @@ export default function profileEditModal({
                 <label className="text-[14px] font-semibold text-[#111827]">
                   기술 스택
                 </label>
-                <input
+                <textarea
                   value={form.techStacksText}
                   onChange={(e) =>
                     setForm((prev) => ({
@@ -149,9 +157,12 @@ export default function profileEditModal({
                       techStacksText: e.target.value,
                     }))
                   }
-                  placeholder="React, TypeScript, Node.js"
-                  className="h-[46px] rounded-[12px] border border-[#D7DFEA] px-[14px] text-[14px] focus:outline-none"
+                  placeholder="예: React, TypeScript, Spring"
+                  className="min-h-[72px] resize-none rounded-[12px] border border-[#D7DFEA] px-[14px] py-[12px] text-[14px] leading-[20px] focus:outline-none"
                 />
+                <p className="text-[11px] leading-[16px] text-[#94A3B8]">
+                  쉼표 또는 엔터로 여러 태그를 구분할 수 있어요.
+                </p>
               </div>
             </div>
           </div>

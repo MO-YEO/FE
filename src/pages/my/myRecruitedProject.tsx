@@ -55,6 +55,22 @@ export default function MyRecruitedProject() {
     return "내가 작성한 모집글입니다.";
   };
 
+  const getCurrentCount = (project: any) => {
+    return (
+      project.approvedCount ??
+      project.acceptedCount ??
+      project.currentHeadcount ??
+      project.participantCount ??
+      project.memberCount ??
+      project.applicantCount ??
+      0
+    );
+  }
+
+  const getTotalHeadcount = (project: any) => {
+    return project.totalHeadcount ?? project.recruitCount ?? 0;
+  };
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[88px]">
       <header className="border-b border-[#E5E7EB] bg-white">
@@ -101,7 +117,9 @@ export default function MyRecruitedProject() {
                 dDay={calculateDday(project.deadline)}
                 title={project.title}
                 description={getDescription(project)}
-                recruitCount={project.totalHeadcount}
+                recruitCount={getTotalHeadcount(project)}
+                currentCount={getCurrentCount(project)}
+                totalCount={getTotalHeadcount(project)}
                 techStacks={project.skills ?? []}
                 writer={project.author?.nickname ?? "나"}
                 department={project.department ?? ""}

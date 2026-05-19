@@ -207,9 +207,8 @@ const ProjectPage = () => {
             <button
               type="button"
               onClick={() => handleOpenSheet("register")}
-              className="flex h-[36px] w-[36px] shrink-0 cursor-pointer items-center justify-center rounded-[10px] bg-[#356AE6]"
             >
-              <img src={plusIcon} alt="추가" className="h-[20px] w-[20px]" />
+              <img src={plusIcon} alt="추가" className="h-[24px] w-[24px]" />
             </button>
           </div>
 

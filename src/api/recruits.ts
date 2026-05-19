@@ -78,6 +78,27 @@ export const recruitsApi = {
     return data;
   },
 
+  updateApplicationStatus: async (
+    recruitId: number,
+    applicationId: number,
+    payload: { status: "ACCEPTED" | "REJECTED" },
+  ) => {
+    const { data } = await apiClient.patch(
+      `/api/recruits/${recruitId}/applications/${applicationId}`,
+      payload,
+    );
+    return data;
+  },
+
+  getParticipatingRecruits: async (params?: { page?: number; size?: number }) => {
+    const { data } = await apiClient.get(
+      "/api/recruits/participating",
+      { params },
+    );
+    return data;
+  },
+
+
   // 프로젝트 지원하기 (ApplySheet 연동)
   apply: async (recruitId: number, payload?: any) => {
     const { data } = await apiClient.post(
@@ -87,7 +108,7 @@ export const recruitsApi = {
     return data;
   },
   // 지원 취소하기
-  cancelApply: async (recruitId: number) => {
+  cancelRecruitApplication: async (recruitId: number) => {
     const { data } = await apiClient.delete(`/api/recruits/${recruitId}/apply`);
     return data;
   },

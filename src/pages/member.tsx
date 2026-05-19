@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import TeamMemberCard from "../components/memberCard";
 import backIcon from "../assets/back.svg";
 import plusIcon from "../assets/plus.svg";
@@ -20,7 +21,6 @@ const interestCategories: InterestCategory[] = [
   "스터디",
 ];
 
-// 팀원 목록 조회용 query enum
 const categoryToApiValue: Record<Category, string | undefined> = {
   전체: undefined,
   수업: "CLASS",
@@ -29,7 +29,17 @@ const categoryToApiValue: Record<Category, string | undefined> = {
   공모전: "CONTEST",
 };
 
+const interestCategoryToApiValue: Record<InterestCategory, string | undefined> = {
+  전체: undefined,
+  수업: "CLASS",
+  프로젝트: "PROJECT",
+  스터디: "STUDY",
+  공모전: "CONTEST",
+};
+
 export default function TeamMemberPage() {
+  const navigate = useNavigate();
+
   const [selectedCategory, setSelectedCategory] = useState<Category>("전체");
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [selectedInterest, setSelectedInterest] =
@@ -68,9 +78,9 @@ export default function TeamMemberPage() {
         size: 10,
       });
 
-      setMembers(data.items);
-      setTotalElements(data.pageInfo.totalElements);
-      setTotalPages(data.pageInfo.totalPages);
+      setMembers(data.items ?? []);
+      setTotalElements(data.pageInfo?.totalElements ?? 0);
+      setTotalPages(data.pageInfo?.totalPages ?? 1);
     } catch (error) {
       console.error("팀원 목록 조회 실패:", error);
       setMembers([]);
@@ -81,46 +91,6 @@ export default function TeamMemberPage() {
       setIsLoading(false);
     }
   };
-
-  const [myMemberId, setMyMemberId] = useState<number | null>(null);
-
-  const handleBookmarkMember = async (memberId: number) => {
-  if (memberId === myMemberId) {
-    alert("본인 프로필은 북마크할 수 없습니다.");
-    return;
-  }
-
-  const targetMember = members.find((member) => member.memberId === memberId);
-
-  if (!targetMember) {
-    console.error("북마크 대상 멤버를 찾을 수 없습니다:", memberId);
-    return;
-  }
-
-  if (targetMember.isBookmarked) {
-    return;
-  }
-
-  try {
-    console.log("팀원 북마크 요청 memberId:", memberId);
-
-    await membersApi.bookmarkMember(memberId);
-
-    setMembers((prev) =>
-      prev.map((member) =>
-        member.memberId === memberId
-          ? {
-              ...member,
-              isBookmarked: true,
-            }
-          : member,
-      ),
-    );
-  } catch (error) {
-    console.error("팀원 북마크 실패:", error);
-    alert("팀원 북마크에 실패했습니다.");
-  }
-};
 
   useEffect(() => {
     const updateSheetWidth = () => {
@@ -149,19 +119,6 @@ export default function TeamMemberPage() {
     fetchMembers();
   }, [selectedCategory, page]);
 
-  useEffect(() => {
-  const fetchMyProfile = async () => {
-    try {
-      const profile = await membersApi.getMyProfile();
-      setMyMemberId(profile.memberId);
-    } catch (error) {
-      console.error("내 프로필 조회 실패:", error);
-    }
-  };
-
-  fetchMyProfile();
-}, []);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -184,6 +141,13 @@ export default function TeamMemberPage() {
   const handleCategoryClick = (category: Category) => {
     setSelectedCategory(category);
     setPage(0);
+  };
+
+  const parseSkills = (value: string) => {
+    return value
+      .split(/[,，\n]+/)
+      .map((skill) => skill.trim())
+      .filter(Boolean);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -219,6 +183,9 @@ export default function TeamMemberPage() {
     try {
       setIsSubmitting(true);
 
+      const selectedActivityCategory =
+        interestCategoryToApiValue[selectedInterest];
+
       const payload: TeamProfileRegisterRequest = {
         nickname: form.name.trim(),
         role: form.role.trim(),
@@ -227,12 +194,10 @@ export default function TeamMemberPage() {
         githubUrl: form.github.trim(),
         intro: form.bio.trim(),
         profileImageUrl: "",
-        techStacks: form.skills
-          .split(",")
-          .map((skill) => skill.trim())
-          .filter(Boolean),
-        activityCategories:
-          selectedInterest === "전체" ? [] : [selectedInterest],
+        techStacks: parseSkills(form.skills),
+        activityCategories: selectedActivityCategory
+          ? [selectedActivityCategory]
+          : [],
       };
 
       await membersApi.registerTeamProfile(payload);
@@ -260,9 +225,9 @@ export default function TeamMemberPage() {
         size: 10,
       });
 
-      setMembers(data.items);
-      setTotalElements(data.pageInfo.totalElements);
-      setTotalPages(data.pageInfo.totalPages);
+      setMembers(data.items ?? []);
+      setTotalElements(data.pageInfo?.totalElements ?? 0);
+      setTotalPages(data.pageInfo?.totalPages ?? 1);
     } catch (error) {
       console.error("팀원 등록 실패:", error);
       alert("팀원 등록에 실패했습니다.");
@@ -276,11 +241,11 @@ export default function TeamMemberPage() {
       ref={wrapperRef}
       className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F9FAFB]"
     >
-      {/* 헤더 */}
       <header className="border-b border-[#E5E7EB] bg-white">
         <div className="flex h-[96px] items-end px-[16px] pb-[20px] pt-[40px]">
           <button
             type="button"
+            onClick={() => navigate(-1)}
             className="flex h-[24px] w-[24px] items-center justify-center"
           >
             <img src={backIcon} alt="뒤로가기" className="h-[24px] w-[24px]" />
@@ -298,7 +263,6 @@ export default function TeamMemberPage() {
         </div>
       </header>
 
-      {/* 카테고리 */}
       <section className="border-b border-[#E5E7EB] bg-white px-4 py-3">
         <div className="flex w-full items-center gap-2 overflow-x-auto">
           {categories.map((category) => {
@@ -322,7 +286,6 @@ export default function TeamMemberPage() {
         </div>
       </section>
 
-      {/* 본문 */}
       <main className="px-4 pt-4 pb-6">
         <p className="mb-4 text-[14px] font-medium leading-5 text-[#6B7280]">
           {totalElements}명의 팀원
@@ -354,13 +317,10 @@ export default function TeamMemberPage() {
                 name={member.nickname}
                 role={member.role}
                 description={member.intro}
-                techStacks={member.techStacks}
+                techStacks={member.techStacks ?? []}
                 rating={0}
                 profileInitial={member.nickname?.charAt(0) ?? "?"}
-                isBookmarked={member.isBookmarked ?? false}
                 githubUrl={member.githubUrl}
-                isMe={member.memberId === myMemberId}
-                onBookmarkClick={() => handleBookmarkMember(member.memberId)}
               />
             ))}
           </div>
@@ -395,7 +355,6 @@ export default function TeamMemberPage() {
         )}
       </main>
 
-      {/* 바텀시트 */}
       <div
         className={`fixed inset-0 z-50 transition-all duration-300 ${
           isRegisterOpen
@@ -416,7 +375,6 @@ export default function TeamMemberPage() {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* 시트 헤더 */}
           <div className="h-[68.8px] border-b border-[#E2E8F0] bg-white">
             <div className="flex h-full items-center justify-between px-5">
               <h2 className="text-[18px] font-bold leading-[32px] text-[#111827]">
@@ -472,7 +430,7 @@ export default function TeamMemberPage() {
                 name="skills"
                 value={form.skills}
                 onChange={handleChange}
-                placeholder="예: React, TypeScript, Node.js (쉼표로 구분)"
+                placeholder="예: React, TypeScript, Node.js"
                 className="h-[45px] w-full rounded-[10px] border border-[#E2E8F0] px-4 text-[14px] text-[#111827] outline-none placeholder:text-[#9CA3AF]"
               />
 
