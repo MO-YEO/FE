@@ -24,7 +24,6 @@ const ProjectPage = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isApplyOpen, setIsApplyOpen] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
 
   const [search, setSearch] = useState("");
   const debouncedValue = useDebounce(search, 300);
@@ -82,14 +81,14 @@ const ProjectPage = () => {
       };
       console.log("최종 등록 데이터:", finalData);
       try {
-        setIsLoading(true);
+ 
         await recruitsApi.createRecruit(finalData);
         handleCloseSheet("register");
         // 등록 후 최신 목록으로 갱신하기 위해 강제 상태 변경 트리거 가능
       } catch (error) {
         console.log("모집글 등록 실패", error);
       } finally {
-        setIsLoading(false);
+
       }
     }
 
@@ -105,7 +104,6 @@ const ProjectPage = () => {
 
       if (selectedRecruitId) {
         try {
-          setIsLoading(true);
           await recruitsApi.apply(selectedRecruitId, finalData);
           handleCloseSheet("apply");
           setSelectedRecruitId(null);
@@ -114,7 +112,6 @@ const ProjectPage = () => {
           console.log("프로젝트 지원 실패", error);
           alert("지원에 실패했습니다. 입력 양식을 확인해주세요.");
         } finally {
-          setIsLoading(false);
         }
       }
     }
@@ -149,13 +146,11 @@ const ProjectPage = () => {
   useEffect(() => {
     (async () => {
       try {
-        setIsLoading(true);
         const data = await meApi.getMe();
         setMyId(data);
       } catch (error) {
         console.log("아이디조회실패", error);
       } finally {
-        setIsLoading(false);
       }
     })();
   }, []);
@@ -164,7 +159,6 @@ const ProjectPage = () => {
   useEffect(() => {
     (async () => {
       try {
-        setIsLoading(true);
         console.log(selectMenu, selectTagMenu);
         const data = await recruitsApi.getRecruits({
           activityCategory: selectMenu == "ALL" ? "" : selectMenu,
@@ -175,7 +169,6 @@ const ProjectPage = () => {
       } catch (error) {
         console.log("프로젝트 불러오기 실패", error);
       } finally {
-        setIsLoading(false);
       }
     })();
   }, [selectMenu, selectTagMenu, debouncedValue]);

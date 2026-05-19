@@ -3,9 +3,7 @@ import type {
   MemberListResponse,
   MyProfileResponse,
   MemberDetail,
-  UpdateMyProfileRequest,
   TeamProfileRegisterRequest,
-  TeamProfileRegisterResponse,
 } from "../types";
 
 export const membersApi = {
@@ -54,5 +52,14 @@ export const membersApi = {
     );
     return data;
   },
+
+  registerTeamProfile: async (payload: TeamProfileRegisterRequest) => {
+  const { data } = await apiClient.post(
+    "/api/members/me/team-profile",
+    payload,
+  );
+
+  return data;
+},
   };
 
