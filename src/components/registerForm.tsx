@@ -131,7 +131,7 @@ export default function RegisterForm({
         <FieldLabel label="모집 마감일" required />
         <Input
           name="deadline"
-          placeholder="예: 2026/12/12"
+          placeholder="예: 2026-12-12"
           defaultValue={project?.deadline ?? ""}
         />
 
