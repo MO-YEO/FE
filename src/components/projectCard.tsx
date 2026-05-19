@@ -21,7 +21,7 @@ type ProjectCardProps = {
   totalCount?: number;
   author?: boolean;
   recruitId?: number;
-  selectedProject?: null | any;
+  selectedProject?: any;
 };
 
 export default function ProjectCard({
@@ -38,22 +38,13 @@ export default function ProjectCard({
   onButtonClick,
   currentCount,
   totalCount,
-  author,
+  author = false,
   selectedProject,
 }: ProjectCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [sheetWidth, setSheetWidth] = useState<number>(430);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
-  const handleOpenSheet = () => {
-    if (wrapperRef.current) {
-      setSheetWidth(wrapperRef.current.offsetWidth);
-    }
-
-    setIsEditOpen(true);
-  };
-
-  const handleCloseSheet = () => {
-    setIsEditOpen(false);
-  };
   const categoryLabel =
     RECRUIT_CATEGORY.find((item) => item.value === category)?.label || category;
 
@@ -84,16 +75,64 @@ export default function ProjectCard({
     }
 
     return "bg-[#F0FDF4] text-[#16A34A]";
-  const [sheetWidth, setSheetWidth] = useState<number>(430);
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  };
+
+  const handleOpenSheet = () => {
+    if (wrapperRef.current) {
+      setSheetWidth(wrapperRef.current.offsetWidth);
+    }
+
+    setIsEditOpen(true);
+  };
+
+  const handleCloseSheet = () => {
+    setIsEditOpen(false);
+  };
 
   const handleDeleteProject = async () => {
+    if (!selectedProject?.recruitId) {
+      alert("삭제할 프로젝트 정보를 찾을 수 없습니다.");
+      return;
+    }
+
     try {
       if (!window.confirm("삭제하시겠습니까?")) return;
+
       await recruitsApi.deleteRecruit(selectedProject.recruitId);
       window.location.reload();
     } catch (err) {
       console.log("프로젝트 삭제 실패", err);
+      alert("프로젝트 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!selectedProject?.recruitId) {
+      alert("수정할 프로젝트 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+
+    const finalData = {
+      ...data,
+      skills:
+        (formData.get("skills") as string)
+          ?.split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean) || [],
+    };
+
+    try {
+      await recruitsApi.patchRecruit(selectedProject.recruitId, finalData);
+      handleCloseSheet();
+      window.location.reload();
+    } catch (error) {
+      console.log("프로젝트 수정 실패", error);
+      alert("프로젝트 수정에 실패했습니다.");
     }
   };
 
@@ -113,38 +152,18 @@ export default function ProjectCard({
   }, []);
 
   useEffect(() => {
-    const isOpen = isEditOpen;
-    document.body.style.overflow = isOpen ? "hidden" : "";
+    document.body.style.overflow = isEditOpen ? "hidden" : "";
+
     return () => {
       document.body.style.overflow = "";
     };
   }, [isEditOpen]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
-    const finalData = {
-      ...data,
-      skills:
-        (formData.get("skills") as string)
-          ?.split(",")
-          .map((skill) => skill.trim())
-          .filter(Boolean) || [],
-    };
-    console.log("최종 데이터:", finalData);
-    try {
-      console.log(selectedProject.recruitId);
-      await recruitsApi.patchRecruit(selectedProject.recruitId, finalData);
-      handleCloseSheet();
-      window.location.reload();
-    } catch (error) {
-      console.log("프로젝트 수정 실패", error);
-    }
-  };
-
   return (
-    <div className="flex flex-col gap-3 rounded-[14px] border border-[#D0D0D0] bg-white p-4 shadow-sm">
+    <div
+      ref={wrapperRef}
+      className="flex flex-col gap-3 rounded-[14px] border border-[#D0D0D0] bg-white p-4 shadow-sm"
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-lg bg-[#EFF6FF] px-2 py-1 text-[10px] font-bold text-[#2F6BFF]">
@@ -156,43 +175,46 @@ export default function ProjectCard({
           </span>
         </div>
 
-        {applicationStatus ? (
-          <span
-            className={`shrink-0 rounded-[8px] px-2 py-1 text-[10px] font-bold leading-4 ${getApplicationStatusClassName(
-              applicationStatus,
-            )}`}
-          >
-            {getApplicationStatusLabel(applicationStatus)}
-          </span>
-        ) : (
-          <button type="button" className="shrink-0">
-            <img src={bookmarkIcon} alt="스크랩" className="h-[15px] w-[15px]" />
-          </button>
-        )}
-        <div className="flex gap-2">
-          {author && (
-            <div className="flex gap-2">
+        <div className="flex shrink-0 items-center gap-2">
+          {applicationStatus ? (
+            <span
+              className={`rounded-[8px] px-2 py-1 text-[10px] font-bold leading-4 ${getApplicationStatusClassName(
+                applicationStatus,
+              )}`}
+            >
+              {getApplicationStatusLabel(applicationStatus)}
+            </span>
+          ) : null}
+
+          {author ? (
+            <div className="flex items-center gap-2">
               <button
-                className="text-[12px] cursor-pointer"
+                type="button"
+                className="text-[12px] text-[#64748B] cursor-pointer"
                 onClick={handleOpenSheet}
               >
                 수정
               </button>
+
               <button
-                className="text-[12px] cursor-pointer"
+                type="button"
+                className="text-[12px] text-[#EF4444] cursor-pointer"
                 onClick={handleDeleteProject}
               >
                 삭제
               </button>
             </div>
-          )}
-          <button type="button" className="shrink-0">
-            <img
-              src={bookmarkIcon}
-              alt="스크랩"
-              className="h-[15px] w-[15px]"
-            />
-          </button>
+          ) : null}
+
+          {!applicationStatus && !author ? (
+            <button type="button" className="shrink-0">
+              <img
+                src={bookmarkIcon}
+                alt="스크랩"
+                className="h-[15px] w-[15px]"
+              />
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -236,20 +258,21 @@ export default function ProjectCard({
         </button>
       </div>
 
-      {/*수정하기 폼*/}
-      <BottomSheet
-        open={isEditOpen}
-        title="프로젝트 수정"
-        sheetWidth={sheetWidth}
-        onClose={handleCloseSheet}
-      >
-        <RegisterForm
-          project={selectedProject}
-          submitText="수정하기"
-          onSubmit={handleSubmit}
-          onCancel={handleCloseSheet}
-        />
-      </BottomSheet>
+      {selectedProject ? (
+        <BottomSheet
+          open={isEditOpen}
+          title="프로젝트 수정"
+          sheetWidth={sheetWidth}
+          onClose={handleCloseSheet}
+        >
+          <RegisterForm
+            project={selectedProject}
+            submitText="수정하기"
+            onSubmit={handleSubmit}
+            onCancel={handleCloseSheet}
+          />
+        </BottomSheet>
+      ) : null}
     </div>
   );
 }
