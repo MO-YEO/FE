@@ -19,8 +19,13 @@ const MemberPage = lazy(() => import("../pages/member"));
 const SignupPage = lazy(() => import("../pages/signUp"));
 const InquiryPage = lazy(() => import("../pages/Inquiry"));
 const NotFoundPage = lazy(() => import("../pages/notFound"));
+const OAuthCallback = lazy(() => import("../pages/OAuthCallback"));
 
 export const protectedRoutes = [
+  {
+    path: "/oauth/callback", // ✅ 백엔드 Redirect URI와 동일한지 꼭 확인! (PATH.CALLBACK 이 있다면 그거로 사용)
+    Component: OAuthCallback,
+  },
   {
     path: PATH.HOME,
     Component: HomePage,

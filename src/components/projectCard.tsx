@@ -1,4 +1,8 @@
+import { useEffect, useRef, useState } from "react";
 import bookmarkIcon from "../assets/bookmark.svg";
+import { recruitsApi } from "../api/recruits";
+import RegisterForm from "./registerForm";
+import BottomSheet from "./bottomSheet";
 import { RECRUIT_CATEGORY } from "../constants/category";
 
 type ProjectCardProps = {
@@ -15,6 +19,9 @@ type ProjectCardProps = {
   onButtonClick?: () => void;
   currentCount?: number;
   totalCount?: number;
+  author?: boolean;
+  recruitId?: number;
+  selectedProject?: null | any;
 };
 
 export default function ProjectCard({
@@ -31,7 +38,22 @@ export default function ProjectCard({
   onButtonClick,
   currentCount,
   totalCount,
+  author,
+  selectedProject,
 }: ProjectCardProps) {
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const handleOpenSheet = () => {
+    if (wrapperRef.current) {
+      setSheetWidth(wrapperRef.current.offsetWidth);
+    }
+
+    setIsEditOpen(true);
+  };
+
+  const handleCloseSheet = () => {
+    setIsEditOpen(false);
+  };
   const categoryLabel =
     RECRUIT_CATEGORY.find((item) => item.value === category)?.label || category;
 
@@ -62,6 +84,63 @@ export default function ProjectCard({
     }
 
     return "bg-[#F0FDF4] text-[#16A34A]";
+  const [sheetWidth, setSheetWidth] = useState<number>(430);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const handleDeleteProject = async () => {
+    try {
+      if (!window.confirm("삭제하시겠습니까?")) return;
+      await recruitsApi.deleteRecruit(selectedProject.recruitId);
+      window.location.reload();
+    } catch (err) {
+      console.log("프로젝트 삭제 실패", err);
+    }
+  };
+
+  useEffect(() => {
+    const updateSheetWidth = () => {
+      if (wrapperRef.current) {
+        setSheetWidth(wrapperRef.current.offsetWidth);
+      }
+    };
+
+    updateSheetWidth();
+    window.addEventListener("resize", updateSheetWidth);
+
+    return () => {
+      window.removeEventListener("resize", updateSheetWidth);
+    };
+  }, []);
+
+  useEffect(() => {
+    const isOpen = isEditOpen;
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isEditOpen]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+    const finalData = {
+      ...data,
+      skills:
+        (formData.get("skills") as string)
+          ?.split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean) || [],
+    };
+    console.log("최종 데이터:", finalData);
+    try {
+      console.log(selectedProject.recruitId);
+      await recruitsApi.patchRecruit(selectedProject.recruitId, finalData);
+      handleCloseSheet();
+      window.location.reload();
+    } catch (error) {
+      console.log("프로젝트 수정 실패", error);
+    }
   };
 
   return (
@@ -90,6 +169,31 @@ export default function ProjectCard({
             <img src={bookmarkIcon} alt="스크랩" className="h-[15px] w-[15px]" />
           </button>
         )}
+        <div className="flex gap-2">
+          {author && (
+            <div className="flex gap-2">
+              <button
+                className="text-[12px] cursor-pointer"
+                onClick={handleOpenSheet}
+              >
+                수정
+              </button>
+              <button
+                className="text-[12px] cursor-pointer"
+                onClick={handleDeleteProject}
+              >
+                삭제
+              </button>
+            </div>
+          )}
+          <button type="button" className="shrink-0">
+            <img
+              src={bookmarkIcon}
+              alt="스크랩"
+              className="h-[15px] w-[15px]"
+            />
+          </button>
+        </div>
       </div>
 
       <p className="text-[16px] font-bold leading-[24px] text-[#111827]">
@@ -131,6 +235,21 @@ export default function ProjectCard({
           {buttonLabel}
         </button>
       </div>
+
+      {/*수정하기 폼*/}
+      <BottomSheet
+        open={isEditOpen}
+        title="프로젝트 수정"
+        sheetWidth={sheetWidth}
+        onClose={handleCloseSheet}
+      >
+        <RegisterForm
+          project={selectedProject}
+          submitText="수정하기"
+          onSubmit={handleSubmit}
+          onCancel={handleCloseSheet}
+        />
+      </BottomSheet>
     </div>
   );
 }

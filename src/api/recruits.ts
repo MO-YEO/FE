@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 import type {
   RecruitListResponse,
   RecruitDetail,
@@ -16,19 +16,36 @@ export const recruitsApi = {
     page?: number;
     size?: number;
   }) => {
-    const { data } = await apiClient.get<RecruitListResponse>('/api/recruits', { params });
+    const { data } = await apiClient.get<RecruitListResponse>("/api/recruits", {
+      params,
+    });
     return data;
   },
 
   // 신규 프로젝트 등록
   createRecruit: async (payload: any) => {
-    const { data } = await apiClient.post<RecruitDetail>('/api/recruits', payload);
+    const { data } = await apiClient.post<RecruitDetail>(
+      "/api/recruits",
+      payload,
+    );
     return data;
+  },
+
+  //프로젝트 삭제
+  deleteRecruit: async (recruitId: number) => {
+    await apiClient.delete(`api/recruits/${recruitId}`);
+  },
+
+  //프로젝트 수정
+  patchRecruit: async (recruitId: number, payload: any) => {
+    await apiClient.patch(`api/recruits/${recruitId}`, payload);
   },
 
   // 프로젝트 상세 조회
   getRecruitDetail: async (recruitId: number) => {
-    const { data } = await apiClient.get<RecruitDetail>(`/api/recruits/${recruitId}`);
+    const { data } = await apiClient.get<RecruitDetail>(
+      `/api/recruits/${recruitId}`,
+    );
     return data;
   },
 
@@ -84,10 +101,12 @@ export const recruitsApi = {
 
   // 프로젝트 지원하기 (ApplySheet 연동)
   apply: async (recruitId: number, payload?: any) => {
-    const { data } = await apiClient.post(`/api/recruits/${recruitId}/apply`, payload);
+    const { data } = await apiClient.post(
+      `/api/recruits/${recruitId}/apply`,
+      payload,
+    );
     return data;
   },
-
   // 지원 취소하기
   cancelRecruitApplication: async (recruitId: number) => {
     const { data } = await apiClient.delete(`/api/recruits/${recruitId}/apply`);

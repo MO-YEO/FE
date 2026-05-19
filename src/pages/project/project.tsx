@@ -5,12 +5,14 @@ import plusIcon from "../../assets/plus.svg";
 import closeIcon from "../../assets/close.svg";
 import FieldLabel from "../../components/fieldLabel";
 import Input from "../../components/input";
-import Textarea from "../../components/textarea";
 import ProjectCard from "../../components/projectCard";
 import { recruitsApi } from "../../api/recruits";
 import type { RecruitSummary } from "../../types";
 import { ACTIVITY_CATEGORY, RECRUIT_CATEGORY } from "../../constants/category";
 import useDebounce from "../../hooks/useDebounce";
+import { meApi } from "../../api/me";
+import BottomSheet from "../../components/bottomSheet";
+import RegisterForm from "../../components/registerForm";
 
 const ProjectPage = () => {
   const [selectMenu, setSelectMenu] = useState("ALL");
@@ -32,6 +34,8 @@ const ProjectPage = () => {
   );
 
   const [data, setData] = useState<RecruitSummary[]>();
+
+  const [myId, setMyId] = useState<number | null>(null);
 
   const handleOpenSheet = (type: "register" | "apply", id?: number) => {
     if (wrapperRef.current) {
@@ -63,9 +67,7 @@ const ProjectPage = () => {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    console.log("최종 데이터:", data);
-
-    //프로젝트 등록하기 폼 제출
+    // 프로젝트 등록하기 폼 제출
     if (type === "register") {
       const finalData = {
         ...data,
@@ -78,10 +80,12 @@ const ProjectPage = () => {
         totalHeadcount: Number(formData.get("totalHeadcount")),
         applicantCount: Number(formData.get("applicantCount")),
       };
-      console.log("최종 데이터:", finalData);
+      console.log("최종 등록 데이터:", finalData);
       try {
+        setIsLoading(true);
         await recruitsApi.createRecruit(finalData);
         handleCloseSheet("register");
+        // 등록 후 최신 목록으로 갱신하기 위해 강제 상태 변경 트리거 가능
       } catch (error) {
         console.log("모집글 등록 실패", error);
       } finally {
@@ -89,24 +93,26 @@ const ProjectPage = () => {
       }
     }
 
-    //지원하기 폼 제출
+    // 지원하기 폼 제출
     if (type === "apply") {
       const finalData = {
         ...data,
-        // requiredSkills:
-        //   (formData.get("requiredSkills") as string)
-        //     ?.split(",")
-        //     .map((skill) => skill.trim())
-        //     .filter(Boolean) || [],
+        // ✨ 스웨거 명세에 맞춰 requiredSkills를 배열이 아닌 단순 string 구조로 그대로 전송
+        requiredSkills: formData.get("requiredSkills") as string,
       };
-      console.log("최종 데이터:", finalData);
+
+      console.log("백엔드 매핑 최종 지원 데이터:", finalData);
+
       if (selectedRecruitId) {
         try {
+          setIsLoading(true);
           await recruitsApi.apply(selectedRecruitId, finalData);
           handleCloseSheet("apply");
           setSelectedRecruitId(null);
+          alert("성공적으로 프로젝트에 지원되었습니다! 🎉");
         } catch (error) {
           console.log("프로젝트 지원 실패", error);
+          alert("지원에 실패했습니다. 입력 양식을 확인해주세요.");
         } finally {
           setIsLoading(false);
         }
@@ -138,6 +144,21 @@ const ProjectPage = () => {
       document.body.style.overflow = "";
     };
   }, [isRegisterOpen, isApplyOpen]);
+
+  //나의 아이디 조회 api
+  useEffect(() => {
+    (async () => {
+      try {
+        setIsLoading(true);
+        const data = await meApi.getMe();
+        setMyId(data);
+      } catch (error) {
+        console.log("아이디조회실패", error);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, []);
 
   //프로젝트 검색/조회 api
   useEffect(() => {
@@ -201,26 +222,28 @@ const ProjectPage = () => {
       </header>
 
       <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
-        {ACTIVITY_CATEGORY.map((menuItem) => {
-          return (
-            <button
-              key={menuItem.value}
-              type="button"
-              className={`cursor-pointer text-[14px] font-bold ${
-                menuItem.value === selectMenu
-                  ? "text-[#356AE6]"
-                  : "text-[#4A5565]"
-              }`}
-              onClick={() => setSelectMenu(menuItem.value)}
-            >
-              {menuItem.label}
-            </button>
-          );
-        })}
+        {[{ label: "전체", value: "ALL" }, ...ACTIVITY_CATEGORY].map(
+          (menuItem) => {
+            return (
+              <button
+                key={menuItem.value}
+                type="button"
+                className={`cursor-pointer text-[14px] font-bold ${
+                  menuItem.value === selectMenu
+                    ? "text-[#356AE6]"
+                    : "text-[#4A5565]"
+                }`}
+                onClick={() => setSelectMenu(menuItem.value)}
+              >
+                {menuItem.label}
+              </button>
+            );
+          },
+        )}
       </div>
 
       <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
-        {RECRUIT_CATEGORY.map((tag) => (
+        {[{ label: "전체", value: "ALL" }, ...RECRUIT_CATEGORY].map((tag) => (
           <button
             key={tag.value}
             type="button"
@@ -238,37 +261,47 @@ const ProjectPage = () => {
 
       <div className="flex-1 bg-[#F9FAFB] px-5 py-4 pb-20 ">
         {!data || data.length === 0 ? (
-          <div className="flex justify-center">
+          <div className="flex justify-center text-gray-400 text-sm mt-8">
             아직 등록된 프로젝트가 없어요
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {data.map((data) => (
-              <ProjectCard
-                key={data.recruitId}
-                category={data.category}
-                dDay={data.deadline}
-                title={data.title}
-                description={data.content}
-                recruitCount={data.totalHeadcount}
-                techStacks={data.skills}
-                writer={data.author.nickname}
-                department={data.department}
-                buttonLabel="지원하기"
-                onButtonClick={() => handleOpenSheet("apply", data.recruitId)}
-              />
-            ))}
+            {data.map((data) => {
+              const Author = myId === data.author.memberId;
+              return (
+                <ProjectCard
+                  key={data.recruitId}
+                  category={data.category}
+                  dDay={data.deadline}
+                  title={data.title}
+                  description={data.content}
+                  recruitCount={data.totalHeadcount}
+                  techStacks={data.skills}
+                  writer={data.author.nickname}
+                  department={data.department}
+                  buttonLabel="지원하기"
+                  onButtonClick={() => handleOpenSheet("apply", data.recruitId)}
+                  author={Author}
+                  selectedProject={data}
+                />
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* 프로젝트 등록 바텀시트 */}
-      <RegisterSheet
-        onClick={() => handleCloseSheet("register")}
-        onSubmit={(e) => handleSubmit(e, "register")}
-        isRegisterOpen={isRegisterOpen}
+      <BottomSheet
+        open={isRegisterOpen}
+        title="프로젝트 등록"
         sheetWidth={sheetWidth}
-      />
+        onClose={() => handleCloseSheet("register")}
+      >
+        <RegisterForm
+          onSubmit={(e) => handleSubmit(e, "register")}
+          onCancel={() => handleCloseSheet("register")}
+        />
+      </BottomSheet>
 
       {/* 지원하기 바텀시트 */}
       <ApplySheet
@@ -282,172 +315,6 @@ const ProjectPage = () => {
 };
 
 export default ProjectPage;
-
-function RegisterSheet({
-  onClick,
-  onSubmit,
-  isRegisterOpen,
-  sheetWidth,
-}: {
-  onClick: () => void;
-  onSubmit: React.FormEventHandler<HTMLFormElement>;
-  isRegisterOpen: boolean;
-  sheetWidth: number;
-}) {
-  const [selectMenu, setSelectMenu] = useState("ALL");
-  const [selectTagMenu, setSelectTagMenu] = useState("ALL");
-
-  return (
-    <div
-      className={`fixed inset-0 z-50 transition-all duration-300 ${
-        isRegisterOpen
-          ? "pointer-events-auto bg-black/50"
-          : "pointer-events-none bg-black/0"
-      }`}
-      onClick={onClick}
-    >
-      <div
-        className={`fixed bottom-0 left-1/2 z-[60] overflow-hidden rounded-t-[20px] bg-white transition-transform duration-300 ${
-          isRegisterOpen ? "translate-y-0" : "translate-y-full"
-        }`}
-        style={{
-          width: `${sheetWidth}px`,
-          transform: `translateX(-50%) translateY(${
-            isRegisterOpen ? "0" : "100%"
-          })`,
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* 시트 헤더 */}
-        <div className="h-[68.8px] border-b border-[#E2E8F0] bg-white">
-          <div className="flex h-full items-center justify-between px-5">
-            <h2 className="text-[18px] font-bold leading-[32px] text-[#111827]">
-              프로젝트 등록
-            </h2>
-
-            <button
-              type="button"
-              onClick={onClick}
-              className="flex h-6 w-6 cursor-pointer items-center justify-center"
-            >
-              <img src={closeIcon} alt="닫기" className="h-7 w-7" />
-            </button>
-          </div>
-        </div>
-
-        {/*프로젝트 등록 폼 */}
-        <form
-          onSubmit={onSubmit}
-          className="flex max-h-[calc(100vh-96px)] flex-col bg-white"
-        >
-          <div className="flex flex-col gap-[10px] overflow-y-auto px-4 py-4">
-            <FieldLabel label="프로젝트 제목" required={true} />
-            <Input name="title" placeholder="예: 2026 공모전 팀원 모집" />
-
-            <FieldLabel label="카테고리" />
-            <div className="shrink-0 overflow-x-auto px-4 py-2">
-              <div className="flex gap-2">
-                {ACTIVITY_CATEGORY.map((tag) => (
-                  <button
-                    key={tag.value}
-                    type="button"
-                    className={`shrink-0 cursor-pointer rounded-xl border px-3 py-[6px] text-[12px] font-bold ${
-                      tag.value === selectMenu
-                        ? "border-[#356AE6] bg-[#356AE6] text-white"
-                        : "border-[#E5E7EB] bg-white text-[#111827]"
-                    }`}
-                    onClick={() => setSelectMenu(tag.value)}
-                  >
-                    {tag.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <FieldLabel label="세부 카테고리" />
-            <div className="shrink-0 overflow-x-auto px-4 py-2">
-              <div className="flex gap-2">
-                {RECRUIT_CATEGORY.map((tag) => (
-                  <button
-                    key={tag.value}
-                    type="button"
-                    className={`shrink-0 cursor-pointer rounded-xl border px-3 py-[6px] text-[12px] font-bold ${
-                      tag.value === selectTagMenu
-                        ? "border-[#356AE6] bg-[#356AE6] text-white"
-                        : "border-[#E5E7EB] bg-white text-[#111827]"
-                    }`}
-                    onClick={() => setSelectTagMenu(tag.value)}
-                  >
-                    {tag.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <input type="hidden" name="activityCategory" value={selectMenu} />
-            <input type="hidden" name="recruitCategory" value={selectTagMenu} />
-            <input type="hidden" name="type" value={selectMenu} />
-            <input type="hidden" name="category" value={selectTagMenu} />
-            <FieldLabel label="프로젝트 설명" required={true} />
-            <Textarea
-              name="content"
-              placeholder="프로젝트에 대해 설명해주세요"
-            />
-            <div className="flex gap-3">
-              <div className="flex flex-col gap-[10px]">
-                <FieldLabel label="현재 인원" required={true} />
-                <Input
-                  name="applicantCount"
-                  placeholder="예: 4"
-                  type="number"
-                />
-              </div>
-
-              <div className="flex flex-col gap-[10px]">
-                <FieldLabel label="모집 인원" required={true} />
-                <Input
-                  name="totalHeadcount"
-                  placeholder="예: 4"
-                  type="number"
-                />
-              </div>
-            </div>
-
-            <FieldLabel label="필요한 툴 / 기술 스택" required={false} />
-            <Input
-              name="skills"
-              placeholder="예: React, 포토샵, 노션 (쉼표로 구분해주세요!)"
-            />
-
-            <FieldLabel label="모집 마감일" required={true} />
-            <Input name="deadline" placeholder="예: 2026/12/12" />
-
-            <FieldLabel label="나의 정보" required={false} />
-            <Input name="department" placeholder="예: 미디어기술콘텐츠학과" />
-          </div>
-
-          <div className="border-t border-[#E2E8F0] bg-white px-5 py-5">
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={onClick}
-                className="h-[45px] flex-1 cursor-pointer rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] font-medium text-[#314158]"
-              >
-                취소
-              </button>
-
-              <button
-                type="submit"
-                className="h-[45px] flex-1 cursor-pointer rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white"
-              >
-                등록하기
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
 
 //지원하기 폼
 const fields = [
@@ -553,10 +420,11 @@ function ApplySheet({
             {fields.map((field) => (
               <div key={field.id} className="flex w-full flex-col gap-2">
                 <FieldLabel label={field.title} required={field.required} />
-                {field.id === "intro" ? (
+                {/* 💡 조건부 렌더링 검증 조건 수정 완료: id가 introduction인 경우 텍스트에어리어 컴포넌트 맵핑 */}
+                {field.id === "introduction" ? (
                   <textarea
                     name={field.id}
-                    className="h-27 w-full resize-none rounded-lg border border-[#E2E8F0] bg-white px-4 py-[14px] text-[14px] focus:outline-none"
+                    className="h-28 w-full resize-none rounded-lg border border-[#E2E8F0] bg-white px-4 py-[14px] text-[14px] focus:outline-none focus:border-[#356AE6]"
                     placeholder={field.placeholder}
                   />
                 ) : (
