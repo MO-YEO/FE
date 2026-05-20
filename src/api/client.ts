@@ -4,24 +4,33 @@ const baseURL = '';
 
 export const apiClient = axios.create({
   baseURL: baseURL,
-  // 백엔드 쿠키 및 세션 공유 허용 (로그인 인증 실패 방지 방어코드)
-  withCredentials: true, 
+  withCredentials: true, // 백엔드 쿠키 및 세션 공유 허용
 });
 
 apiClient.interceptors.request.use(
   (config) => {
+    // 1. 혹시라도 Content-Type이 문자열 "undefined"로 꼬여있다면 정석대로 복구하거나 제거
+    if (config.headers['Content-Type'] === 'undefined' || !config.headers['Content-Type']) {
+      if (config.data instanceof FormData) {
+        // FormData 형식일 때는 브라우저가 알아서 바운더리를 지정하도록 헤더에서 삭제
+        delete config.headers['Content-Type'];
+      } else {
+        // 일반적인 GET/POST 요청은 application/json으로 고정
+        config.headers['Content-Type'] = 'application/json';
+      }
+    }
+
     const token = localStorage.getItem('access_token'); 
     
     if (token) {
-      // ⭕ 혹시 모를 찌꺼기 문자열을 날리고 순수 텍스트만 추출합니다.
+      // 따옴표나 양끝 공백을 깔끔하게 청소
       const cleanToken = token.replace(/^"|"$/g, '').trim();
       
-      // 만약 이미 토큰 자체에 Bearer가 붙어있다면 중복 부착 방지 처리
+      // 2. 안전하게 Authorization 헤더 세팅
       if (cleanToken.toLowerCase().startsWith('bearer ')) {
-        config.headers.set('Authorization', cleanToken);
+        config.headers['Authorization'] = cleanToken;
       } else {
-        // [정석 규격] 앞머리에 한 칸 공백을 두고 'Bearer [토큰값]' 형태로 안전하게 장착
-        config.headers.set('Authorization', `Bearer ${cleanToken}`);
+        config.headers['Authorization'] = `Bearer ${cleanToken}`;
       }
     }
     
