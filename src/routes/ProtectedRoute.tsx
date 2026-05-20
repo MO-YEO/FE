@@ -1,7 +1,7 @@
 import { lazy, type LazyExoticComponent, type ComponentType } from "react"; 
 import { PATH } from "../components/path";
 
-// 1. 라우트 객체를 위한 타입 정의 (타입 에러 방지)
+// 1. 라우트 객체를 위한 타입 정의
 interface RouteConfig {
   path: string;
   Component: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
@@ -10,7 +10,7 @@ interface RouteConfig {
 // 2. 페이지 컴포넌트 Lazy Loading
 const HomePage = lazy(() => import("../pages/home"));
 const BoardPage = lazy(() => import("../pages/board/board"));
-const BoardDetailPage = lazy(() => import("../pages/board/boardDetail")); // ✨ 추가된 부분
+const BoardDetailPage = lazy(() => import("../pages/board/boardDetail"));
 const ProjectPage = lazy(() => import("../pages/project/project"));
 const MyPage = lazy(() => import("../pages/my/my"));
 const MyPostPage = lazy(() => import("../pages/my/myPost"));
@@ -25,15 +25,11 @@ const MemberPage = lazy(() => import("../pages/member"));
 const SignupPage = lazy(() => import("../pages/signUp"));
 const InquiryPage = lazy(() => import("../pages/Inquiry"));
 
-
-// 3. 보호된 라우트 목록 구성
+// 3. 보호된 라우트 목록 구성 (이곳에서 콜백 경로는 public으로 이동하여 완전 제외되었습니다)
 export const protectedRoutes: RouteConfig[] = [
   { path: PATH.HOME, Component: HomePage },
   { path: PATH.BOARD, Component: BoardPage },
-  { 
-    path: PATH.BOARD_DETAIL, 
-    Component: BoardDetailPage 
-  },
+  { path: PATH.BOARD_DETAIL, Component: BoardDetailPage },
   { path: PATH.PROJECTS, Component: ProjectPage },
   { path: PATH.MEMBER, Component: MemberPage },
   { path: PATH.SIGNUP, Component: SignupPage },
