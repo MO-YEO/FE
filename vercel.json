@@ -7,7 +7,11 @@
       "destination": "http://3.37.55.120.nip.io:8080/api/:path*"
     },
     {
-      "source": "/:(?!api)(.*)",
+      "source": "/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/:path*/:slug*",
       "destination": "/index.html"
     }
   ]
