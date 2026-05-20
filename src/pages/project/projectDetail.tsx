@@ -35,7 +35,8 @@ const ProjectDetailPage = () => {
   });
 
   const cancelApplyMutation = useMutation({
-    mutationFn: () => recruitsApi.cancelApply(recruitId),
+    // ✨ 기존 API 명세인 cancelRecruitApplication을 호출하도록 수정!
+    mutationFn: () => recruitsApi.cancelRecruitApplication(recruitId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recruits', recruitId] });
       alert("지원이 취소되었습니다.");
@@ -62,7 +63,7 @@ const ProjectDetailPage = () => {
   const isAuthor = profile?.memberId === detail.author.memberId;
   const isClosed = detail.status === 'CLOSED';
 
-  // D-Day
+  // D-Day 계산
   let dDayStr = '';
   if (detail.deadline) {
     const diffTime = new Date(detail.deadline).getTime() - new Date().getTime();
@@ -86,7 +87,6 @@ const ProjectDetailPage = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F9FAFB] font-sans pb-[100px] max-w-[430px] mx-auto w-full relative shadow-xl">
-      {/* 헤더 */}
       <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-10 w-full">
         <div className="flex flex-col justify-center px-4 pt-4 pb-4">
           <div className="flex items-center">
@@ -105,7 +105,6 @@ const ProjectDetailPage = () => {
       </header>
 
       <main className="flex-1 w-full bg-white">
-        {/* 상단 섹션 */}
         <div className="px-5 py-6 border-b border-[#F1F5F9]">
           <div className="flex items-center justify-between mb-3">
              <span className="text-[12px] text-[#1447E6] font-bold bg-[#EFF6FF] px-2.5 py-1 rounded-md">
@@ -137,7 +136,6 @@ const ProjectDetailPage = () => {
           </div>
         </div>
 
-        {/* 요약 컨디션 */}
         <div className="px-5 py-6 border-b border-[#F1F5F9] bg-[#F8FAFC]">
           <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
@@ -161,7 +159,6 @@ const ProjectDetailPage = () => {
           </div>
         </div>
 
-        {/* 세부 내용 */}
         <div className="px-5 py-6">
           <h3 className="text-[16px] font-bold text-[#1E293B] mb-4">기술 스택 및 요구사항</h3>
           <div className="flex gap-2 flex-wrap mb-8">
@@ -192,7 +189,6 @@ const ProjectDetailPage = () => {
         </div>
       </main>
 
-      {/* 하단 지원하기 픽스 바 */}
       <div className="fixed bottom-0 w-full max-w-[430px] bg-white border-t border-[#E2E8F0] px-5 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
         {isAuthor ? (
            <button 
