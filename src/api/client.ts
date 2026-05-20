@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = 'http://3.37.55.120.nip.io:8080';
+const baseURL = 'https://3.37.55.120.nip.io:8080';
 
 export const apiClient = axios.create({
   baseURL: baseURL,
