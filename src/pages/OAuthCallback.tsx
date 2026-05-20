@@ -28,10 +28,13 @@ const OAuthCallback: React.FC = () => {
       token = token.replace(/^(Bearer\s+)+/i, '').replace(/^"|"$/g, '').trim();
       localStorage.setItem("access_token", token);
       
-      console.log("✅ 토큰 저장 완료. 테스트를 위해 가입 페이지로 이동합니다.");
+      console.log("✅ 토큰 로컬스토리지 저장 완료. 가드 인식을 위해 미세 지연 후 이동합니다.");
 
-      // 🚀 [테스트 모드] 무조건 가입 페이지로 이동
-      navigate(PATH.SIGNUP);
+      // 🚀 [해결 핵심] 토큰이 유효하게 등록될 시간을 라우터에 벌어다 줍니다 (0.15초 뒤 안전 이동)
+      setTimeout(() => {
+        navigate(PATH.SIGNUP);
+      }, 150);
+
     } else {
       console.error("❌ 토큰 없음");
       navigate(PATH.LOGIN);
