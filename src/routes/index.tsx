@@ -1,8 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
 import { publicRoutes } from "./public-routes";
 import { protectedRoutes } from "./protected-routes";
-import NotFound from "../pages/member";
 import MobileLayout from "../layouts/mobileLayout";
+import NotFoundPage from "../pages/notFound";
 
 export const router = createBrowserRouter([
   {
@@ -10,14 +10,10 @@ export const router = createBrowserRouter([
     element: <MobileLayout />,
     children: [
       ...publicRoutes,
-
-      {
-        // element: <ProtectedRoute />,
-        children: protectedRoutes,
-      },
+      ...protectedRoutes,
       {
         path: "*",
-        element: <NotFound />,
+        element: <NotFoundPage />,
       },
     ],
   },
