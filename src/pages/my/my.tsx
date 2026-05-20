@@ -58,18 +58,25 @@ export default function MyPage() {
     queryFn: membersApi.getMyProfile,
   });
 
-  // 내가 작성한 모집글 목록
   const { data: myRecruits, isLoading: isRecruitsLoading } = useQuery({
     queryKey: ["myRecruits"],
     queryFn: () => recruitsApi.getMyRecruits({ page: 0, size: 5 }),
   });
 
-  // 내가 지원한 모집글 목록
-  const { data: appliedRecruits, isLoading: isAppliedRecruitsLoading } =
-    useQuery({
-      queryKey: ["appliedRecruits"],
-      queryFn: () => recruitsApi.getAppliedRecruits({ page: 0, size: 5 }),
-    });
+  // 상단 통계 "지원한 프로젝트" 개수용
+  const { data: appliedRecruits } = useQuery({
+    queryKey: ["appliedRecruits"],
+    queryFn: () => recruitsApi.getAppliedRecruits({ page: 0, size: 5 }),
+  });
+
+  // 마이페이지 미리보기 "내가 참여한 프로젝트" 카드용
+  const {
+    data: participatingRecruits,
+    isLoading: isParticipatingRecruitsLoading,
+  } = useQuery({
+    queryKey: ["participatingRecruits"],
+    queryFn: () => recruitsApi.getParticipatingRecruits({ page: 0, size: 5 }),
+  });
 
   const { data: myPosts, isLoading: isPostsLoading } = useQuery({
     queryKey: ["myPosts"],
@@ -142,11 +149,15 @@ export default function MyPage() {
   const handleSaveProfile = async (updatedProfile: ProfileFormFromModal) => {
     const payload: UpdateMyProfileRequest = {
       nickname: updatedProfile.name,
-      profileImageUrl: profile?.profileImageUrl ?? "https://example.com/profile.png",
+      profileImageUrl:
+        profile?.profileImageUrl ?? "https://example.com/profile.png",
       role: updatedProfile.role,
       contactEmail: updatedProfile.email,
       phoneNumber: profile?.phoneNumber ?? "010-0000-0000",
-      githubUrl: editableProfile.githubUrl || profile?.githubUrl || "https://github.com/example",
+      githubUrl:
+        editableProfile.githubUrl ||
+        profile?.githubUrl ||
+        "https://github.com/example",
       intro: updatedProfile.bio,
       techStacks: updatedProfile.techStacks,
       activityCategories: profile?.activityCategories?.length
@@ -183,6 +194,21 @@ export default function MyPage() {
     if (status === "REJECTED") return "불합격";
     if (status === "CANCELED") return "지원취소";
     return status || "지원완료";
+  };
+
+  const getApprovedCount = (project: any) => {
+    return (
+      project.approvedCount ??
+      project.acceptedCount ??
+      project.currentHeadcount ??
+      project.participantCount ??
+      project.memberCount ??
+      0
+    );
+  };
+
+  const getTotalHeadcount = (project: any) => {
+    return project.totalHeadcount ?? project.recruitCount ?? 0;
   };
 
   const stats = useMemo(
@@ -261,7 +287,11 @@ export default function MyPage() {
                         </div>
 
                         <div className="mt-[8px] flex items-center gap-[8px] text-[12px] leading-[18px] text-[#94A3B8]">
-                          <img src={mailIcon} alt="" className="h-[18px] w-[18px]" />
+                          <img
+                            src={mailIcon}
+                            alt=""
+                            className="h-[18px] w-[18px]"
+                          />
                           <span className="truncate">
                             {profile?.contactEmail ||
                               profile?.email ||
@@ -352,7 +382,7 @@ export default function MyPage() {
                     로딩 중...
                   </div>
                 ) : myRecruits?.recruits?.length ? (
-                  myRecruits.recruits.map((project) => (
+                  myRecruits.recruits.map((project: any) => (
                     <article
                       key={project.recruitId}
                       className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[14px] shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
@@ -394,16 +424,9 @@ export default function MyPage() {
                             "모집글"}
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            navigate(`/projects/${project.recruitId}/applicants`)
-                          }
-                          className="text-right text-[12px] font-semibold leading-[20px] text-[#2563EB]"
-                        >
-                          {project.applicantCount}/{project.totalHeadcount} 지원자
-                          확인하기
-                        </button>
+                        <div className="text-[12px] font-semibold leading-[20px] text-[#2563EB]">
+                          {getApprovedCount(project)}/{getTotalHeadcount(project)} 참여
+                        </div>
                       </div>
 
                       <div className="mt-[8px] text-[11px] leading-[16px] text-[#94A3B8]">
@@ -438,12 +461,12 @@ export default function MyPage() {
               </div>
 
               <div className="flex flex-col gap-[12px]">
-                {isAppliedRecruitsLoading ? (
+                {isParticipatingRecruitsLoading ? (
                   <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[14px] text-center text-[13px] text-[#94A3B8] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
                     로딩 중...
                   </div>
-                ) : appliedRecruits?.recruits?.length ? (
-                  appliedRecruits.recruits.map((project) => (
+                ) : participatingRecruits?.recruits?.length ? (
+                  participatingRecruits.recruits.map((project: any) => (
                     <article
                       key={project.recruitId}
                       className="rounded-[14px] border border-[#E2E8F0] bg-white px-[20px] py-[18px] shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
@@ -477,19 +500,15 @@ export default function MyPage() {
                         </span>
                       </div>
 
-                      <div className="mt-[14px] flex items-end justify-between gap-[12px]">
+                      <div className="mt-[14px] flex items-center justify-between gap-[12px]">
                         <div className="text-[12px] leading-[20px] text-[#64748B]">
                           지원 상태:{" "}
                           {getApplicationStatusText(project.applicationStatus)}
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/projects/${project.recruitId}`)}
-                          className="text-[12px] font-semibold leading-[20px] text-[#2563EB]"
-                        >
-                          상세보기 &gt;
-                        </button>
+                        <div className="text-[12px] font-semibold leading-[20px] text-[#2563EB]">
+                          {getApprovedCount(project)}/{getTotalHeadcount(project)} 참여
+                        </div>
                       </div>
 
                       <div className="mt-[8px] text-[11px] leading-[16px] text-[#94A3B8]">
@@ -499,7 +518,7 @@ export default function MyPage() {
                   ))
                 ) : (
                   <div className="rounded-[14px] border border-[#E2E8F0] bg-white px-[16px] py-[14px] text-center text-[13px] text-[#94A3B8] shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
-                    지원한 모집글이 없습니다.
+                    참여한 프로젝트가 없습니다.
                   </div>
                 )}
               </div>
@@ -529,7 +548,7 @@ export default function MyPage() {
                     로딩 중...
                   </div>
                 ) : myPosts?.posts?.length ? (
-                  myPosts.posts.map((post) => (
+                  myPosts.posts.map((post: any) => (
                     <div
                       key={post.postId}
                       onClick={() => navigate(`/board/${post.postId}`)}

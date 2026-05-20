@@ -1,4 +1,8 @@
+import { useEffect, useRef, useState } from "react";
 import bookmarkIcon from "../assets/bookmark.svg";
+import { recruitsApi } from "../api/recruits";
+import RegisterForm from "./registerForm";
+import BottomSheet from "./bottomSheet";
 import { RECRUIT_CATEGORY } from "../constants/category";
 
 type ProjectCardProps = {
@@ -9,9 +13,15 @@ type ProjectCardProps = {
   recruitCount: number;
   techStacks: string[];
   writer: string;
+  applicationStatus?: string;
   department: string;
   buttonLabel: string;
   onButtonClick?: () => void;
+  currentCount?: number;
+  totalCount?: number;
+  author?: boolean;
+  recruitId?: number;
+  selectedProject?: any;
 };
 
 export default function ProjectCard({
@@ -22,64 +32,247 @@ export default function ProjectCard({
   recruitCount,
   techStacks,
   writer,
+  applicationStatus,
   department,
   buttonLabel,
   onButtonClick,
+  currentCount,
+  totalCount,
+  author = false,
+  selectedProject,
 }: ProjectCardProps) {
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [sheetWidth, setSheetWidth] = useState<number>(430);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
   const categoryLabel =
     RECRUIT_CATEGORY.find((item) => item.value === category)?.label || category;
-  return (
-    <div className="bg-white flex flex-col gap-3 p-4 rounded-[14px] shadow-sm border border-[#D0D0D0]">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <button className="text-[10px] text-[#2F6BFF] font-bold bg-[#EFF6FF] px-2 py-1 rounded-lg">
-            {categoryLabel}
-          </button>
 
-          <button className="text-[10px] text-[#EF4400] font-bold bg-[#FEF2F2] px-2 py-1 rounded-lg">
+  const recruitCountText =
+    typeof currentCount === "number" && typeof totalCount === "number"
+      ? `${currentCount}/${totalCount}`
+      : `${recruitCount}명`;
+
+  const getApplicationStatusLabel = (status?: string) => {
+    if (status === "APPLIED") return "지원 완료";
+    if (status === "ACCEPTED") return "승인 완료";
+    if (status === "REJECTED") return "거절";
+    if (status === "CANCELED") return "지원 취소";
+    return status;
+  };
+
+  const getApplicationStatusClassName = (status?: string) => {
+    if (status === "ACCEPTED") {
+      return "bg-[#EFF6FF] text-[#2563EB]";
+    }
+
+    if (status === "REJECTED") {
+      return "bg-[#FEF2F2] text-[#DC2626]";
+    }
+
+    if (status === "CANCELED") {
+      return "bg-[#F1F5F9] text-[#64748B]";
+    }
+
+    return "bg-[#F0FDF4] text-[#16A34A]";
+  };
+
+  const handleOpenSheet = () => {
+    if (wrapperRef.current) {
+      setSheetWidth(wrapperRef.current.offsetWidth);
+    }
+
+    setIsEditOpen(true);
+  };
+
+  const handleCloseSheet = () => {
+    setIsEditOpen(false);
+  };
+
+  const handleDeleteProject = async () => {
+    if (!selectedProject?.recruitId) {
+      alert("삭제할 프로젝트 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    try {
+      if (!window.confirm("삭제하시겠습니까?")) return;
+
+      await recruitsApi.deleteRecruit(selectedProject.recruitId);
+      window.location.reload();
+    } catch (err) {
+      console.log("프로젝트 삭제 실패", err);
+      alert("프로젝트 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!selectedProject?.recruitId) {
+      alert("수정할 프로젝트 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+
+    const finalData = {
+      ...data,
+      skills:
+        (formData.get("skills") as string)
+          ?.split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean) || [],
+    };
+
+    try {
+      await recruitsApi.patchRecruit(selectedProject.recruitId, finalData);
+      handleCloseSheet();
+      window.location.reload();
+    } catch (error) {
+      console.log("프로젝트 수정 실패", error);
+      alert("프로젝트 수정에 실패했습니다.");
+    }
+  };
+
+  useEffect(() => {
+    const updateSheetWidth = () => {
+      if (wrapperRef.current) {
+        setSheetWidth(wrapperRef.current.offsetWidth);
+      }
+    };
+
+    updateSheetWidth();
+    window.addEventListener("resize", updateSheetWidth);
+
+    return () => {
+      window.removeEventListener("resize", updateSheetWidth);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = isEditOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isEditOpen]);
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="flex flex-col gap-3 rounded-[14px] border border-[#D0D0D0] bg-white p-4 shadow-sm"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-lg bg-[#EFF6FF] px-2 py-1 text-[10px] font-bold text-[#2F6BFF]">
+            {categoryLabel}
+          </span>
+
+          <span className="rounded-lg bg-[#FEF2F2] px-2 py-1 text-[10px] font-bold text-[#EF4400]">
             {dDay}
-          </button>
+          </span>
         </div>
 
-        <button type="button" className="shrink-0">
-          <img src={bookmarkIcon} alt="스크랩" className="h-[15px] w-[15px]" />
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          {applicationStatus ? (
+            <span
+              className={`rounded-[8px] px-2 py-1 text-[10px] font-bold leading-4 ${getApplicationStatusClassName(
+                applicationStatus,
+              )}`}
+            >
+              {getApplicationStatusLabel(applicationStatus)}
+            </span>
+          ) : null}
+
+          {author ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="text-[12px] text-[#64748B] cursor-pointer"
+                onClick={handleOpenSheet}
+              >
+                수정
+              </button>
+
+              <button
+                type="button"
+                className="text-[12px] text-[#EF4444] cursor-pointer"
+                onClick={handleDeleteProject}
+              >
+                삭제
+              </button>
+            </div>
+          ) : null}
+
+          {!applicationStatus && !author ? (
+            <button type="button" className="shrink-0">
+              <img
+                src={bookmarkIcon}
+                alt="스크랩"
+                className="h-[15px] w-[15px]"
+              />
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      <p className="font-bold text-[16px] text-[#111827] leading-[24px]">
+      <p className="text-[16px] font-bold leading-[24px] text-[#111827]">
         {title}
       </p>
 
-      <p className="text-[14px] text-[#374151] leading-[22px]">{description}</p>
+      <p className="text-[14px] leading-[22px] text-[#374151]">{description}</p>
 
       <div>
-        <p className="text-[12px] text-[#4B5563]">모집인원: {recruitCount}명</p>
+        <p className="text-[12px] text-[#4B5563]">
+          모집인원: {recruitCountText}
+        </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {techStacks.map((stack) => (
-          <button
-            key={stack}
-            className="text-[10px] text-[#0069A8] bg-[#F0F9FF] px-2 py-1 rounded-lg"
-          >
-            {stack}
-          </button>
-        ))}
-      </div>
+      {techStacks.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {techStacks.map((stack) => (
+            <span
+              key={stack}
+              className="rounded-lg bg-[#F0F9FF] px-2 py-1 text-[10px] text-[#0069A8]"
+            >
+              {stack}
+            </span>
+          ))}
+        </div>
+      )}
 
-      <div className="border-t border-[#D0D0D0] flex justify-between items-center pt-3">
-        <div className="text-[#9D9D9D] text-[12px] leading-[18px]">
+      <div className="flex items-center justify-between border-t border-[#D0D0D0] pt-3">
+        <div className="text-[12px] leading-[18px] text-[#9D9D9D]">
           <p>{writer}</p>
           <p>{department}</p>
         </div>
 
         <button
-          className="bg-[#2F6BFF] rounded-lg px-4 py-2 text-[12px] text-white font-bold leading-none shadow-sm cursor-pointer"
+          type="button"
+          className="cursor-pointer rounded-lg bg-[#2F6BFF] px-4 py-2 text-[12px] font-bold leading-none text-white shadow-sm"
           onClick={onButtonClick}
         >
           {buttonLabel}
         </button>
       </div>
+
+      {selectedProject ? (
+        <BottomSheet
+          open={isEditOpen}
+          title="프로젝트 수정"
+          sheetWidth={sheetWidth}
+          onClose={handleCloseSheet}
+        >
+          <RegisterForm
+            project={selectedProject}
+            submitText="수정하기"
+            onSubmit={handleSubmit}
+            onCancel={handleCloseSheet}
+          />
+        </BottomSheet>
+      ) : null}
     </div>
   );
 }

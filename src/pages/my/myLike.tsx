@@ -71,7 +71,7 @@ export default function MyLike() {
 
         {!isLoading && !isError && likedPosts?.posts?.length ? (
           <div className="flex flex-col gap-[12px]">
-            {likedPosts.posts.map((post) => (
+            {likedPosts.posts.map((post: any) => (
               <div
                 key={post.postId}
                 onClick={() => navigate(`/board/${post.postId}`)}
@@ -84,6 +84,7 @@ export default function MyLike() {
                   time={formatDate(post.createdAt)}
                   likeCount={post.likeCount}
                   commentCount={post.commentCount}
+                  isBookmarked={post.bookmarkedByMe ?? false}
                 />
               </div>
             ))}

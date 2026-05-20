@@ -70,7 +70,7 @@ export default function MyPostsPage() {
 
         {!isLoading && !isError && myPosts?.posts?.length ? (
           <div className="flex flex-col gap-[12px]">
-            {myPosts.posts.map((post) => (
+            {myPosts.posts.map((post: any) => (
               <div
                 key={post.postId}
                 onClick={() => navigate(`/board/${post.postId}`)}
@@ -83,6 +83,7 @@ export default function MyPostsPage() {
                   time={formatDate(post.createdAt)}
                   likeCount={post.likeCount}
                   commentCount={post.commentCount}
+                  isBookmarked={post.bookmarkedByMe ?? false}
                 />
               </div>
             ))}
