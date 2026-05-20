@@ -1,9 +1,8 @@
 import Button from '../components/button';
-import { useNavigate } from 'react-router-dom';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 const Login: React.FC = () => {
-  const navigate = useNavigate();
+  
   
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#F8FAFC] font-sans overflow-x-hidden p-6">
