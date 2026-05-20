@@ -104,6 +104,19 @@ export interface Author {
   departmentName: string;
 }
 
+export type Pageable = {
+  page?: number;
+  size?: number;
+  sort?: string;
+};
+
+export type GetRecruits = Pageable & {
+  activityCategory?: string;
+  recruitCategory?: string;
+  status?: string;
+  keyword?: string;
+};
+
 export interface RecruitSummary {
   recruitId: number;
   type: string;
@@ -140,7 +153,6 @@ export interface MyRecruitSummary {
   activityCategory: string;
   recruitCategory: string;
 }
-
 
 export interface MyRecruitListResponse {
   recruits: MyRecruitSummary[];

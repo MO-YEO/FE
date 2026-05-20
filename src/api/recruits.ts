@@ -4,18 +4,12 @@ import type {
   RecruitDetail,
   MyRecruitListResponse,
   AppliedRecruitListResponse,
+  GetRecruits,
 } from "../types";
 
 export const recruitsApi = {
   // 프로젝트 목록 필터링 조회
-  getRecruits: async (params?: {
-    activityCategory?: string;
-    recruitCategory?: string;
-    status?: string;
-    keyword?: string;
-    page?: number;
-    size?: number;
-  }) => {
+  getRecruits: async (params?: GetRecruits) => {
     const { data } = await apiClient.get<RecruitListResponse>("/api/recruits", {
       params,
     });
@@ -90,14 +84,15 @@ export const recruitsApi = {
     return data;
   },
 
-  getParticipatingRecruits: async (params?: { page?: number; size?: number }) => {
-    const { data } = await apiClient.get(
-      "/api/recruits/participating",
-      { params },
-    );
+  getParticipatingRecruits: async (params?: {
+    page?: number;
+    size?: number;
+  }) => {
+    const { data } = await apiClient.get("/api/recruits/participating", {
+      params,
+    });
     return data;
   },
-
 
   // 프로젝트 지원하기 (ApplySheet 연동)
   apply: async (recruitId: number, payload?: any) => {

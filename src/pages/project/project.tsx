@@ -24,7 +24,6 @@ const ProjectPage = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isApplyOpen, setIsApplyOpen] = useState(false);
 
-
   const [search, setSearch] = useState("");
   const debouncedValue = useDebounce(search, 300);
 
@@ -81,14 +80,11 @@ const ProjectPage = () => {
       };
       console.log("최종 등록 데이터:", finalData);
       try {
- 
         await recruitsApi.createRecruit(finalData);
         handleCloseSheet("register");
         // 등록 후 최신 목록으로 갱신하기 위해 강제 상태 변경 트리거 가능
       } catch (error) {
         console.log("모집글 등록 실패", error);
-      } finally {
-
       }
     }
 
@@ -111,7 +107,6 @@ const ProjectPage = () => {
         } catch (error) {
           console.log("프로젝트 지원 실패", error);
           alert("지원에 실패했습니다. 입력 양식을 확인해주세요.");
-        } finally {
         }
       }
     }
@@ -150,7 +145,6 @@ const ProjectPage = () => {
         setMyId(data);
       } catch (error) {
         console.log("아이디조회실패", error);
-      } finally {
       }
     })();
   }, []);
@@ -164,11 +158,11 @@ const ProjectPage = () => {
           activityCategory: selectMenu == "ALL" ? "" : selectMenu,
           recruitCategory: selectTagMenu == "ALL" ? "" : selectTagMenu,
           keyword: debouncedValue,
+          sort: "createdAt,desc",
         });
         setData(data.recruits);
       } catch (error) {
         console.log("프로젝트 불러오기 실패", error);
-      } finally {
       }
     })();
   }, [selectMenu, selectTagMenu, debouncedValue]);
@@ -197,10 +191,7 @@ const ProjectPage = () => {
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => handleOpenSheet("register")}
-            >
+            <button type="button" onClick={() => handleOpenSheet("register")}>
               <img src={plusIcon} alt="추가" className="h-[24px] w-[24px]" />
             </button>
           </div>
