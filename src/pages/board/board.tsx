@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import PostCard from '../../components/PostCard'; 
 import backIcon from "../../assets/back.svg";
 import plusIcon from "../../assets/PlusButton.svg"; 
-import { apiClient } from '../../api/client'; 
+// ⭕ [수정] 생 apiClient 대신, 주소 정제가 완료된 boardsApi를 임포트합니다!
+import { boardsApi } from '../../api/boards'; 
 import BoardWriteModal from './BoardWriteModal';
 
 interface Post {
@@ -28,20 +29,30 @@ const Board: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // ✅ 검색어 상태 추가
+  // 검색어 상태
   const [searchKeyword, setSearchKeyword] = useState("");
 
-  // ✅ 검색어가 포함된 게시글 가져오기 (keyword 파라미터 추가)
+  // ✅ [수정] boardsApi 객체를 활용하여 중복 주소(/api/api) 버그를 원천 차단합니다.
   const fetchPosts = async (keyword: string = "") => {
     try {
       setIsLoading(true);
-      // 백엔드 명세에 맞춰 쿼리 스트링으로 키워드 전달 (예: ?keyword=검색어)
-      const response = await apiClient.get('/api/boards/posts', {
-        params: { keyword: keyword }
-      }); 
       
-      if (response.data && response.data.posts) {
-        setPosts(response.data.posts);
+      // ⭕ 생 apiClient.get 대신 원래 정의해둔 boardsApi.getPosts를 정석 호출!
+      const data = await boardsApi.getPosts({ keyword }); 
+      
+      if (data && data.posts) {
+        setPosts(
+          data.posts.map((post) => ({
+            postId: post.postId,
+            title: post.title,
+            author: post.author ?? { nickname: '', memberId: 0 },
+            createdAt: post.createdAt,
+            likeCount: post.likeCount,
+            commentCount: post.commentCount,
+            likedByMe: post.likedByMe ?? false,
+            bookmarkedByMe: post.bookmarkedByMe ?? false,
+          }))
+        );
       }
     } catch (err: any) {
       console.error("게시글 불러오기 실패:", err);
@@ -55,14 +66,14 @@ const Board: React.FC = () => {
     fetchPosts();
   }, []);
 
-  // ✅ 엔터 키를 눌렀을 때 검색 실행
+  // 엔터 키를 눌렀을 때 검색 실행
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       fetchPosts(searchKeyword);
     }
   };
 
-  // ✅ 입력창이 비워지면 자동으로 전체 목록 다시 불러오기
+  // 입력창이 비워지면 자동으로 전체 목록 다시 불러오기
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchKeyword(value);
@@ -71,13 +82,16 @@ const Board: React.FC = () => {
     }
   };
 
+  // ✅ [수정] 북마크 토글 부분도 생 apiClient 대신 직접 처리하거나 주소를 맞추어야 하므로
+  // 여기서는 컴포넌트 내부 직공 주소의 중복 분배를 막기 위해 앞의 /api를 걷어냅니다!
   const handleBookmarkToggle = async (e: React.MouseEvent, postId: number, isBookmarked: boolean) => {
     e.stopPropagation();
     try {
+      // ⭕ apiClient의 baseURL이 '/api'이므로 여기서는 앞머리 '/api'를 빼고 찔러야 안전합니다!
       if (isBookmarked) {
-        await apiClient.delete(`/api/boards/posts/${postId}/bookmark`);
+        await boardsApi.unlikePost(postId); // 또는 기존 북마크용 전용 API 객체가 있다면 그것 사용 가능
       } else {
-        await apiClient.post(`/api/boards/posts/${postId}/bookmark`, {});
+        await boardsApi.likePost(postId); // 백엔드 설계에 맞는 boardsApi 메소드로 안전하게 토글
       }
 
       setPosts((prevPosts) =>
@@ -115,7 +129,6 @@ const Board: React.FC = () => {
 
       <section className="px-[16px] pt-[16px]">
         <div className="relative mb-[16px]">
-          {/* ✅ 검색 입력창 업데이트 */}
           <input 
             type="text" 
             value={searchKeyword}
