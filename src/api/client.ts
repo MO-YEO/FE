@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// ⭕ 브라우저의 Mixed Content(HTTPS -> HTTP) 차단을 우회하기 위해 Vercel 프록시 루트를 타게 만듭니다.
 const baseURL = '/api';
 
 export const apiClient = axios.create({
@@ -10,7 +9,6 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    // Content-Type 자동 처리
     if (
       config.headers['Content-Type'] === 'undefined' ||
       !config.headers['Content-Type']
@@ -25,7 +23,6 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('access_token');
 
     if (token) {
-      // 토큰 찌꺼기 정리
       const cleanToken = token
         .replace(/^Bearer\s+/i, '')
         .replace(/^"|"$/g, '')
@@ -34,7 +31,6 @@ apiClient.interceptors.request.use(
 
       console.log('🧹 정리된 순수 토큰 문자열:', cleanToken);
 
-      // ✅ 스프링 시큐리티에서 인지할 수 있도록 Bearer 한 칸 띄우고 토큰 주입
       config.headers['Authorization'] = `Bearer ${cleanToken}`;
 
       console.log(

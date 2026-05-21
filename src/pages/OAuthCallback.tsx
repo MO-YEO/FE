@@ -14,15 +14,12 @@ const OAuthCallback: React.FC = () => {
     console.log("🌍 search:", window.location.search);
     console.log("🌍 hash:", window.location.hash);
 
-    // query parameter 읽기
     const searchParams = new URLSearchParams(window.location.search);
 
-    // hash parameter 읽기 (#token=...)
     const hashParams = new URLSearchParams(
       window.location.hash.replace("#", "")
     );
 
-    // 디버깅용 전체 출력
     for (const [key, value] of searchParams.entries()) {
       console.log("📦 search 파라미터:", key, value);
     }
@@ -31,7 +28,6 @@ const OAuthCallback: React.FC = () => {
       console.log("📦 hash 파라미터:", key, value);
     }
 
-    // 에러 처리
     const error =
       searchParams.get("error") || hashParams.get("error");
 
@@ -41,7 +37,6 @@ const OAuthCallback: React.FC = () => {
       return;
     }
 
-    // 토큰 추출 (query + hash 둘 다 대응)
     let token =
       searchParams.get("access_token") ||
       searchParams.get("token") ||
@@ -53,14 +48,12 @@ const OAuthCallback: React.FC = () => {
     console.log("🎟️ 추출된 원본 토큰:", token);
 
     if (token) {
-      // 토큰 정리
       token = token
         .replace(/^Bearer\s+/i, "")
         .replace(/^"|"$/g, "")
         .replace(/[\r\n\t]/g, "")
         .trim();
 
-      // 저장
       localStorage.setItem("access_token", token);
 
       console.log(
@@ -68,7 +61,6 @@ const OAuthCallback: React.FC = () => {
         localStorage.getItem("access_token")
       );
 
-      // ⭕ [서순 교정] 미가입 임시 회원이므로 홈이 아니라 추가 정보 입력 창으로 강제 소환합니다!
       setTimeout(() => {
         navigate(PATH.SIGNUP);
       }, 200);

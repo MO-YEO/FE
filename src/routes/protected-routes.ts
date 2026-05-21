@@ -1,7 +1,6 @@
 import { lazy, type LazyExoticComponent, type ComponentType } from "react"; 
 import { PATH } from "../components/path";
 
-// 1. 라우트 객체를 위한 타입 정의
 interface RouteConfig {
   path: string;
   Component: LazyExoticComponent<ComponentType<any>> | ComponentType<any>;
@@ -23,8 +22,6 @@ const MyParticipatedProjectsPage = lazy(() => import("../pages/my/myParticipated
 const MemberPage = lazy(() => import("../pages/member"));
 const InquiryPage = lazy(() => import("../pages/Inquiry"));
 
-// 3. 보호된 라우트 목록 구성
-// ⚠️ publicRoutes 및 index.tsx와 중복되는 SignupPage, NotFoundPage를 완전 제외했습니다!
 export const protectedRoutes: RouteConfig[] = [
   { path: PATH.HOME, Component: HomePage },
   { path: PATH.BOARD, Component: BoardPage },
@@ -33,7 +30,6 @@ export const protectedRoutes: RouteConfig[] = [
   { path: PATH.MEMBER, Component: MemberPage },
   { path: PATH.INQUIRY, Component: InquiryPage },
   
-  // 마이페이지 관련
   { path: PATH.MY, Component: MyPage },
   { path: PATH.MY_POSTS, Component: MyPostPage },
   { path: PATH.MY_LIKE, Component: MyLikePage },

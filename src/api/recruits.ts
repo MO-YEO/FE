@@ -16,7 +16,6 @@ export const recruitsApi = {
     page?: number;
     size?: number;
   }) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits
     const { data } = await apiClient.get<RecruitListResponse>("/recruits", {
       params,
     });
@@ -25,7 +24,6 @@ export const recruitsApi = {
 
   // 신규 프로젝트 등록
   createRecruit: async (payload: any) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits
     const { data } = await apiClient.post<RecruitDetail>(
       "/recruits",
       payload,
@@ -35,19 +33,16 @@ export const recruitsApi = {
 
   // 프로젝트 삭제
   deleteRecruit: async (recruitId: number) => {
-    // ⭕ api/ 제거 및 슬래시 정돈 -> 최종 주소: /api/recruits/${recruitId}
     await apiClient.delete(`/recruits/${recruitId}`);
   },
 
   // 프로젝트 수정
   patchRecruit: async (recruitId: number, payload: any) => {
-    // ⭕ api/ 제거 및 슬래시 정돈 -> 최종 주소: /api/recruits/${recruitId}
     await apiClient.patch(`/recruits/${recruitId}`, payload);
   },
 
   // 프로젝트 상세 조회
   getRecruitDetail: async (recruitId: number) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits/${recruitId}
     const { data } = await apiClient.get<RecruitDetail>(
       `/recruits/${recruitId}`,
     );
@@ -56,7 +51,6 @@ export const recruitsApi = {
 
   // 내가 모집 중인 글 조회
   getMyRecruits: async (params?: { page?: number; size?: number }) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits/me
     const { data } = await apiClient.get<MyRecruitListResponse>(
       "/recruits/me",
       { params },
@@ -66,7 +60,6 @@ export const recruitsApi = {
 
   // 내가 지원 완료한 프로젝트 조회 (통계용)
   getAppliedRecruits: async (params?: { page?: number; size?: number }) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits/applied
     const { data } = await apiClient.get<AppliedRecruitListResponse>(
       "/recruits/applied",
       { params },
@@ -79,7 +72,6 @@ export const recruitsApi = {
     recruitId: number,
     params?: { page?: number; size?: number },
   ) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits/${recruitId}/applications
     const { data } = await apiClient.get(
       `/recruits/${recruitId}/applications`,
       { params },
@@ -93,7 +85,6 @@ export const recruitsApi = {
     applicationId: number,
     payload: { status: "ACCEPTED" | "REJECTED" },
   ) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits/${recruitId}/applications/${applicationId}
     const { data } = await apiClient.patch(
       `/recruits/${recruitId}/applications/${applicationId}`,
       payload,
@@ -103,7 +94,6 @@ export const recruitsApi = {
 
   // 내가 참여 중인 프로젝트 조회
   getParticipatingRecruits: async (params?: { page?: number; size?: number }) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits/participating
     const { data } = await apiClient.get(
       "/recruits/participating",
       { params },
@@ -113,7 +103,6 @@ export const recruitsApi = {
 
   // 프로젝트 지원하기 (ApplySheet 연동)
   apply: async (recruitId: number, payload?: any) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits/${recruitId}/apply
     const { data } = await apiClient.post(
       `/recruits/${recruitId}/apply`,
       payload,
@@ -123,7 +112,6 @@ export const recruitsApi = {
 
   // 지원 취소하기
   cancelRecruitApplication: async (recruitId: number) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/recruits/${recruitId}/apply
     const { data } = await apiClient.delete(`/recruits/${recruitId}/apply`);
     return data;
   },

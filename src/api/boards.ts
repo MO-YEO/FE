@@ -28,28 +28,24 @@ export const boardsApi = {
 
   // 상세 조회
   getPostDetail: async (postId: number) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/boards/posts/${postId}
     const { data } = await apiClient.get<any>(`/boards/posts/${postId}`);
     return data;
   },
 
   // 수정 (PUT 규격에 맞춰 매핑 가능하도록 설정)
   updatePost: async (postId: number, payload: { title: string; content: string; images?: any[] }) => {
-    // ⭕ /api 제거 및 기존 명세에 맞춰 put/patch 유연하게 대응
     const { data } = await apiClient.put(`/boards/posts/${postId}`, payload);
     return data;
   },
 
   // 삭제
   deletePost: async (postId: number) => {
-    // ⭕ /api 제거
     const { data } = await apiClient.delete(`/boards/posts/${postId}`);
     return data;
   },
 
   // 💬 댓글 목록 조회
   getComments: async (postId: number) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/boards/posts/${postId}/comments
     const { data } = await apiClient.get<any>(`/boards/posts/${postId}/comments`);
     return data;
   },
@@ -62,19 +58,16 @@ export const boardsApi = {
 
   // 💬 댓글 수정
   updateComment: async (commentId: number, payload: { content: string }) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/boards/comments/${commentId}
     const { data } = await apiClient.put(`/boards/comments/${commentId}`, payload);
     return data;
   },
 
   // 💬 댓글 삭제
   deleteComment: async (commentId: number) => {
-    // ⭕ /api 제거 -> 최종 주소: /api/boards/comments/${commentId}
     const { data } = await apiClient.delete(`/boards/comments/${commentId}`);
     return data;
   },
 
-  // ❤️ 좋아요 및 취소 (상세페이지 명세 post/delete /like 규격 저격)
   likePost: async (postId: number) => {
     const { data } = await apiClient.post(`/boards/posts/${postId}/like`);
     return data;
