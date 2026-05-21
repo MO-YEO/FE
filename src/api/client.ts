@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-// ❌ 기존: const baseURL = 'http://3.37.55.120.nip.io:8080';
-// ⭕ 변경: 브라우저 Mixed Content 보안을 우회하기 위해 vercel.json 프록시 경로를 타도록 설정합니다!
-const baseURL = '/api'; 
+// ⭕ 브라우저의 Mixed Content(HTTPS -> HTTP) 차단을 우회하기 위해 Vercel 프록시 루트를 타게 만듭니다.
+const baseURL = '/api';
 
 export const apiClient = axios.create({
   baseURL,
@@ -35,7 +34,7 @@ apiClient.interceptors.request.use(
 
       console.log('🧹 정리된 순수 토큰 문자열:', cleanToken);
 
-      // ✅ [스프링 시큐리티 표준 규격] 토큰 앞에 'Bearer '가 없다면 강제로 안전하게 붙여서 쏩니다!
+      // ✅ 스프링 시큐리티에서 인지할 수 있도록 Bearer 한 칸 띄우고 토큰 주입
       config.headers['Authorization'] = `Bearer ${cleanToken}`;
 
       console.log(
