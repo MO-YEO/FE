@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// ⭕ [핵심 원인 해결] 비어있던 주소창에 진짜 AWS 백엔드 서버 주소를 확실하게 박아 넣습니다!
-const baseURL = 'http://3.37.55.120.nip.io:8080';
+// ❌ 기존: const baseURL = 'http://3.37.55.120.nip.io:8080';
+// ⭕ 변경: 브라우저 Mixed Content 보안을 우회하기 위해 vercel.json 프록시 경로를 타도록 설정합니다!
+const baseURL = '/api'; 
 
 export const apiClient = axios.create({
   baseURL,
