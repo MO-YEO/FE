@@ -68,9 +68,9 @@ const OAuthCallback: React.FC = () => {
         localStorage.getItem("access_token")
       );
 
-      // 홈 이동
+      // ⭕ [서순 교정] 미가입 임시 회원이므로 홈이 아니라 추가 정보 입력 창으로 강제 소환합니다!
       setTimeout(() => {
-        navigate(PATH.HOME);
+        navigate(PATH.SIGNUP);
       }, 200);
     } else {
       console.error("❌ 토큰 추출 실패");
