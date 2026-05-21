@@ -13,7 +13,6 @@ import useDebounce from "../../hooks/useDebounce";
 import { meApi } from "../../api/me";
 import BottomSheet from "../../components/bottomSheet";
 import RegisterForm from "../../components/registerForm";
-import { apiClient } from "../../api/client"; // 임포트 확인
 
 const ProjectPage = () => {
   const [selectMenu, setSelectMenu] = useState("ALL");
@@ -25,6 +24,7 @@ const ProjectPage = () => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isApplyOpen, setIsApplyOpen] = useState(false);
 
+
   const [search, setSearch] = useState("");
   const debouncedValue = useDebounce(search, 300);
 
@@ -33,6 +33,7 @@ const ProjectPage = () => {
   );
 
   const [data, setData] = useState<RecruitSummary[]>();
+
   const [myId, setMyId] = useState<number | null>(null);
 
   const handleOpenSheet = (type: "register" | "apply", id?: number) => {
@@ -80,10 +81,14 @@ const ProjectPage = () => {
       };
       console.log("최종 등록 데이터:", finalData);
       try {
+ 
         await recruitsApi.createRecruit(finalData);
         handleCloseSheet("register");
+        // 등록 후 최신 목록으로 갱신하기 위해 강제 상태 변경 트리거 가능
       } catch (error) {
         console.log("모집글 등록 실패", error);
+      } finally {
+
       }
     }
 
@@ -91,6 +96,7 @@ const ProjectPage = () => {
     if (type === "apply") {
       const finalData = {
         ...data,
+        // ✨ 스웨거 명세에 맞춰 requiredSkills를 배열이 아닌 단순 string 구조로 그대로 전송
         requiredSkills: formData.get("requiredSkills") as string,
       };
 
@@ -105,6 +111,7 @@ const ProjectPage = () => {
         } catch (error) {
           console.log("프로젝트 지원 실패", error);
           alert("지원에 실패했습니다. 입력 양식을 확인해주세요.");
+        } finally {
         }
       }
     }
@@ -135,26 +142,24 @@ const ProjectPage = () => {
     };
   }, [isRegisterOpen, isApplyOpen]);
 
-  // 나의 아이디 조회 api
+  //나의 아이디 조회 api
   useEffect(() => {
     (async () => {
       try {
-        // ⭕ 생 apiClient 주소 매칭 수정 시 '/api/me' -> '/me' 로 가야 한다면 meApi 내부를 확인해야 하지만, 
-        // 여기서는 meApi 객체를 썼으므로 만약 에러가 난다면 src/api/me.ts 내부의 주소를 '/me'로 고쳐주셔야 합니다!
         const data = await meApi.getMe();
         setMyId(data);
       } catch (error) {
         console.log("아이디조회실패", error);
+      } finally {
       }
     })();
   }, []);
 
-  // 프로젝트 검색/조회 api
+  //프로젝트 검색/조회 api
   useEffect(() => {
     (async () => {
       try {
-        // ⭕ 만약 recruitsApi 안에서 생 apiClient를 쓰고 있다면 그 파일 내부 주소의 /api도 떼야 하지만,
-        // 여기 컴포넌트 내부에서 직접 쏘는 구조가 생기면 무조건 /api를 빼야 합니다.
+        console.log(selectMenu, selectTagMenu);
         const data = await recruitsApi.getRecruits({
           activityCategory: selectMenu == "ALL" ? "" : selectMenu,
           recruitCategory: selectTagMenu == "ALL" ? "" : selectTagMenu,
@@ -163,12 +168,14 @@ const ProjectPage = () => {
         setData(data.recruits);
       } catch (error) {
         console.log("프로젝트 불러오기 실패", error);
+      } finally {
       }
     })();
   }, [selectMenu, selectTagMenu, debouncedValue]);
 
   return (
     <div className="flex min-h-full flex-col" ref={wrapperRef}>
+      {/* 헤더 */}
       <header className="border-b border-[#E5E7EB] bg-white">
         <div className="flex flex-col justify-center gap-4 px-[16px] pt-[40px] pb-[20px]">
           <div className="flex items-center">
@@ -177,7 +184,11 @@ const ProjectPage = () => {
               className="flex h-[24px] w-[24px] items-center justify-center cursor-pointer"
               onClick={() => navigate(-1)}
             >
-              <img src={backIcon} alt="뒤로가기" className="h-[24px] w-[24px]" />
+              <img
+                src={backIcon}
+                alt="뒤로가기"
+                className="h-[24px] w-[24px]"
+              />
             </button>
 
             <div className="flex flex-1 justify-center">
@@ -186,7 +197,10 @@ const ProjectPage = () => {
               </span>
             </div>
 
-            <button type="button" onClick={() => handleOpenSheet("register")}>
+            <button
+              type="button"
+              onClick={() => handleOpenSheet("register")}
+            >
               <img src={plusIcon} alt="추가" className="h-[24px] w-[24px]" />
             </button>
           </div>
@@ -201,18 +215,24 @@ const ProjectPage = () => {
       </header>
 
       <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
-        {[{ label: "전체", value: "ALL" }, ...ACTIVITY_CATEGORY].map((menuItem) => (
-          <button
-            key={menuItem.value}
-            type="button"
-            className={`cursor-pointer text-[14px] font-bold ${
-              menuItem.value === selectMenu ? "text-[#356AE6]" : "text-[#4A5565]"
-            }`}
-            onClick={() => setSelectMenu(menuItem.value)}
-          >
-            {menuItem.label}
-          </button>
-        ))}
+        {[{ label: "전체", value: "ALL" }, ...ACTIVITY_CATEGORY].map(
+          (menuItem) => {
+            return (
+              <button
+                key={menuItem.value}
+                type="button"
+                className={`cursor-pointer text-[14px] font-bold ${
+                  menuItem.value === selectMenu
+                    ? "text-[#356AE6]"
+                    : "text-[#4A5565]"
+                }`}
+                onClick={() => setSelectMenu(menuItem.value)}
+              >
+                {menuItem.label}
+              </button>
+            );
+          },
+        )}
       </div>
 
       <div className="flex gap-2 border-b border-[#E5E7EB] bg-[#F9FAFB] px-4 py-2">
@@ -221,7 +241,9 @@ const ProjectPage = () => {
             key={tag.value}
             type="button"
             className={`cursor-pointer rounded-xl border px-3 py-[6px] text-[12px] font-bold ${
-              tag.value === selectTagMenu ? "border-[#356AE6] bg-[#356AE6] text-white" : "border-[#E5E7EB] bg-white text-[#111827]"
+              tag.value === selectTagMenu
+                ? "border-[#356AE6] bg-[#356AE6] text-white"
+                : "border-[#E5E7EB] bg-white text-[#111827]"
             }`}
             onClick={() => setSelectTagMenu(tag.value)}
           >
@@ -230,30 +252,30 @@ const ProjectPage = () => {
         ))}
       </div>
 
-      <div className="flex-1 bg-[#F9FAFB] px-5 py-4 pb-20">
+      <div className="flex-1 bg-[#F9FAFB] px-5 py-4 pb-20 ">
         {!data || data.length === 0 ? (
           <div className="flex justify-center text-gray-400 text-sm mt-8">
             아직 등록된 프로젝트가 없어요
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {data.map((item) => {
-              const Author = myId === item.author.memberId;
+            {data.map((data) => {
+              const Author = myId === data.author.memberId;
               return (
                 <ProjectCard
-                  key={item.recruitId}
-                  category={item.category}
-                  dDay={item.deadline}
-                  title={item.title}
-                  description={item.content}
-                  recruitCount={item.totalHeadcount}
-                  techStacks={item.skills}
-                  writer={item.author.nickname}
-                  department={item.department}
+                  key={data.recruitId}
+                  category={data.category}
+                  dDay={data.deadline}
+                  title={data.title}
+                  description={data.content}
+                  recruitCount={data.totalHeadcount}
+                  techStacks={data.skills}
+                  writer={data.author.nickname}
+                  department={data.department}
                   buttonLabel="지원하기"
-                  onButtonClick={() => handleOpenSheet("apply", item.recruitId)}
+                  onButtonClick={() => handleOpenSheet("apply", data.recruitId)}
                   author={Author}
-                  selectedProject={item}
+                  selectedProject={data}
                 />
               );
             })}
@@ -261,6 +283,7 @@ const ProjectPage = () => {
         )}
       </div>
 
+      {/* 프로젝트 등록 바텀시트 */}
       <BottomSheet
         open={isRegisterOpen}
         title="프로젝트 등록"
@@ -273,6 +296,7 @@ const ProjectPage = () => {
         />
       </BottomSheet>
 
+      {/* 지원하기 바텀시트 */}
       <ApplySheet
         onClick={() => handleCloseSheet("apply")}
         onSubmit={(e) => handleSubmit(e, "apply")}
@@ -285,15 +309,50 @@ const ProjectPage = () => {
 
 export default ProjectPage;
 
-// 지원하기 폼 구조 및 ApplySheet 하단부는 원본 유지
+//지원하기 폼
 const fields = [
-  { id: "name", title: "이름", placeholder: "김가톨릭", required: true },
-  { id: "role", title: "역할/포지션", placeholder: "예: 디자이너, 팀원, 발표자", required: true },
-  { id: "introduction", title: "자기소개", placeholder: "자기소개를 입력하세요", required: true },
-  { id: "requiredSkills", title: "사용 가능한 툴 / 기술스택", placeholder: "예: React, 포토샵, 노션 (쉼표로 구분해주세요!)", required: true },
-  { id: "phoneNumber", title: "연락처", placeholder: "010-0000-0000", required: true },
-  { id: "contactEmail", title: "이메일", placeholder: "example@email.com", required: false },
-  { id: "githubUrl", title: "깃허브 주소", placeholder: "https://github.com/username", required: false },
+  {
+    id: "name",
+    title: "이름",
+    placeholder: "김가톨릭",
+    required: true,
+  },
+  {
+    id: "role",
+    title: "역할/포지션",
+    placeholder: "예: 디자이너, 팀원, 발표자",
+    required: true,
+  },
+  {
+    id: "introduction",
+    title: "자기소개",
+    placeholder: "자기소개를 입력하세요",
+    required: true,
+  },
+  {
+    id: "requiredSkills",
+    title: "사용 가능한 툴 / 기술스택",
+    placeholder: "예: React, 포토샵, 노션 (쉼표로 구분해주세요!)",
+    required: true,
+  },
+  {
+    id: "phoneNumber",
+    title: "연락처",
+    placeholder: "010-0000-0000",
+    required: true,
+  },
+  {
+    id: "contactEmail",
+    title: "이메일",
+    placeholder: "example@email.com",
+    required: false,
+  },
+  {
+    id: "githubUrl",
+    title: "깃허브 주소",
+    placeholder: "https://github.com/username",
+    required: false,
+  },
 ];
 
 function ApplySheet({
@@ -310,7 +369,9 @@ function ApplySheet({
   return (
     <div
       className={`fixed inset-0 z-50 transition-all duration-300 ${
-        isApplyOpen ? "pointer-events-auto bg-black/50" : "pointer-events-none bg-black/0"
+        isApplyOpen
+          ? "pointer-events-auto bg-black/50"
+          : "pointer-events-none bg-black/0"
       }`}
       onClick={onClick}
     >
@@ -320,24 +381,39 @@ function ApplySheet({
         }`}
         style={{
           width: `${sheetWidth}px`,
-          transform: `translateX(-50%) translateY(${isApplyOpen ? "0" : "100%"})`,
+          transform: `translateX(-50%) translateY(${
+            isApplyOpen ? "0" : "100%"
+          })`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* 시트 헤더 */}
         <div className="h-[68.8px] border-b border-[#E2E8F0] bg-white">
           <div className="flex h-full items-center justify-between px-5">
-            <h2 className="text-[18px] font-bold leading-[32px] text-[#111827]">지원하기</h2>
-            <button type="button" onClick={onClick} className="flex h-6 w-6 cursor-pointer items-center justify-center">
+            <h2 className="text-[18px] font-bold leading-[32px] text-[#111827]">
+              지원하기
+            </h2>
+
+            <button
+              type="button"
+              onClick={onClick}
+              className="flex h-6 w-6 cursor-pointer items-center justify-center"
+            >
               <img src={closeIcon} alt="닫기" className="h-7 w-7" />
             </button>
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="flex max-h-[calc(100vh-96px)] flex-col overflow-y-auto bg-white">
+        {/* 지원하기 폼 */}
+        <form
+          onSubmit={onSubmit}
+          className="flex max-h-[calc(100vh-96px)] flex-col overflow-y-auto bg-white"
+        >
           <div className="flex flex-col gap-[10px] overflow-y-auto px-4 py-4">
             {fields.map((field) => (
               <div key={field.id} className="flex w-full flex-col gap-2">
                 <FieldLabel label={field.title} required={field.required} />
+                {/* 💡 조건부 렌더링 검증 조건 수정 완료: id가 introduction인 경우 텍스트에어리어 컴포넌트 맵핑 */}
                 {field.id === "introduction" ? (
                   <textarea
                     name={field.id}
@@ -351,6 +427,7 @@ function ApplySheet({
             ))}
           </div>
 
+          {/* 하단 버튼 */}
           <div className="border-t border-[#E2E8F0] bg-white px-5 py-5">
             <div className="flex gap-3">
               <button
@@ -360,6 +437,7 @@ function ApplySheet({
               >
                 취소
               </button>
+
               <button
                 type="submit"
                 className="h-[45px] flex-1 cursor-pointer rounded-[10px] bg-gradient-to-r from-[#00A6F4] to-[#2B7FFF] text-[14px] font-semibold text-white"

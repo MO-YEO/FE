@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { apiClient } from '../../api/client';
+// ⭕ 생 apiClient 대신 주소가 안전하게 정제된 boardsApi를 임포트합니다.
+import { boardsApi } from '../../api/boards';
 import backIcon from "../../assets/back.svg";
 import likeIcon from "../../assets/like.svg";
 
@@ -19,6 +20,7 @@ interface Comment {
 const BoardDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const postId = Number(id);
 
   const [post, setPost] = useState<PostDetail | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -32,33 +34,41 @@ const BoardDetailPage: React.FC = () => {
   const [editContent, setEditContent] = useState('');
 
   const fetchData = async () => {
-    if (!id) return;
+    if (!postId) return;
     try {
       setIsLoading(true);
-      const [pRes, cRes] = await Promise.all([
-        apiClient.get(`/api/boards/posts/${id}`),
-        apiClient.get(`/api/boards/posts/${id}/comments`)
+      
+      // ⭕ 생 apiClient 대신 정제된 boardsApi 메소드를 사용하여 가로챕니다!
+      const [pData, cData] = await Promise.all([
+        boardsApi.getPostDetail(postId),
+        boardsApi.getComments(postId)
       ]);
-      const pData = pRes.data?.result || pRes.data;
-      const cData = cRes.data?.result || cRes.data || [];
 
-      setPost({ ...pData, liked: pData.liked ?? pData.likedByMe ?? false });
-      setComments(Array.isArray(cData) ? cData : []);
-      setEditTitle(pData.title);
-      setEditContent(pData.content);
-    } catch (err) { console.error(err); }
-    finally { setIsLoading(false); }
+      const postResult = pData?.result || pData;
+      const commentResult = cData?.result || cData || [];
+
+      setPost({ ...postResult, liked: postResult.liked ?? postResult.likedByMe ?? false });
+      setComments(Array.isArray(commentResult) ? commentResult : []);
+      setEditTitle(postResult.title);
+      setEditContent(postResult.content);
+    } catch (err) { 
+      console.error("상세 데이터 로드 실패:", err); 
+    } finally { 
+      setIsLoading(false); 
+    }
   };
 
   useEffect(() => { fetchData(); }, [id]);
 
   const handleLikeToggle = async () => {
-    if (!post) return;
+    if (!post || !postId) return;
     try {
+      // ⭕ 정제된 좋이요 API 매칭
       const res = post.liked 
-        ? await apiClient.delete(`/api/boards/posts/${id}/like`)
-        : await apiClient.post(`/api/boards/posts/${id}/like`);
-      const result = res.data?.result || res.data;
+        ? await boardsApi.unlikePost(postId)
+        : await boardsApi.likePost(postId);
+      
+      const result = res?.result || res;
       setPost(prev => prev ? { 
         ...prev, 
         liked: result.liked ?? result.likedByMe ?? !prev.liked,
@@ -68,13 +78,14 @@ const BoardDetailPage: React.FC = () => {
   };
 
   const handlePostAction = async (type: 'delete' | 'update') => {
+    if (!postId) return;
     try {
       if (type === 'delete') {
         if (!window.confirm("삭제하시겠습니까?")) return;
-        await apiClient.delete(`/api/boards/posts/${id}`);
+        await boardsApi.deletePost(postId);
         navigate('/board');
       } else {
-        await apiClient.put(`/api/boards/posts/${id}`, { title: editTitle, content: editContent, images: [] });
+        await boardsApi.updatePost(postId, { title: editTitle, content: editContent, images: [] });
         setIsEditModalOpen(false);
         fetchData();
       }
@@ -84,15 +95,17 @@ const BoardDetailPage: React.FC = () => {
   const handleCommentAction = async (type: 'add' | 'edit' | 'delete', cId?: number) => {
     try {
       if (type === 'add') {
-        if (!commentContent.trim()) return;
-        await apiClient.post(`/api/boards/posts/${id}/comments`, { content: commentContent });
+        if (!commentContent.trim() || !postId) return;
+        await boardsApi.createComment(postId, { content: commentContent });
         setCommentContent('');
       } else if (type === 'edit') {
-        await apiClient.put(`/api/boards/comments/${cId}`, { content: editCommentValue });
+        if (!cId) return;
+        await boardsApi.updateComment(cId, { content: editCommentValue });
         setEditingCommentId(null);
       } else {
+        if (!cId) return;
         if (!window.confirm("삭제하시겠습니까?")) return;
-        await apiClient.delete(`/api/boards/comments/${cId}`);
+        await boardsApi.deleteComment(cId);
       }
       fetchData();
     } catch (err) { alert("실패"); }
@@ -113,11 +126,10 @@ const BoardDetailPage: React.FC = () => {
           </button>
         </header>
 
-        {/* 본문 섹션 */}
-        <section className="px-[20px] pt-6 text-left">
+        <section className="px-[20px] pt-[6px] text-left">
           <div className="bg-white rounded-[24px] p-7 shadow-sm border border-[#F1F5F9] mb-4">
             <div className="flex items-center justify-between mb-6">
-              <UserChip nickname={post.author.nickname} date={post.createdAt} />
+              <UserChip nickname={post.author?.nickname} date={post.createdAt} />
               {post.mine && (
                 <div className="flex gap-2">
                   <button onClick={() => setIsEditModalOpen(true)} className="text-[13px] font-bold text-[#64748B]">수정</button>
@@ -139,7 +151,6 @@ const BoardDetailPage: React.FC = () => {
           </div>
         </section>
 
-        {/* ✅ MobileLayout의 Footer와 동일한 규격 적용 */}
         <footer className="fixed bottom-0 left-1/2 -translate-x-1/2 flex h-16 w-full max-w-[400px] border-t border-black bg-[#FFFFFF] items-center px-[20px] z-50">
           <div className="flex w-full items-center gap-3">
             <input
@@ -169,9 +180,9 @@ const BoardDetailPage: React.FC = () => {
 /** --- Helper Components --- */
 const UserChip = ({ nickname, date }: any) => (
   <div className="flex items-center gap-3">
-    <div className="w-10 h-10 rounded-full bg-[#DBEAFE] flex items-center justify-center font-bold text-[#2563EB]">{nickname?.[0]}</div>
+    <div className="w-10 h-10 rounded-full bg-[#DBEAFE] flex items-center justify-center font-bold text-[#2563EB]">{nickname?.[0] ?? "U"}</div>
     <div className="flex flex-col text-left">
-      <span className="font-bold text-[15px]">{nickname}</span>
+      <span className="font-bold text-[15px]">{nickname ?? "익명 유저"}</span>
       <span className="text-[12px] text-[#94A3B8]">{new Date(date).toLocaleDateString()}</span>
     </div>
   </div>
@@ -181,7 +192,7 @@ const CommentItem = ({ comment, isEditing, editValue, setEditValue, onEditStart,
   <div className="py-5 border-b border-[#F1F5F9] last:border-0 text-left">
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center gap-2">
-        <span className={`font-bold text-[14px] ${comment.mine ? 'text-[#2563EB]' : 'text-[#334155]'}`}>{comment.author?.nickname}</span>
+        <span className={`font-bold text-[14px] ${comment.mine ? 'text-[#2563EB]' : 'text-[#334155]'}`}>{comment.author?.nickname ?? "익명 댓글러"}</span>
         <span className="text-[11px] text-[#94A3B8]">{new Date(comment.createdAt).toLocaleDateString()}</span>
       </div>
       {comment.mine && !isEditing && (
