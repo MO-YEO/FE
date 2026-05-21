@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const baseURL = '';
+// ⭕ [핵심 원인 해결] 비어있던 주소창에 진짜 AWS 백엔드 서버 주소를 확실하게 박아 넣습니다!
+const baseURL = 'http://3.37.55.120.nip.io:8080';
 
 export const apiClient = axios.create({
   baseURL,
@@ -24,20 +25,20 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('access_token');
 
     if (token) {
-      // 토큰 정리
+      // 토큰 찌꺼기 정리
       const cleanToken = token
         .replace(/^Bearer\s+/i, '')
         .replace(/^"|"$/g, '')
         .replace(/[\r\n\t]/g, '')
         .trim();
 
-      console.log('🧹 정리된 토큰:', cleanToken);
+      console.log('🧹 정리된 순수 토큰 문자열:', cleanToken);
 
-      // ✅ Bearer 제거 버전 테스트
-      config.headers['Authorization'] = cleanToken;
+      // ✅ [스프링 시큐리티 표준 규격] 토큰 앞에 'Bearer '가 없다면 강제로 안전하게 붙여서 쏩니다!
+      config.headers['Authorization'] = `Bearer ${cleanToken}`;
 
       console.log(
-        '🚀 실제 Authorization 헤더:',
+        '🚀 실제 백엔드로 날아가는 Authorization 헤더:',
         config.headers['Authorization']
       );
     }
