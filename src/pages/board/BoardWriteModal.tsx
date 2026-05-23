@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { boardsApi } from '../../api/boards';
+import { apiClient } from '../../api/client';
 import closeIcon from "../../assets/close.svg";
 
 interface ModalProps {
@@ -22,9 +22,15 @@ const BoardWriteModal: React.FC<ModalProps> = ({ isOpen, onClose, onRefresh }) =
 
     try {
       setIsSubmitting(true);
-
-      await boardsApi.createComment(0, { title: title, content: content } as any); 
-  
+      
+      // ✅ API 명세서에 따른 수정 ()
+      // 1. URL 변경: /api/boards/posts
+      // 2. Body 데이터: title, content 외에 images 배열 추가
+      await apiClient.post('/boards/posts', {
+        title: title,
+        content: content,
+        images: [] // 명세서상의 images[] 요청 대응
+      });
 
       alert("게시글이 성공적으로 등록되었습니다!");
       setTitle(''); 
@@ -33,6 +39,7 @@ const BoardWriteModal: React.FC<ModalProps> = ({ isOpen, onClose, onRefresh }) =
       onClose();   
     } catch (err: any) {
       console.error("등록 실패:", err);
+      // 백엔드 에러 메시지가 있다면 출력, 없으면 기본 메시지
       const errorMessage = err.response?.data?.message || "등록 중 오류가 발생했습니다.";
       alert(errorMessage);
     } finally {
