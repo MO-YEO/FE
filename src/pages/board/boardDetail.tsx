@@ -4,7 +4,6 @@ import { boardsApi } from '../../api/boards';
 import backIcon from "../../assets/back.svg";
 import likeIcon from "../../assets/like.svg";
 
-/** --- Types --- */
 interface PostDetail {
   postId: number; title: string; content: string; createdAt: string;
   author: { nickname: string }; likeCount: number; commentCount: number;
@@ -36,8 +35,6 @@ const BoardDetailPage: React.FC = () => {
     if (!postId) return;
     try {
       setIsLoading(true);
-      
-      // ⭕ 생 apiClient 대신 정제된 boardsApi 메소드를 사용하여 가로챕니다!
       const [pData, cData] = await Promise.all([
         boardsApi.getPostDetail(postId),
         boardsApi.getComments(postId)
@@ -62,7 +59,6 @@ const BoardDetailPage: React.FC = () => {
   const handleLikeToggle = async () => {
     if (!post || !postId) return;
     try {
-      // ⭕ 정제된 좋이요 API 매칭
       const res = post.liked 
         ? await boardsApi.unlikePost(postId)
         : await boardsApi.likePost(postId);
@@ -176,7 +172,6 @@ const BoardDetailPage: React.FC = () => {
   );
 };
 
-/** --- Helper Components --- */
 const UserChip = ({ nickname, date }: any) => (
   <div className="flex items-center gap-3">
     <div className="w-10 h-10 rounded-full bg-[#DBEAFE] flex items-center justify-center font-bold text-[#2563EB]">{nickname?.[0] ?? "U"}</div>

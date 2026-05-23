@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import PostCard from '../../components/PostCard'; 
 import backIcon from "../../assets/back.svg";
 import plusIcon from "../../assets/PlusButton.svg"; 
-// ⭕ [수정] 생 apiClient 대신, 주소 정제가 완료된 boardsApi를 임포트합니다!
 import { boardsApi } from '../../api/boards'; 
 import BoardWriteModal from './BoardWriteModal';
 
