@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-// ⭕ 생 apiClient 대신 주소가 안전하게 정제된 boardsApi를 임포트합니다.
 import { boardsApi } from '../../api/boards';
 import backIcon from "../../assets/back.svg";
 import likeIcon from "../../assets/like.svg";

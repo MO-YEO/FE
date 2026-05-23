@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiClient } from '../../api/client';
+import { boardsApi } from '../../api/boards';
 import closeIcon from "../../assets/close.svg";
 
 interface ModalProps {
@@ -22,12 +22,9 @@ const BoardWriteModal: React.FC<ModalProps> = ({ isOpen, onClose, onRefresh }) =
 
     try {
       setIsSubmitting(true);
-      
-      await apiClient.post('/api/boards/posts', {
-        title: title,
-        content: content,
-        images: [] 
-      });
+
+      await boardsApi.createComment(0, { title: title, content: content } as any); 
+  
 
       alert("게시글이 성공적으로 등록되었습니다!");
       setTitle(''); 
