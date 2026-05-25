@@ -180,9 +180,8 @@ export interface RecruitListResponse {
   pageInfo: PageInfo;
 }
 
-export interface RecruitDetail extends RecruitSummary {
-  content: string;
-  contactUrl: string;
+export interface RecruitDetail {
+  recruits: RecruitSummary;
 }
 
 export interface RecruitApplicant {
