@@ -29,14 +29,9 @@ apiClient.interceptors.request.use(
         .replace(/[\r\n\t]/g, '')
         .trim();
 
-      console.log('🧹 정리된 순수 토큰 문자열:', cleanToken);
 
       config.headers['Authorization'] = `Bearer ${cleanToken}`;
 
-      console.log(
-        '🚀 실제 백엔드로 날아가는 Authorization 헤더:',
-        config.headers['Authorization']
-      );
     }
 
     return config;
