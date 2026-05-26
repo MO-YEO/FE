@@ -216,6 +216,16 @@ export interface RecruitApplicationsResponse {
   pageInfo: PageInfo;
 }
 
+export interface ApplyRequest {
+  name: string;
+  role: string;
+  introduction: string;
+  requiredSkills: string;
+  phoneNumber: string;
+  contactEmail: string;
+  githubUrl: string;
+}
+
 // ------------------------
 // Board Types
 // ------------------------
