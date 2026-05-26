@@ -27,16 +27,11 @@ const Board: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // 검색어 상태
   const [searchKeyword, setSearchKeyword] = useState("");
 
-  // ✅ [수정] boardsApi 객체를 활용하여 중복 주소(/api/api) 버그를 원천 차단합니다.
   const fetchPosts = async (keyword: string = "") => {
     try {
       setIsLoading(true);
-      
-      // ⭕ 생 apiClient.get 대신 원래 정의해둔 boardsApi.getPosts를 정석 호출!
       const data = await boardsApi.getPosts({ keyword }); 
       
       if (data && data.posts) {
@@ -65,14 +60,12 @@ const Board: React.FC = () => {
     fetchPosts();
   }, []);
 
-  // 엔터 키를 눌렀을 때 검색 실행
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       fetchPosts(searchKeyword);
     }
   };
 
-  // 입력창이 비워지면 자동으로 전체 목록 다시 불러오기
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchKeyword(value);
@@ -81,16 +74,14 @@ const Board: React.FC = () => {
     }
   };
 
-  // ✅ [수정] 북마크 토글 부분도 생 apiClient 대신 직접 처리하거나 주소를 맞추어야 하므로
-  // 여기서는 컴포넌트 내부 직공 주소의 중복 분배를 막기 위해 앞의 /api를 걷어냅니다!
   const handleBookmarkToggle = async (e: React.MouseEvent, postId: number, isBookmarked: boolean) => {
     e.stopPropagation();
     try {
-      // ⭕ apiClient의 baseURL이 '/api'이므로 여기서는 앞머리 '/api'를 빼고 찔러야 안전합니다!
+      // ⭕ [버그 완벽 수정] 게시글 삭제 함수를 걷어내고, 진짜 북마크 전용 API를 찌르도록 변경했습니다!
       if (isBookmarked) {
-        await boardsApi.unlikePost(postId); // 또는 기존 북마크용 전용 API 객체가 있다면 그것 사용 가능
+        await boardsApi.unbookmarkPost(postId); 
       } else {
-        await boardsApi.likePost(postId); // 백엔드 설계에 맞는 boardsApi 메소드로 안전하게 토글
+        await boardsApi.bookmarkPost(postId); 
       }
 
       setPosts((prevPosts) =>

@@ -32,7 +32,7 @@ export const boardsApi = {
     return data;
   },
 
-  // 수정 (PUT 규격에 맞춰 매핑 가능하도록 설정)
+  // 수정
   updatePost: async (postId: number, payload: { title: string; content: string; images?: any[] }) => {
     const { data } = await apiClient.put(`/boards/posts/${postId}`, payload);
     return data;
@@ -68,12 +68,32 @@ export const boardsApi = {
     return data;
   },
 
+  // ❤️ 좋아요 및 취소
   likePost: async (postId: number) => {
     const { data } = await apiClient.post(`/boards/posts/${postId}/like`);
     return data;
   },
   unlikePost: async (postId: number) => {
     const { data } = await apiClient.delete(`/boards/posts/${postId}/like`);
+    return data;
+  },
+
+  // ✨ 신규 게시글 작성
+  createPost: async (payload: { title: string; content: string; images?: any[] }) => {
+    const { data } = await apiClient.post('/boards/posts', {
+      title: payload.title,
+      content: payload.content,
+      images: payload.images ?? []
+    });
+    return data;
+  },
+
+  bookmarkPost: async (postId: number) => {
+    const { data } = await apiClient.post(`/boards/posts/${postId}/bookmark`);
+    return data;
+  },
+  unbookmarkPost: async (postId: number) => {
+    const { data } = await apiClient.delete(`/boards/posts/${postId}/bookmark`);
     return data;
   }
 };
