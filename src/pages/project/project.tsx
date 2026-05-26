@@ -290,8 +290,8 @@ const ProjectPage = () => {
 
       {/* 지원하기 바텀시트 */}
       <BottomSheet
-        open={isRegisterOpen}
-        title="프로젝트 등록"
+        open={isApplyOpen}
+        title="지원하기"
         sheetWidth={sheetWidth}
         onClose={() => handleCloseSheet("apply")}
       >
