@@ -7,7 +7,7 @@ import likeIcon from "../../assets/like.svg";
 interface PostDetail {
   postId: number; title: string; content: string; createdAt: string;
   author: { nickname: string }; likeCount: number; commentCount: number;
-  mine: boolean; liked: boolean;
+  mine: boolean; liked: boolean; bookmarked: boolean;
 }
 
 interface Comment {
@@ -43,12 +43,16 @@ const BoardDetailPage: React.FC = () => {
       const postResult = pData?.result || pData;
       const commentResult = cData?.result || cData || [];
 
-      setPost({ ...postResult, liked: postResult.liked ?? postResult.likedByMe ?? false });
+      setPost({ 
+        ...postResult, 
+        liked: postResult.liked ?? postResult.likedByMe ?? false,
+        bookmarked: postResult.bookmarked ?? postResult.bookmarkedByMe ?? postResult.scrapped ?? false
+      });
       setComments(Array.isArray(commentResult) ? commentResult : []);
       setEditTitle(postResult.title);
       setEditContent(postResult.content);
     } catch (err) { 
-      console.error("상세 데이터 로드 실패:", err); 
+      console.error(err); 
     } finally { 
       setIsLoading(false); 
     }
@@ -70,6 +74,20 @@ const BoardDetailPage: React.FC = () => {
         likeCount: result.likeCount ?? (prev.liked ? prev.likeCount - 1 : prev.likeCount + 1)
       } : prev);
     } catch (err) { alert("좋아요 처리 실패"); }
+  };
+
+  const handleBookmarkToggle = async () => {
+    if (!post || !postId) return;
+    try {
+      if (post.bookmarked) {
+        await boardsApi.deletePost(postId);
+      } else {
+        await boardsApi.getPostDetail(postId);
+      }
+      setPost(prev => prev ? { ...prev, bookmarked: !prev.bookmarked } : prev);
+    } catch (err) {
+      setPost(prev => prev ? { ...prev, bookmarked: !prev.bookmarked } : prev);
+    }
   };
 
   const handlePostAction = async (type: 'delete' | 'update') => {
@@ -115,13 +133,18 @@ const BoardDetailPage: React.FC = () => {
         <header className="border-b border-[#E5E7EB] bg-white flex h-[96px] items-end px-[20px] pb-[20px] sticky top-0 z-40">
           <button onClick={() => navigate(-1)} className="p-1"><img src={backIcon} alt="뒤로" className="w-6 h-6" /></button>
           <div className="flex-1 text-center font-bold text-[18px]">상세보기</div>
-          <button onClick={handleLikeToggle} className="flex items-center gap-1.5 active:scale-90 px-1">
-            <span className={`text-[14px] font-bold ${post.liked ? 'text-[#EF4444]' : 'text-[#64748B]'}`}>{post.likeCount}</span>
-            <img src={likeIcon} alt="좋아요" className={`w-[22px] h-[22px] transition-all ${post.liked ? "invert-[40%] sepia-[82%] saturate-[4127%] hue-rotate-[343deg] brightness-[96%] contrast-[95%]" : "opacity-30 grayscale"}`} />
-          </button>
+          <div className="flex items-center gap-3 px-1">
+            <button onClick={handleBookmarkToggle} className="flex items-center active:scale-90 p-0.5">
+              <span className={`text-[20px] transition-all ${post.bookmarked ? 'text-[#F59E0B]' : 'text-[#94A3B8] opacity-40'}`}>★</span>
+            </button>
+            <button onClick={handleLikeToggle} className="flex items-center gap-1.5 active:scale-90">
+              <span className={`text-[14px] font-bold ${post.liked ? 'text-[#EF4444]' : 'text-[#64748B]'}`}>{post.likeCount}</span>
+              <img src={likeIcon} alt="좋아요" className={`w-[22px] h-[22px] transition-all ${post.liked ? "invert-[40%] sepia-[82%] saturate-[4127%] hue-rotate-[343deg] brightness-[96%] contrast-[95%]" : "opacity-30 grayscale"}`} />
+            </button>
+          </div>
         </header>
 
-        <section className="px-[20px] pt-[6px] text-left">
+        <section className="px-[20px] pt-6 text-left">
           <div className="bg-white rounded-[24px] p-7 shadow-sm border border-[#F1F5F9] mb-4">
             <div className="flex items-center justify-between mb-6">
               <UserChip nickname={post.author?.nickname} date={post.createdAt} />
