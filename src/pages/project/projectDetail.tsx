@@ -30,7 +30,7 @@ const ProjectDetailPage = () => {
         console.log("프로젝트 불러오기 실패", error);
       }
     })();
-  });
+  }, [recruitId]);
 
   useEffect(() => {
     const updateSheetWidth = () => {

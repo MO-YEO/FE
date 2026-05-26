@@ -124,6 +124,8 @@ export default function ProjectCard({
 
     const finalData = {
       ...data,
+      applicantCount: Number(data.applicantCount),
+      totalHeadcount: Number(data.totalHeadcount),
       skills:
         (formData.get("skills") as string)
           ?.split(",")

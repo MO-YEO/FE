@@ -26,10 +26,11 @@ export const useRecruitActions = () => {
     try {
       if (bookmarkedByMe) {
         await recruitsApi.cancelBookmark(recruitId);
+        alert("북마크가 취소되었습니다.");
       } else {
         await recruitsApi.bookmark(recruitId);
+        alert("북마크가 완료되었습니다.");
       }
-      alert("북마크 완료!");
     } catch (error) {
       console.error("북마크 실패", error);
       alert("북마크에 실패했습니다.");
