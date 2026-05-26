@@ -11,7 +11,6 @@ import { boardsApi } from "../api/boards";
 import { membersApi } from "../api/member";
 import { aiRecommendApi } from "../api/aiRecommend";
 import type { AIRecommendation } from "../api/aiRecommend";
-
 import Member from "../assets/footer/member.svg?react";
 import HomeBoard from "../assets/homeBoard.svg?react";
 import Time from "../assets/time.svg?react";
