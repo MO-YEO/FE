@@ -4,18 +4,13 @@ import type {
   RecruitDetail,
   MyRecruitListResponse,
   AppliedRecruitListResponse,
+  GetRecruits,
+  ApplyRequest,
 } from "../types";
 
 export const recruitsApi = {
   // 프로젝트 목록 필터링 조회
-  getRecruits: async (params?: {
-    activityCategory?: string;
-    recruitCategory?: string;
-    status?: string;
-    keyword?: string;
-    page?: number;
-    size?: number;
-  }) => {
+  getRecruits: async (params?: GetRecruits) => {
     const { data } = await apiClient.get<RecruitListResponse>("/api/recruits", {
       params,
     });
@@ -90,26 +85,42 @@ export const recruitsApi = {
     return data;
   },
 
-  getParticipatingRecruits: async (params?: { page?: number; size?: number }) => {
-    const { data } = await apiClient.get(
-      "/api/recruits/participating",
-      { params },
-    );
+  getParticipatingRecruits: async (params?: {
+    page?: number;
+    size?: number;
+  }) => {
+    const { data } = await apiClient.get("/api/recruits/participating", {
+      params,
+    });
     return data;
   },
 
-
   // 프로젝트 지원하기 (ApplySheet 연동)
-  apply: async (recruitId: number, payload?: any) => {
+  apply: async (recruitId: number, payload?: ApplyRequest) => {
     const { data } = await apiClient.post(
       `/api/recruits/${recruitId}/apply`,
       payload,
     );
     return data;
   },
+
   // 지원 취소하기
   cancelRecruitApplication: async (recruitId: number) => {
     const { data } = await apiClient.delete(`/api/recruits/${recruitId}/apply`);
+    return data;
+  },
+
+  //프로젝트 북마크
+  bookmark: async (recruitId: number) => {
+    const { data } = await apiClient.post(
+      `/api/recruits/${recruitId}/bookmark`,
+    );
+    return data;
+  },
+  cancelBookmark: async (recruitId: number) => {
+    const { data } = await apiClient.delete(
+      `/api/recruits/${recruitId}/bookmark`,
+    );
     return data;
   },
 };
