@@ -105,7 +105,7 @@ const Home: React.FC = () => {
       </header>
 
       <section className="grid grid-cols-2 gap-3 px-5 pt-[30px] text-white">
-        <button onClick={() => navigate("/members")} className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all">
+        <button onClick={() => navigate("/member")} className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all">
           <Member className="size-7" />
           <span className="font-bold text-[14px] mt-2">팀원 찾기</span>
         </button>
