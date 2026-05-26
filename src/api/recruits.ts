@@ -5,6 +5,7 @@ import type {
   MyRecruitListResponse,
   AppliedRecruitListResponse,
   GetRecruits,
+  ApplyRequest,
 } from "../types";
 
 export const recruitsApi = {
@@ -95,16 +96,31 @@ export const recruitsApi = {
   },
 
   // 프로젝트 지원하기 (ApplySheet 연동)
-  apply: async (recruitId: number, payload?: any) => {
+  apply: async (recruitId: number, payload?: ApplyRequest) => {
     const { data } = await apiClient.post(
       `/api/recruits/${recruitId}/apply`,
       payload,
     );
     return data;
   },
+
   // 지원 취소하기
   cancelRecruitApplication: async (recruitId: number) => {
     const { data } = await apiClient.delete(`/api/recruits/${recruitId}/apply`);
+    return data;
+  },
+
+  //프로젝트 북마크
+  bookmark: async (recruitId: number) => {
+    const { data } = await apiClient.post(
+      `/api/recruits/${recruitId}/bookmark`,
+    );
+    return data;
+  },
+  cancelBookmark: async (recruitId: number) => {
+    const { data } = await apiClient.delete(
+      `/api/recruits/${recruitId}/bookmark`,
+    );
     return data;
   },
 };
