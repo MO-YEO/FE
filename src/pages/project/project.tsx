@@ -56,7 +56,7 @@ const ProjectPage = () => {
     }
   };
 
-  const { handleApply } = useRecruitActions();
+  const { handleApply, handleBookmark } = useRecruitActions();
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
@@ -104,7 +104,7 @@ const ProjectPage = () => {
       await handleApply(selectedRecruitId, finalData, () => {
         handleCloseSheet("apply");
         setSelectedRecruitId(null);
-        alert("성공적으로 프로젝트에 지원되었습니다! 🎉");
+        alert("성공적으로 프로젝트에 지원되었습니다!");
       });
     }
   };
@@ -264,6 +264,10 @@ const ProjectPage = () => {
                   onButtonClick={() => handleOpenSheet("apply", data.recruitId)}
                   author={Author}
                   selectedProject={data}
+                  isBookmarked={data.bookmarkedByMe}
+                  onBookmarkClick={() =>
+                    handleBookmark(data.recruitId, data.bookmarkedByMe)
+                  }
                 />
               );
             })}

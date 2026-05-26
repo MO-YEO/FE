@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import bookmarkIcon from "../assets/bookmark.svg";
+import bookmarkActiveIcon from "../assets/bookmark.svg";
 import { recruitsApi } from "../api/recruits";
 import RegisterForm from "./registerForm";
 import BottomSheet from "./bottomSheet";
@@ -22,6 +23,8 @@ type ProjectCardProps = {
   author?: boolean;
   recruitId?: number;
   selectedProject?: any;
+  isBookmarked?: boolean;
+  onBookmarkClick?: (e: React.MouseEvent) => void;
 };
 
 export default function ProjectCard({
@@ -40,6 +43,8 @@ export default function ProjectCard({
   totalCount,
   author = false,
   selectedProject,
+  isBookmarked,
+  onBookmarkClick,
 }: ProjectCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [sheetWidth, setSheetWidth] = useState<number>(430);
@@ -207,11 +212,20 @@ export default function ProjectCard({
           ) : null}
 
           {!applicationStatus && !author ? (
-            <button type="button" className="shrink-0">
+            <button
+              type="button"
+              onClick={onBookmarkClick}
+              className="p-1 transition-transform active:scale-90"
+            >
               <img
-                src={bookmarkIcon}
+                src={isBookmarked ? bookmarkActiveIcon : bookmarkIcon}
                 alt="스크랩"
-                className="h-[15px] w-[15px]"
+                className={`
+                h-[18px]
+                w-[18px]
+                transition-all
+                ${isBookmarked ? "opacity-100" : "opacity-40 grayscale"}
+              `}
               />
             </button>
           ) : null}

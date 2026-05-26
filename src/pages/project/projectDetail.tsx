@@ -68,7 +68,7 @@ const ProjectDetailPage = () => {
     setIsSheetOpen(false);
   };
 
-  const { handleApply } = useRecruitActions();
+  const { handleApply, handleBookmark } = useRecruitActions();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -124,6 +124,10 @@ const ProjectDetailPage = () => {
             buttonLabel="지원하기"
             onButtonClick={() => handleOpenSheet(data.recruitId)}
             selectedProject={data}
+            isBookmarked={data.bookmarkedByMe}
+            onBookmarkClick={() =>
+              handleBookmark(data.recruitId, data.bookmarkedByMe)
+            }
           />
         )}
       </div>

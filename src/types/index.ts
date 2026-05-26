@@ -127,6 +127,7 @@ export interface RecruitSummary {
   status: "OPEN" | "CLOSED";
   skills: string[];
   appliedByMe: boolean;
+  bookmarkedByMe: boolean;
   applicantCount: number;
   totalHeadcount: number;
   deadline: string;
