@@ -13,7 +13,7 @@ import RegisterForm from "../../components/registerForm";
 import { useRecruitActions } from "../../hooks/useRecruitHandler";
 import ApplyForm from "../../components/applyForm";
 import useGetRecruits from "../../hooks/queries/useGetRecruits";
-import { LoadingSpinner } from "../../components/loadingSpinner";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 const ProjectPage = () => {
   const [selectMenu, setSelectMenu] = useState("ALL");

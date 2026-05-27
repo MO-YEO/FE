@@ -6,6 +6,7 @@ import type {
   AppliedRecruitListResponse,
   GetRecruits,
   ApplyRequest,
+  PatchRecruitParams,
 } from "../types";
 
 export const recruitsApi = {
@@ -32,7 +33,7 @@ export const recruitsApi = {
   },
 
   //프로젝트 수정
-  patchRecruit: async (recruitId: number, payload: any) => {
+  patchRecruit: async (recruitId: number, payload: PatchRecruitParams) => {
     await apiClient.patch(`api/recruits/${recruitId}`, payload);
   },
 
