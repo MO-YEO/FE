@@ -8,8 +8,9 @@ export const PATH = {
   // 2. Protected
   HOME: "/home",
   BOARD: "/board",
-  BOARD_DETAIL: "/board/:id", 
+  BOARD_DETAIL: "/board/:id",
   PROJECTS: "/project",
+  PROJECTS_DETAIL: "/project/:id",
 
   // 3. MyPage
   MY: "/my",
@@ -20,7 +21,6 @@ export const PATH = {
   MY_RECRUITED_PROJECTS: "/my/recruited-projects",
   MY_APPLICANTS: "/projects/:recruitId/applicants",
   MY_PARTICIPATED_PROJECTS: "/my/participated-projects",
-
 
   MEMBER: "/member",
   INQUIRY: "/inquiry",

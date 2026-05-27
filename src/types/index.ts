@@ -104,6 +104,19 @@ export interface Author {
   departmentName: string;
 }
 
+export type Pageable = {
+  page?: number;
+  size?: number;
+  sort?: string;
+};
+
+export type GetRecruits = Pageable & {
+  activityCategory?: string;
+  recruitCategory?: string;
+  status?: string;
+  keyword?: string;
+};
+
 export interface RecruitSummary {
   recruitId: number;
   type: string;
@@ -114,6 +127,7 @@ export interface RecruitSummary {
   status: "OPEN" | "CLOSED";
   skills: string[];
   appliedByMe: boolean;
+  bookmarkedByMe: boolean;
   applicantCount: number;
   totalHeadcount: number;
   deadline: string;
@@ -141,7 +155,6 @@ export interface MyRecruitSummary {
   recruitCategory: string;
 }
 
-
 export interface MyRecruitListResponse {
   recruits: MyRecruitSummary[];
   pageInfo: PageInfo;
@@ -168,9 +181,8 @@ export interface RecruitListResponse {
   pageInfo: PageInfo;
 }
 
-export interface RecruitDetail extends RecruitSummary {
-  content: string;
-  contactUrl: string;
+export interface RecruitDetail {
+  recruits: RecruitSummary;
 }
 
 export interface RecruitApplicant {
@@ -203,6 +215,16 @@ export interface RecruitApplicant {
 export interface RecruitApplicationsResponse {
   applications: RecruitApplicant[];
   pageInfo: PageInfo;
+}
+
+export interface ApplyRequest {
+  name: string;
+  role: string;
+  introduction: string;
+  requiredSkills: string;
+  phoneNumber: string;
+  contactEmail: string;
+  githubUrl: string;
 }
 
 // ------------------------
