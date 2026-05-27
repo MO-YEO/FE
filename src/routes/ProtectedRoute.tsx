@@ -31,7 +31,7 @@ const SignupPage = lazy(() => import("../pages/signUp"));
 const InquiryPage = lazy(() => import("../pages/Inquiry"));
 
 // 3. 보호된 라우트 목록 구성
-export const protectedRoutes: RouteConfig[] = [
+export const protectedRoute: RouteConfig[] = [
   { path: PATH.HOME, Component: HomePage },
   { path: PATH.BOARD, Component: BoardPage },
   {
@@ -59,4 +59,4 @@ export const protectedRoutes: RouteConfig[] = [
   { path: PATH.NOT_FOUND, Component: NotFoundPage },
 ];
 
-export default protectedRoutes;
+export default protectedRoute;

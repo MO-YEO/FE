@@ -28,7 +28,7 @@ const OAuthCallback = lazy(() => import("../pages/OAuthCallback"));
 
 export const protectedRoutes = [
   {
-    path: "/oauth/callback", // ✅ 백엔드 Redirect URI와 동일한지 꼭 확인! (PATH.CALLBACK 이 있다면 그거로 사용)
+    path: "/oauth/callback",
     Component: OAuthCallback,
   },
   {
@@ -39,7 +39,6 @@ export const protectedRoutes = [
     path: PATH.BOARD,
     Component: BoardPage,
   },
-  // ✅ 여기에 상세 페이지 라우트를 명시적으로 추가해야 합니다!
   {
     path: PATH.BOARD_DETAIL, // "/board/:id"
     Component: BoardDetailPage,
@@ -93,7 +92,6 @@ export const protectedRoutes = [
     path: PATH.INQUIRY,
     Component: InquiryPage,
   },
-  // ⚠️ 중요: 모든 구체적인 경로 다음에 와야 합니다.
   {
     path: PATH.NOT_FOUND, // "*"
     Component: NotFoundPage,
