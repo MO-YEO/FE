@@ -126,7 +126,7 @@ const Home: React.FC = () => {
             {searchType === 'project' && (
               <div className="flex flex-col">
                 {filteredRecruits.length > 0 ? filteredRecruits.map((p: any) => (
-                  <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "모집중"} members={p.applicantCount} maxMembers={p.totalHeadcount} time="조회중" onClick={() => navigate(`/projects/${p.recruitId}`)} />
+                  <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "모집중"} members={p.applicantCount} maxMembers={p.totalHeadcount} time="조회중" onClick={() => navigate(`/project/${p.recruitId}`)} />
                 )) : <EmptyState />}
               </div>
             )}
@@ -173,7 +173,7 @@ const Home: React.FC = () => {
                       title={topMatch.title || "추천 프로젝트"} 
                       matchingScore={topMatch.matchingScore} 
                       aiComment={topMatch.aiComment} 
-                      onClick={() => navigate(`/projects/${topMatch.recruitPostId}`)} 
+                      onClick={() => navigate(`/project/${topMatch.recruitPostId}`)} 
                     />
                   );
                 })()
@@ -195,7 +195,7 @@ const Home: React.FC = () => {
               {recruitsLoading ? (
                 <div className="w-full h-[80px] bg-white rounded-[14px] animate-pulse mb-3" />
               ) : recruitsData?.recruits?.slice(0, 3).map((p: any) => (
-                <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "작성자"} members={p.applicantCount} maxMembers={p.totalHeadcount} time="마감임박" onClick={() => navigate(`/projects/${p.recruitId}`)} />
+                <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "작성자"} members={p.applicantCount} maxMembers={p.totalHeadcount} time="마감임박" onClick={() => navigate(`/project/${p.recruitId}`)} />
               ))}
             </div>
 
