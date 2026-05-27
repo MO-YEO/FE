@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 
 const ProtectedLayout = () => {
-  const accessToken = localStorage.getItem("access_Token");
+  const accessToken = localStorage.getItem("access_token");
   const navigate = useNavigate();
 
   useEffect(() => {
