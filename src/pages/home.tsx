@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PostPreviewCard from '../components/PostPreviewCard'; 
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import PostPreviewCard from "../components/PostPreviewCard";
 import logo from "../assets/MO-YEOlogo.svg";
 import projectIcon from "../assets/project.svg";
 import postIcon from "../assets/post.svg";
@@ -15,31 +15,35 @@ import Member from "../assets/footer/member.svg?react";
 import HomeBoard from "../assets/homeBoard.svg?react";
 import Time from "../assets/time.svg?react";
 
-type SearchType = 'project' | 'board';
+type SearchType = "project" | "board";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState<SearchType>('project');
+  const [searchType, setSearchType] = useState<SearchType>("project");
 
   const { data: profile } = useQuery({
-    queryKey: ['myProfile'],
+    queryKey: ["myProfile"],
     queryFn: membersApi.getMyProfile,
     retry: 0,
   });
 
   const { data: recruitsData, isLoading: recruitsLoading } = useQuery({
-    queryKey: ['recruits', 'recent'],
+    queryKey: ["recruits", "recent"],
     queryFn: () => recruitsApi.getRecruits({ size: 20 }),
   });
 
   const { data: postsData, isLoading: postsLoading } = useQuery({
-    queryKey: ['boards', 'recent'],
+    queryKey: ["boards", "recent"],
     queryFn: () => boardsApi.getPosts({ size: 20 }),
   });
 
-  const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation[]>({
-    queryKey: ['recruits', 'recommendation'],
+  const {
+    data: aiRecommendData,
+    isLoading: aiLoading,
+    isFetching: aiFetching,
+  } = useQuery<AIRecommendation[]>({
+    queryKey: ["recruits", "recommendation"],
     queryFn: aiRecommendApi.getAiRecommendations,
     enabled: !!profile,
     staleTime: 1000 * 60 * 30,
@@ -57,13 +61,19 @@ const Home: React.FC = () => {
     }
   }, [profile, navigate]);
 
-  const filteredRecruits = recruitsData?.recruits?.filter((p: any) => 
-    p.title.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5) || [];
+  const filteredRecruits =
+    recruitsData?.recruits
+      ?.filter((p: any) =>
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+      .slice(0, 5) || [];
 
-  const filteredPosts = postsData?.posts?.filter((p: any) => 
-    p.title.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5) || [];
+  const filteredPosts =
+    postsData?.posts
+      ?.filter((p: any) =>
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+      .slice(0, 5) || [];
 
   const isAiProcessing = aiLoading || (aiFetching && !aiRecommendData);
 
@@ -76,27 +86,34 @@ const Home: React.FC = () => {
             <h1 className="text-white text-[28px] font-bold">MO-YEO</h1>
           </div>
           {profile && (
-            <div className="text-white text-[12px] font-bold bg-white/20 px-3 py-1.5 rounded-full cursor-pointer" onClick={() => navigate('/my')}>
+            <div
+              className="text-white text-[12px] font-bold bg-white/20 px-3 py-1.5 rounded-full cursor-pointer"
+              onClick={() => navigate("/my")}
+            >
               {profile.nickname}님 👋
             </div>
           )}
         </div>
 
         <div className="relative flex gap-2">
-          <select 
+          <select
             value={searchType}
             onChange={(e) => {
               setSearchType(e.target.value as SearchType);
-              setSearchQuery(""); 
+              setSearchQuery("");
             }}
             className="bg-white/10 text-white text-[13px] font-bold rounded-[12px] px-2 outline-none border border-white/20 cursor-pointer"
           >
-            <option value="project" className="text-black">프로젝트</option>
-            <option value="board" className="text-black">게시글</option>
+            <option value="project" className="text-black">
+              프로젝트
+            </option>
+            <option value="board" className="text-black">
+              게시글
+            </option>
           </select>
           <div className="flex-1">
-            <Input 
-              placeholder={`${searchType === 'project' ? '프로젝트' : '게시글'} 실시간 검색...`} 
+            <Input
+              placeholder={`${searchType === "project" ? "프로젝트" : "게시글"} 실시간 검색...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -105,11 +122,21 @@ const Home: React.FC = () => {
       </header>
 
       <section className="grid grid-cols-2 gap-3 px-5 pt-[30px] text-white">
+<<<<<<< HEAD
         <button onClick={() => navigate("/member")} className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all">
+=======
+        <button
+          onClick={() => navigate("/members")}
+          className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all"
+        >
+>>>>>>> develop
           <Member className="size-7" />
           <span className="font-bold text-[14px] mt-2">팀원 찾기</span>
         </button>
-        <button onClick={() => navigate("/board")} className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all">
+        <button
+          onClick={() => navigate("/board")}
+          className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all"
+        >
           <HomeBoard className="size-7" />
           <span className="font-bold text-[14px] mt-2">전체 게시판</span>
         </button>
@@ -121,22 +148,48 @@ const Home: React.FC = () => {
             <h2 className="font-bold text-[18px] text-[#1E293B] mb-4">
               '{searchQuery}' 검색 결과
             </h2>
-            
-            {searchType === 'project' && (
+
+            {searchType === "project" && (
               <div className="flex flex-col">
-                {filteredRecruits.length > 0 ? filteredRecruits.map((p: any) => (
-                  <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "모집중"} members={p.applicantCount} maxMembers={p.totalHeadcount} time="조회중" onClick={() => navigate(`/projects/${p.recruitId}`)} />
-                )) : <EmptyState />}
+                {filteredRecruits.length > 0 ? (
+                  filteredRecruits.map((p: any) => (
+                    <ProjectCard
+                      key={p.recruitId}
+                      title={p.title}
+                      author={p.author?.nickname || "모집중"}
+                      members={p.applicantCount}
+                      maxMembers={p.totalHeadcount}
+                      time="조회중"
+                      onClick={() => navigate(`/projects/${p.recruitId}`)}
+                    />
+                  ))
+                ) : (
+                  <EmptyState />
+                )}
               </div>
             )}
 
-            {searchType === 'board' && (
+            {searchType === "board" && (
               <div className="flex flex-col gap-3">
-                {filteredPosts.length > 0 ? filteredPosts.map((p: any) => (
-                  <div key={p.postId} onClick={() => navigate(`/board/${p.postId}`)} className="cursor-pointer">
-                    <PostPreviewCard title={p.title} likeCount={p.likeCount} commentCount={p.commentCount} date="최신" author={p.author?.nickname || p.author} />
-                  </div>
-                )) : <EmptyState />}
+                {filteredPosts.length > 0 ? (
+                  filteredPosts.map((p: any) => (
+                    <div
+                      key={p.postId}
+                      onClick={() => navigate(`/board/${p.postId}`)}
+                      className="cursor-pointer"
+                    >
+                      <PostPreviewCard
+                        title={p.title}
+                        likeCount={p.likeCount}
+                        commentCount={p.commentCount}
+                        date="최신"
+                        author={p.author?.nickname || p.author}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState />
+                )}
               </div>
             )}
           </div>
@@ -147,32 +200,55 @@ const Home: React.FC = () => {
                 <div className="bg-gradient-to-r from-[#8B5CF6] to-[#EC4899] p-1.5 rounded-lg text-white font-bold text-[11px] flex items-center gap-1 shadow-sm">
                   <span>AI 추천</span>
                 </div>
-                <h2 className="font-bold text-[18px] text-[#1E293B]">나를 위한 맞춤 프로젝트</h2>
+                <h2 className="font-bold text-[18px] text-[#1E293B]">
+                  나를 위한 맞춤 프로젝트
+                </h2>
               </div>
 
               {isAiProcessing ? (
                 <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm flex flex-col items-center justify-center gap-3 animate-pulse">
                   <div className="flex items-center gap-2">
-                    <svg className="animate-spin h-5 w-5 text-[#8B5CF6]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin h-5 w-5 text-[#8B5CF6]"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
-                    <span className="text-[14px] font-extrabold text-[#7C3AED]">AI 맞춤 분석 진행 중</span>
+                    <span className="text-[14px] font-extrabold text-[#7C3AED]">
+                      AI 맞춤 분석 진행 중
+                    </span>
                   </div>
                   <p className="text-[12px] text-[#8B5CF6] font-medium tracking-tight">
-                    프로필을 기반으로 최적의 프로젝트 모집글을 매칭하고 있습니다...
+                    프로필을 기반으로 최적의 프로젝트 모집글을 매칭하고
+                    있습니다...
                   </p>
                 </div>
               ) : aiRecommendData && aiRecommendData.length > 0 ? (
                 (() => {
-                  const topMatch: AIRecommendation = aiRecommendData[0]; 
+                  const topMatch: AIRecommendation = aiRecommendData[0];
                   return (
-                    <AIProjectCard 
-                      key={topMatch.recruitPostId} 
-                      title={topMatch.title || "추천 프로젝트"} 
-                      matchingScore={topMatch.matchingScore} 
-                      aiComment={topMatch.aiComment} 
-                      onClick={() => navigate(`/projects/${topMatch.recruitPostId}`)} 
+                    <AIProjectCard
+                      key={topMatch.recruitPostId}
+                      title={topMatch.title || "추천 프로젝트"}
+                      matchingScore={topMatch.matchingScore}
+                      aiComment={topMatch.aiComment}
+                      onClick={() =>
+                        navigate(`/project/${topMatch.recruitPostId}`)
+                      }
                     />
                   );
                 })()
@@ -187,33 +263,71 @@ const Home: React.FC = () => {
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
                   <img src={projectIcon} alt="" className="w-5 h-5" />
-                  <h2 className="font-bold text-[18px] text-[#1E293B]">최근 프로젝트</h2>
+                  <h2 className="font-bold text-[18px] text-[#1E293B]">
+                    최근 프로젝트
+                  </h2>
                 </div>
-                <button className="text-[13px] text-[#2563EB] font-bold" onClick={() => navigate("/project")}>전체보기</button>
+                <button
+                  className="text-[13px] text-[#2563EB] font-bold"
+                  onClick={() => navigate("/project")}
+                >
+                  전체보기
+                </button>
               </div>
               {recruitsLoading ? (
                 <div className="w-full h-[80px] bg-white rounded-[14px] animate-pulse mb-3" />
-              ) : recruitsData?.recruits?.slice(0, 3).map((p: any) => (
-                <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "작성자"} members={p.applicantCount} maxMembers={p.totalHeadcount} time="마감임박" onClick={() => navigate(`/projects/${p.recruitId}`)} />
-              ))}
+              ) : (
+                recruitsData?.recruits
+                  ?.slice(0, 3)
+                  .map((p: any) => (
+                    <ProjectCard
+                      key={p.recruitId}
+                      title={p.title}
+                      author={p.author?.nickname || "작성자"}
+                      members={p.applicantCount}
+                      maxMembers={p.totalHeadcount}
+                      time="마감임박"
+                      onClick={() => navigate(`/project/${p.recruitId}`)}
+                    />
+                  ))
+              )}
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
                   <img src={postIcon} alt="" className="w-5 h-5" />
-                  <h2 className="font-bold text-[18px] text-[#1E293B]">최근 게시글</h2>
+                  <h2 className="font-bold text-[18px] text-[#1E293B]">
+                    최근 게시글
+                  </h2>
                 </div>
-                <button className="text-[13px] text-[#2563EB] font-bold" onClick={() => navigate("/board")}>더보기</button>
+                <button
+                  className="text-[13px] text-[#2563EB] font-bold"
+                  onClick={() => navigate("/board")}
+                >
+                  더보기
+                </button>
               </div>
               <div className="flex flex-col gap-3">
                 {postsLoading ? (
                   <div className="w-full h-[60px] bg-white rounded-[14px] animate-pulse" />
-                ) : postsData?.posts?.slice(0, 3).map((p: any) => (
-                  <div key={p.postId} onClick={() => navigate(`/board/${p.postId}`)} className="cursor-pointer">
-                    <PostPreviewCard title={p.title} likeCount={p.likeCount} commentCount={p.commentCount} date="방금 전" author={p.author?.nickname || p.author} />
-                  </div>
-                ))}
+                ) : (
+                  postsData?.posts?.slice(0, 3).map((p: any) => (
+                    <div
+                      key={p.postId}
+                      onClick={() => navigate(`/board/${p.postId}`)}
+                      className="cursor-pointer"
+                    >
+                      <PostPreviewCard
+                        title={p.title}
+                        likeCount={p.likeCount}
+                        commentCount={p.commentCount}
+                        date="방금 전"
+                        author={p.author?.nickname || p.author}
+                      />
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </>
@@ -223,14 +337,30 @@ const Home: React.FC = () => {
   );
 };
 
-const ProjectCard: React.FC<any> = ({ title, author, members, maxMembers, time, onClick }) => (
-  <div onClick={onClick} className="rounded-[14px] border border-[#E2E8F0] bg-white p-[17px] shadow-sm mb-3 active:scale-[0.98] transition-all cursor-pointer">
-    <h3 className="text-[16px] font-bold text-[#1E293B] truncate mb-2">{title}</h3>
+const ProjectCard: React.FC<any> = ({
+  title,
+  author,
+  members,
+  maxMembers,
+  time,
+  onClick,
+}) => (
+  <div
+    onClick={onClick}
+    className="rounded-[14px] border border-[#E2E8F0] bg-white p-[17px] shadow-sm mb-3 active:scale-[0.98] transition-all cursor-pointer"
+  >
+    <h3 className="text-[16px] font-bold text-[#1E293B] truncate mb-2">
+      {title}
+    </h3>
     <div className="flex items-center justify-between text-[#94A3B8] text-[12px]">
       <span>작성자: {author}</span>
       <div className="flex items-center gap-3">
-        <span className="flex items-center gap-1"><Member className="size-[13px]" /> {members}/{maxMembers}</span>
-        <span className="flex items-center gap-1"><Time className="size-[13px]" /> {time}</span>
+        <span className="flex items-center gap-1">
+          <Member className="size-[13px]" /> {members}/{maxMembers}
+        </span>
+        <span className="flex items-center gap-1">
+          <Time className="size-[13px]" /> {time}
+        </span>
       </div>
     </div>
   </div>
@@ -243,14 +373,24 @@ interface AIProjectCardProps {
   onClick: () => void;
 }
 
-const AIProjectCard: React.FC<AIProjectCardProps> = ({ title, matchingScore, aiComment, onClick }) => (
-  <div onClick={onClick} className="rounded-[20px] border border-[#F5E6FF] bg-gradient-to-b from-white to-[#FDF4FF] p-[20px] shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden">
+const AIProjectCard: React.FC<AIProjectCardProps> = ({
+  title,
+  matchingScore,
+  aiComment,
+  onClick,
+}) => (
+  <div
+    onClick={onClick}
+    className="rounded-[20px] border border-[#F5E6FF] bg-gradient-to-b from-white to-[#FDF4FF] p-[20px] shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden"
+  >
     <div className="absolute top-4 right-4 bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] font-extrabold text-[12px] px-2.5 py-1 rounded-full">
       적합도 {matchingScore}%
     </div>
-    
-    <h3 className="text-[16px] font-extrabold text-[#1E293B] w-[70%] truncate mb-3.5">{title}</h3>
-    
+
+    <h3 className="text-[16px] font-extrabold text-[#1E293B] w-[70%] truncate mb-3.5">
+      {title}
+    </h3>
+
     <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]">
       <p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">
         🤖 {aiComment}
