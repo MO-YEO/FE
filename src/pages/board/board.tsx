@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import PostCard from '../../components/PostCard'; 
 import backIcon from "../../assets/back.svg";
 import plusIcon from "../../assets/PlusButton.svg"; 
-import { apiClient } from '../../api/client'; 
+import { boardsApi } from '../../api/boards'; 
 import BoardWriteModal from './BoardWriteModal';
 
 interface Post {
@@ -27,21 +27,26 @@ const Board: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // ✅ 검색어 상태 추가
   const [searchKeyword, setSearchKeyword] = useState("");
 
-  // ✅ 검색어가 포함된 게시글 가져오기 (keyword 파라미터 추가)
   const fetchPosts = async (keyword: string = "") => {
     try {
       setIsLoading(true);
-      // 백엔드 명세에 맞춰 쿼리 스트링으로 키워드 전달 (예: ?keyword=검색어)
-      const response = await apiClient.get('/api/boards/posts', {
-        params: { keyword: keyword }
-      }); 
+      const data = await boardsApi.getPosts({ keyword }); 
       
-      if (response.data && response.data.posts) {
-        setPosts(response.data.posts);
+      if (data && data.posts) {
+        setPosts(
+          data.posts.map((post) => ({
+            postId: post.postId,
+            title: post.title,
+            author: post.author ?? { nickname: '', memberId: 0 },
+            createdAt: post.createdAt,
+            likeCount: post.likeCount,
+            commentCount: post.commentCount,
+            likedByMe: post.likedByMe ?? false,
+            bookmarkedByMe: post.bookmarkedByMe ?? false,
+          }))
+        );
       }
     } catch (err: any) {
       console.error("게시글 불러오기 실패:", err);
@@ -55,14 +60,12 @@ const Board: React.FC = () => {
     fetchPosts();
   }, []);
 
-  // ✅ 엔터 키를 눌렀을 때 검색 실행
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       fetchPosts(searchKeyword);
     }
   };
 
-  // ✅ 입력창이 비워지면 자동으로 전체 목록 다시 불러오기
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchKeyword(value);
@@ -74,10 +77,11 @@ const Board: React.FC = () => {
   const handleBookmarkToggle = async (e: React.MouseEvent, postId: number, isBookmarked: boolean) => {
     e.stopPropagation();
     try {
+      // ⭕ [버그 완벽 수정] 게시글 삭제 함수를 걷어내고, 진짜 북마크 전용 API를 찌르도록 변경했습니다!
       if (isBookmarked) {
-        await apiClient.delete(`/api/boards/posts/${postId}/bookmark`);
+        await boardsApi.unbookmarkPost(postId); 
       } else {
-        await apiClient.post(`/api/boards/posts/${postId}/bookmark`, {});
+        await boardsApi.bookmarkPost(postId); 
       }
 
       setPosts((prevPosts) =>
@@ -115,7 +119,6 @@ const Board: React.FC = () => {
 
       <section className="px-[16px] pt-[16px]">
         <div className="relative mb-[16px]">
-          {/* ✅ 검색 입력창 업데이트 */}
           <input 
             type="text" 
             value={searchKeyword}

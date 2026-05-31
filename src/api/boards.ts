@@ -1,66 +1,99 @@
-//api/boards.ts
 import { apiClient } from './client';
 import type { BoardListResponse } from '../types';
 
 export const boardsApi = {
   // 게시글 전체 목록 조회
   getPosts: async (params?: { keyword?: string; page?: number; size?: number }) => {
-    const { data } = await apiClient.get<BoardListResponse>('/api/boards/posts', { params });
+    const { data } = await apiClient.get<BoardListResponse>('/boards/posts', { params });
     return data;
   },
 
   // 내가 쓴 게시판 글 조회
   getMyPosts: async (params?: { page?: number; size?: number }) => {
-    const { data } = await apiClient.get<BoardListResponse>('/api/boards/posts/me', { params });
+    const { data } = await apiClient.get<BoardListResponse>('/boards/posts/me', { params });
     return data;
   },
 
-  // 스크랩한 게시물 조회 (마이페이지 통계용)
+  // 스크랩한 게시물 조회
   getScrappedPosts: async (params?: { page?: number; size?: number }) => {
-    const { data } = await apiClient.get<BoardListResponse>(
-      "/api/boards/posts/bookmarks",
-      { params },
-    );
+    const { data } = await apiClient.get<BoardListResponse>("/boards/posts/bookmarks", { params });
     return data;
   },
 
-  // 좋아요한 게시물 조회 (마이페이지 통계용)
+  // 좋아요한 게시물 조회
   getLikedPosts: async (params?: { page?: number; size?: number }) => {
-    const { data } = await apiClient.get<BoardListResponse>('/api/boards/posts/likes', { params });
+    const { data } = await apiClient.get<BoardListResponse>('/boards/posts/likes', { params });
     return data;
   },
 
   // 상세 조회
   getPostDetail: async (postId: number) => {
-    const { data } = await apiClient.get<any>(`/api/boards/posts/${postId}`);
+    const { data } = await apiClient.get<any>(`/boards/posts/${postId}`);
     return data;
   },
 
   // 수정
-  updatePost: async (postId: number, payload: { title: string; content: string }) => {
-    const { data } = await apiClient.patch(`/api/boards/posts/${postId}`, payload);
+  updatePost: async (postId: number, payload: { title: string; content: string; images?: any[] }) => {
+    const { data } = await apiClient.put(`/boards/posts/${postId}`, payload);
     return data;
   },
 
   // 삭제
   deletePost: async (postId: number) => {
-    const { data } = await apiClient.delete(`/api/boards/posts/${postId}`);
+    const { data } = await apiClient.delete(`/boards/posts/${postId}`);
     return data;
   },
 
-  // 댓글 작성
+  // 💬 댓글 목록 조회
+  getComments: async (postId: number) => {
+    const { data } = await apiClient.get<any>(`/boards/posts/${postId}/comments`);
+    return data;
+  },
+
+  // 💬 댓글 작성
   createComment: async (postId: number, payload: { content: string }) => {
-    const { data } = await apiClient.post(`/api/boards/posts/${postId}/comments`, payload);
+    const { data } = await apiClient.post(`/boards/posts/${postId}/comments`, payload);
     return data;
   },
 
-  // 좋아요 및 취소
+  // 💬 댓글 수정
+  updateComment: async (commentId: number, payload: { content: string }) => {
+    const { data } = await apiClient.put(`/boards/comments/${commentId}`, payload);
+    return data;
+  },
+
+  // 💬 댓글 삭제
+  deleteComment: async (commentId: number) => {
+    const { data } = await apiClient.delete(`/boards/comments/${commentId}`);
+    return data;
+  },
+
+  // ❤️ 좋아요 및 취소
   likePost: async (postId: number) => {
-    const { data } = await apiClient.post(`/api/boards/posts/${postId}/likes`);
+    const { data } = await apiClient.post(`/boards/posts/${postId}/like`);
     return data;
   },
   unlikePost: async (postId: number) => {
-    const { data } = await apiClient.delete(`/api/boards/posts/${postId}/likes`);
+    const { data } = await apiClient.delete(`/boards/posts/${postId}/like`);
+    return data;
+  },
+
+  // ✨ 신규 게시글 작성
+  createPost: async (payload: { title: string; content: string; images?: any[] }) => {
+    const { data } = await apiClient.post('/boards/posts', {
+      title: payload.title,
+      content: payload.content,
+      images: payload.images ?? []
+    });
+    return data;
+  },
+
+  bookmarkPost: async (postId: number) => {
+    const { data } = await apiClient.post(`/boards/posts/${postId}/bookmark`);
+    return data;
+  },
+  unbookmarkPost: async (postId: number) => {
+    const { data } = await apiClient.delete(`/boards/posts/${postId}/bookmark`);
     return data;
   }
 };

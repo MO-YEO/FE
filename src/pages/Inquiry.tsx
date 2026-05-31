@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import backIcon from "../assets/back.svg"; // 기존 경로 유지
+import backIcon from "../assets/back.svg";
 
 export default function InquiryPage() {
   const navigate = useNavigate();

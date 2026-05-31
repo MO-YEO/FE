@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { PATH } from "../components/path";
 
 const OAuthCallback: React.FC = () => {
@@ -10,30 +10,63 @@ const OAuthCallback: React.FC = () => {
     if (isProcessed.current) return;
     isProcessed.current = true;
 
-    const params = new URLSearchParams(window.location.search);
-    
-    // 1. 학교 메일 체크 에러 처리
-    const error = params.get("error");
+    console.log("🌍 현재 전체 URL:", window.location.href);
+    console.log("🌍 search:", window.location.search);
+    console.log("🌍 hash:", window.location.hash);
+
+    const searchParams = new URLSearchParams(window.location.search);
+
+    const hashParams = new URLSearchParams(
+      window.location.hash.replace("#", "")
+    );
+
+    for (const [key, value] of searchParams.entries()) {
+      console.log("📦 search 파라미터:", key, value);
+    }
+
+    for (const [key, value] of hashParams.entries()) {
+      console.log("📦 hash 파라미터:", key, value);
+    }
+
+    const error =
+      searchParams.get("error") || hashParams.get("error");
+
     if (error === "school_only") {
       alert("가톨릭대학교 학생 메일(@catholic.ac.kr)로 로그인해 주세요.");
       navigate(PATH.LOGIN);
       return;
     }
 
-    // 2. 토큰 추출 및 저장
-    let token = params.get("access_token") || params.get("token");
+    let token =
+      searchParams.get("access_token") ||
+      searchParams.get("token") ||
+      searchParams.get("accessToken") ||
+      hashParams.get("access_token") ||
+      hashParams.get("token") ||
+      hashParams.get("accessToken");
+
+    console.log("🎟️ 추출된 원본 토큰:", token);
 
     if (token) {
-      // Bearer 문구 및 따옴표 제거
-      token = token.replace(/^(Bearer\s+)+/i, '').replace(/^"|"$/g, '').trim();
-      localStorage.setItem("access_token", token);
-      
-      console.log("✅ 토큰 저장 완료. 테스트를 위해 가입 페이지로 이동합니다.");
+      token = token
+        .replace(/^Bearer\s+/i, "")
+        .replace(/^"|"$/g, "")
+        .replace(/[\r\n\t]/g, "")
+        .trim();
 
-      // 🚀 [테스트 모드] 무조건 가입 페이지로 이동
-      navigate(PATH.SIGNUP);
+      localStorage.setItem("access_token", token);
+
+      console.log(
+        "✅ 저장 후 localStorage:",
+        localStorage.getItem("access_token")
+      );
+
+      setTimeout(() => {
+        navigate(PATH.SIGNUP);
+      }, 200);
     } else {
-      console.error("❌ 토큰 없음");
+      console.error("❌ 토큰 추출 실패");
+      alert("토큰을 받아오지 못했습니다.");
       navigate(PATH.LOGIN);
     }
   }, [navigate]);
@@ -42,8 +75,9 @@ const OAuthCallback: React.FC = () => {
     <div className="flex h-screen items-center justify-center bg-[#F8FAFC]">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 border-4 border-[#5C7CFF] border-t-transparent rounded-full animate-spin"></div>
+
         <div className="text-xl font-bold text-[#5C7CFF] animate-pulse">
-          가입 여부를 확인 중입니다...
+          로그인 처리 중입니다...
         </div>
       </div>
     </div>
