@@ -7,6 +7,7 @@ import type { ApplyRequest, RecruitSummary } from "../../types";
 import { useRecruitActions } from "../../hooks/useRecruitHandler";
 import BottomSheet from "../../components/bottomSheet";
 import ApplyForm from "../../components/applyForm";
+import { useBookmarkMutation } from "../../hooks/mutations/useBookmarkMutation";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -68,7 +69,16 @@ const ProjectDetailPage = () => {
     setIsSheetOpen(false);
   };
 
-  const { handleApply, handleBookmark } = useRecruitActions();
+  const { handleApply } = useRecruitActions();
+
+  const bookmarkMutation = useBookmarkMutation();
+
+  const handleBookmark = (recruitId: number, bookmarkedByMe: boolean) => {
+    bookmarkMutation.mutate({
+      recruitId: recruitId,
+      bookmarkedByMe: !!bookmarkedByMe,
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

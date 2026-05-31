@@ -14,6 +14,7 @@ import { useRecruitActions } from "../../hooks/useRecruitHandler";
 import ApplyForm from "../../components/applyForm";
 import useGetRecruits from "../../hooks/queries/useGetRecruits";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { useBookmarkMutation } from "../../hooks/mutations/useBookmarkMutation";
 
 const ProjectPage = () => {
   const [selectMenu, setSelectMenu] = useState("ALL");
@@ -33,6 +34,15 @@ const ProjectPage = () => {
   );
 
   const [myId, setMyId] = useState<number | null>(null);
+
+  const bookmarkMutation = useBookmarkMutation();
+
+  const handleBookmark = (recruitId: number, bookmarkedByMe: boolean) => {
+    bookmarkMutation.mutate({
+      recruitId: recruitId,
+      bookmarkedByMe: !!bookmarkedByMe,
+    });
+  };
 
   const handleOpenSheet = (type: "register" | "apply", id?: number) => {
     if (wrapperRef.current) {
@@ -56,7 +66,7 @@ const ProjectPage = () => {
     }
   };
 
-  const { handleApply, handleBookmark } = useRecruitActions();
+  const { handleApply } = useRecruitActions();
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
