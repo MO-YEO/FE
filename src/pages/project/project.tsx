@@ -271,6 +271,7 @@ const ProjectPage = () => {
                   onBookmarkClick={() =>
                     handleBookmark(data.recruitId, data.bookmarkedByMe)
                   }
+                  onCardClick={() => navigate(`/project/${data.recruitId}`)}
                 />
               );
             })}

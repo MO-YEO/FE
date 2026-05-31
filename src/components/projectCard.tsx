@@ -25,6 +25,7 @@ type ProjectCardProps = {
   selectedProject?: any;
   isBookmarked?: boolean;
   onBookmarkClick?: (e: React.MouseEvent) => void;
+  onCardClick?: () => void;
 };
 
 export default function ProjectCard({
@@ -45,6 +46,7 @@ export default function ProjectCard({
   selectedProject,
   isBookmarked,
   onBookmarkClick,
+  onCardClick,
 }: ProjectCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [sheetWidth, setSheetWidth] = useState<number>(430);
@@ -170,6 +172,7 @@ export default function ProjectCard({
     <div
       ref={wrapperRef}
       className="flex flex-col gap-3 rounded-[14px] border border-[#D0D0D0] bg-white p-4 shadow-sm"
+      onClick={onCardClick}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
