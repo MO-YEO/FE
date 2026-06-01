@@ -22,7 +22,7 @@ export type ApplicantReview = {
 export const reviewsApi = {
   createReview: async (payload: CreateReviewRequest) => {
     const { data } = await apiClient.post<ReviewResponse>(
-      "/api/reviews",
+      "/reviews",
       payload,
     );
     return data;
@@ -30,7 +30,7 @@ export const reviewsApi = {
 
   getApplicantReviews: async (recruitId: number, applicantUserId: number) => {
     const { data } = await apiClient.get<ApplicantReview[]>(
-      `/api/reviews/recruits/${recruitId}/applicants/${applicantUserId}`,
+      `/reviews/recruits/${recruitId}/applicants/${applicantUserId}`,
     );
     return data;
   },

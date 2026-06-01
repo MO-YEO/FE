@@ -82,14 +82,18 @@ export default function MyParticipatedProject() {
       setIsSubmittingReview(true);
 
       await Promise.all(
-        reviews.map((review) =>
-          reviewsApi.createReview({
+        reviews.map((review) => {
+          const payload = {
             targetUserId: review.memberId,
             recruitPostId: selectedRecruitId,
             rating: review.rating,
             content: review.reviewText,
-          }),
-        ),
+          };
+
+          console.log("리뷰 제출 데이터:", payload);
+
+          return reviewsApi.createReview(payload);
+        }),
       );
 
       alert("팀원 리뷰가 작성되었습니다.");
@@ -203,9 +207,9 @@ export default function MyParticipatedProject() {
 
     if (project.participantIds?.length) {
       return excludeMe(
-        project.participantIds.map((memberId: number) => ({
+        project.participantIds.map((memberId: number, index: number) => ({
           id: memberId,
-          name: `팀원 ${memberId}`,
+          name: project.participantNicknames?.[index] ?? `팀원 ${memberId}`,
           role: "팀원",
         })),
       );
