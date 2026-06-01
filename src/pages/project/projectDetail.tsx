@@ -7,6 +7,7 @@ import type { ApplyRequest, RecruitSummary } from "../../types";
 import { useRecruitActions } from "../../hooks/useRecruitHandler";
 import BottomSheet from "../../components/bottomSheet";
 import ApplyForm from "../../components/applyForm";
+import { useBookmarkMutation } from "../../hooks/mutations/useBookmarkMutation";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,18 +19,16 @@ const ProjectDetailPage = () => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
- useEffect(() => {
-  (async () => {
-    try {
-      // ⭕ (res as any)로 타입을 느슨하게 열어주어 속성 탐색 빨간 줄을 제거합니다.
-      const res = await recruitsApi.getRecruitDetail(recruitId) as any;
-      const resultData = res?.result || res?.recruit || res;
-      setData(resultData);
-    } catch (error) {
-      console.log("프로젝트 불러오기 실패", error);
-    }
-  })();
-}, [recruitId]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await recruitsApi.getRecruitDetail(recruitId);
+        setData(data.recruits);
+      } catch (error) {
+        console.log("프로젝트 불러오기 실패", error);
+      }
+    })();
+  }, [recruitId]);
 
   useEffect(() => {
     const updateSheetWidth = () => {
@@ -67,7 +66,16 @@ const ProjectDetailPage = () => {
     setIsSheetOpen(false);
   };
 
-  const { handleApply, handleBookmark } = useRecruitActions();
+  const { handleApply } = useRecruitActions();
+
+  const bookmarkMutation = useBookmarkMutation();
+
+  const handleBookmark = (recruitId: number, bookmarkedByMe: boolean) => {
+    bookmarkMutation.mutate({
+      recruitId: recruitId,
+      bookmarkedByMe: !!bookmarkedByMe,
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -108,7 +116,9 @@ const ProjectDetailPage = () => {
       </header>
       <div className="flex-1 bg-[#F9FAFB] px-5 py-4 pb-20">
         {!data ? (
-          <div className="text-center p-10 text-gray-400 text-sm">로딩중...</div>
+          <div className="text-center p-10 text-gray-400 text-sm">
+            로딩중...
+          </div>
         ) : (
           <ProjectCard
             key={data.recruitId}

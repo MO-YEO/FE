@@ -136,6 +136,17 @@ export interface RecruitSummary {
   content: string;
 }
 
+export interface PatchRecruitParams {
+  type: string;
+  category: string;
+  tag: string;
+  department: string;
+  title: string;
+  content: string;
+  skills: string[];
+  totalHeadcount: number;
+  deadline: string;
+}
 export interface MyRecruitSummary {
   recruitId: number;
   type: string;

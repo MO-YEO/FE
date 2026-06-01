@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import bookmarkIcon from "../assets/bookmark.svg";
 import bookmarkActiveIcon from "../assets/bookmark.svg";
-import { recruitsApi } from "../api/recruits";
 import RegisterForm from "./registerForm";
 import BottomSheet from "./bottomSheet";
 import { RECRUIT_CATEGORY } from "../constants/category";
+import { useDeleteRecruits } from "../hooks/mutations/useDeleteRecruits";
+import { usePatchRecruits } from "../hooks/mutations/usePatchRecruits";
+import type { PatchRecruitParams } from "../types";
 
 type ProjectCardProps = {
   category: string;
@@ -25,6 +27,7 @@ type ProjectCardProps = {
   selectedProject?: any;
   isBookmarked?: boolean;
   onBookmarkClick?: (e: React.MouseEvent) => void;
+  onCardClick?: () => void;
 };
 
 export default function ProjectCard({
@@ -45,6 +48,7 @@ export default function ProjectCard({
   selectedProject,
   isBookmarked,
   onBookmarkClick,
+  onCardClick,
 }: ProjectCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [sheetWidth, setSheetWidth] = useState<number>(430);
@@ -94,22 +98,18 @@ export default function ProjectCard({
     setIsEditOpen(false);
   };
 
-  const handleDeleteProject = async () => {
+  const { mutate: deleteRecruit } = useDeleteRecruits();
+
+  const handleDeleteProject = () => {
     if (!selectedProject?.recruitId) {
       alert("삭제할 프로젝트 정보를 찾을 수 없습니다.");
       return;
     }
-
-    try {
-      if (!window.confirm("삭제하시겠습니까?")) return;
-
-      await recruitsApi.deleteRecruit(selectedProject.recruitId);
-      window.location.reload();
-    } catch (err) {
-      console.log("프로젝트 삭제 실패", err);
-      alert("프로젝트 삭제에 실패했습니다.");
-    }
+    if (!window.confirm("삭제하시겠습니까?")) return;
+    deleteRecruit(selectedProject.recruitId);
   };
+
+  const { mutate: patchRecruit } = usePatchRecruits();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -122,25 +122,25 @@ export default function ProjectCard({
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    const finalData = {
-      ...data,
-      applicantCount: Number(data.applicantCount),
+    const finalData: PatchRecruitParams = {
+      type: String(data.type),
+      category: String(data.category),
+      tag: String(data.tag),
+      department: String(data.department),
+      title: String(data.title),
+      content: String(data.content),
       totalHeadcount: Number(data.totalHeadcount),
-      skills:
-        (formData.get("skills") as string)
-          ?.split(",")
-          .map((skill) => skill.trim())
-          .filter(Boolean) || [],
+      deadline: String(data.deadline),
+      skills: String(formData.get("skills") ?? "")
+        .split(",")
+        .map((skill) => skill.trim())
+        .filter(Boolean),
     };
 
-    try {
-      await recruitsApi.patchRecruit(selectedProject.recruitId, finalData);
-      handleCloseSheet();
-      window.location.reload();
-    } catch (error) {
-      console.log("프로젝트 수정 실패", error);
-      alert("프로젝트 수정에 실패했습니다.");
-    }
+    patchRecruit({
+      recruitId: selectedProject.recruitId,
+      payload: finalData,
+    });
   };
 
   useEffect(() => {
@@ -170,6 +170,12 @@ export default function ProjectCard({
     <div
       ref={wrapperRef}
       className="flex flex-col gap-3 rounded-[14px] border border-[#D0D0D0] bg-white p-4 shadow-sm"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("button")) {
+          return;
+        }
+        onCardClick?.();
+      }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">

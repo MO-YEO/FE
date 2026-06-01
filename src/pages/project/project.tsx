@@ -4,7 +4,7 @@ import backIcon from "../../assets/back.svg";
 import plusIcon from "../../assets/plus.svg";
 import ProjectCard from "../../components/projectCard";
 import { recruitsApi } from "../../api/recruits";
-import type { ApplyRequest, RecruitSummary } from "../../types";
+import type { ApplyRequest } from "../../types";
 import { ACTIVITY_CATEGORY, RECRUIT_CATEGORY } from "../../constants/category";
 import useDebounce from "../../hooks/useDebounce";
 import { meApi } from "../../api/me";
@@ -12,6 +12,9 @@ import BottomSheet from "../../components/bottomSheet";
 import RegisterForm from "../../components/registerForm";
 import { useRecruitActions } from "../../hooks/useRecruitHandler";
 import ApplyForm from "../../components/applyForm";
+import useGetRecruits from "../../hooks/queries/useGetRecruits";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { useBookmarkMutation } from "../../hooks/mutations/useBookmarkMutation";
 
 const ProjectPage = () => {
   const [selectMenu, setSelectMenu] = useState("ALL");
@@ -30,9 +33,16 @@ const ProjectPage = () => {
     null,
   );
 
-  const [data, setData] = useState<RecruitSummary[]>();
-
   const [myId, setMyId] = useState<number | null>(null);
+
+  const bookmarkMutation = useBookmarkMutation();
+
+  const handleBookmark = (recruitId: number, bookmarkedByMe: boolean) => {
+    bookmarkMutation.mutate({
+      recruitId: recruitId,
+      bookmarkedByMe: !!bookmarkedByMe,
+    });
+  };
 
   const handleOpenSheet = (type: "register" | "apply", id?: number) => {
     if (wrapperRef.current) {
@@ -56,7 +66,7 @@ const ProjectPage = () => {
     }
   };
 
-  const { handleApply, handleBookmark } = useRecruitActions();
+  const { handleApply } = useRecruitActions();
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>,
@@ -146,23 +156,14 @@ const ProjectPage = () => {
     })();
   }, []);
 
-  //프로젝트 검색/조회 api
-  useEffect(() => {
-    (async () => {
-      try {
-        console.log(selectMenu, selectTagMenu);
-        const data = await recruitsApi.getRecruits({
-          activityCategory: selectMenu == "ALL" ? "" : selectMenu,
-          recruitCategory: selectTagMenu == "ALL" ? "" : selectTagMenu,
-          keyword: debouncedValue,
-          sort: "createdAt,desc",
-        });
-        setData(data.recruits);
-      } catch (error) {
-        console.log("프로젝트 불러오기 실패", error);
-      }
-    })();
-  }, [selectMenu, selectTagMenu, debouncedValue]);
+  const { data, isLoading, isError } = useGetRecruits({
+    activityCategory: selectMenu === "ALL" ? "" : selectMenu,
+    recruitCategory: selectTagMenu === "ALL" ? "" : selectTagMenu,
+    keyword: debouncedValue,
+    sort: "createdAt,desc",
+  });
+
+  const recruits = data?.recruits ?? [];
 
   return (
     <div className="flex min-h-full flex-col" ref={wrapperRef}>
@@ -241,13 +242,15 @@ const ProjectPage = () => {
       </div>
 
       <div className="flex-1 bg-[#F9FAFB] px-5 py-4 pb-20 ">
-        {!data || data.length === 0 ? (
+        {isError && <span>에러가 발생했습니다. 다시 시도해주세요.</span>}
+        {isLoading && <LoadingSpinner />}
+        {!isError && !isLoading && recruits.length === 0 ? (
           <div className="flex justify-center text-gray-400 text-sm mt-8">
             아직 등록된 프로젝트가 없어요
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {data.map((data) => {
+            {recruits.map((data) => {
               const Author = myId === data.author.memberId;
               return (
                 <ProjectCard
@@ -268,6 +271,7 @@ const ProjectPage = () => {
                   onBookmarkClick={() =>
                     handleBookmark(data.recruitId, data.bookmarkedByMe)
                   }
+                  onCardClick={() => navigate(`/project/${data.recruitId}`)}
                 />
               );
             })}
