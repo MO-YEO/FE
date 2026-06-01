@@ -31,7 +31,7 @@ export const recruitsApi = {
 
   //프로젝트 수정
   patchRecruit: async (recruitId: number, payload: PatchRecruitParams) => {
-    await apiClient.patch(`api/recruits/${recruitId}`, payload);
+    await apiClient.patch(`/recruits/${recruitId}`, payload);
   },
 
   // 프로젝트 상세 조회
