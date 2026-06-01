@@ -1,34 +1,25 @@
 import { useParams, useNavigate } from "react-router-dom";
 import backIcon from "../../assets/back.svg";
-import { recruitsApi } from "../../api/recruits";
 import ProjectCard from "../../components/projectCard";
 import { useEffect, useRef, useState } from "react";
-import type { ApplyRequest, RecruitSummary } from "../../types";
+import type { ApplyRequest } from "../../types";
 import { useRecruitActions } from "../../hooks/useRecruitHandler";
 import BottomSheet from "../../components/bottomSheet";
 import ApplyForm from "../../components/applyForm";
 import { useBookmarkMutation } from "../../hooks/mutations/useBookmarkMutation";
+import useGetRecruitsDetail from "../../hooks/queries/useGetRecruitsDetail";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const recruitId = Number(id);
 
-  const [data, setData] = useState<RecruitSummary | null>(null);
   const [sheetWidth, setSheetWidth] = useState<number>(430);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await recruitsApi.getRecruitDetail(recruitId);
-        setData(data.recruit);
-      } catch (error) {
-        console.log("프로젝트 불러오기 실패", error);
-      }
-    })();
-  }, [recruitId]);
+  const { data, isLoading, isError } = useGetRecruitsDetail(recruitId);
 
   useEffect(() => {
     const updateSheetWidth = () => {
@@ -115,10 +106,9 @@ const ProjectDetailPage = () => {
         </div>
       </header>
       <div className="flex-1 bg-[#F9FAFB] px-5 py-4 pb-20">
-        {!data ? (
-          <div className="text-center p-10 text-gray-400 text-sm">
-            로딩중...
-          </div>
+        {isError && <p>에러가 발생했습니다. 다시 한번 시도해주세요.</p>}
+        {!data || isLoading ? (
+          <LoadingSpinner />
         ) : (
           <ProjectCard
             key={data.recruitId}
