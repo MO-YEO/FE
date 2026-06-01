@@ -23,7 +23,7 @@ const ProjectDetailPage = () => {
     (async () => {
       try {
         const data = await recruitsApi.getRecruitDetail(recruitId);
-        setData(data.recruits);
+        setData(data.recruit);
       } catch (error) {
         console.log("프로젝트 불러오기 실패", error);
       }

@@ -193,7 +193,7 @@ export interface RecruitListResponse {
 }
 
 export interface RecruitDetail {
-  recruits: RecruitSummary;
+  recruit: RecruitSummary;
 }
 
 export interface RecruitApplicant {
