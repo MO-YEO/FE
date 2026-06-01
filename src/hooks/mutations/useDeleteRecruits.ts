@@ -7,10 +7,13 @@ export const useDeleteRecruits = () => {
 
   return useMutation({
     mutationFn: (recruitId: number) => recruitsApi.deleteRecruit(recruitId),
-    onSuccess: () => {
+    onSuccess: (_, recruitId) => {
       alert("프로젝트 삭제에 성공했습니다.");
       queryClient.invalidateQueries({
-        queryKey: queryFactory.recruits.all,
+        queryKey: queryFactory.recruits.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryFactory.recruits.detail(recruitId),
       });
     },
     onError: () => {

@@ -8,9 +8,7 @@ export const queryFactory = {
       keyword?: string;
       sort?: string;
     }) => [...queryFactory.recruits.lists(), params] as const,
-    detail: (recruitId: number) => [
-      ...queryFactory.recruits.all,
-      { recruitId },
-    ],
+    detail: (recruitId: number) =>
+      [...queryFactory.recruits.all, "detail", recruitId] as const,
   },
 };

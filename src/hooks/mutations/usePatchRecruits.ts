@@ -14,14 +14,17 @@ export const usePatchRecruits = () => {
   return useMutation({
     mutationFn: ({ recruitId, payload }: PatchRecruitMutationParams) =>
       recruitsApi.patchRecruit(recruitId, payload),
-    onSuccess: () => {
+    onSuccess: (_, { recruitId }) => {
       alert("프로젝트 수정에 성공했습니다.");
       queryClient.invalidateQueries({
-        queryKey: queryFactory.recruits.all,
+        queryKey: queryFactory.recruits.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryFactory.recruits.detail(recruitId),
       });
     },
     onError: () => {
-      alert("프로젝트 삭제에 실패했습니다.");
+      alert("프로젝트 수정에 실패했습니다.");
     },
   });
 };
