@@ -170,7 +170,12 @@ export default function ProjectCard({
     <div
       ref={wrapperRef}
       className="flex flex-col gap-3 rounded-[14px] border border-[#D0D0D0] bg-white p-4 shadow-sm"
-      onClick={onCardClick}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("button")) {
+          return;
+        }
+        onCardClick?.();
+      }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
