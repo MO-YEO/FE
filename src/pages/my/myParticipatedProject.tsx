@@ -72,7 +72,7 @@ export default function MyParticipatedProject() {
     setSelectedMembers([]);
   };
 
-  const handleSubmitReviews = async (reviews: ReviewValue[]) => {
+    const handleSubmitReviews = async (reviews: ReviewValue[]) => {
     if (!selectedRecruitId) {
       alert("프로젝트 정보를 찾을 수 없습니다.");
       return;
@@ -82,25 +82,41 @@ export default function MyParticipatedProject() {
       setIsSubmittingReview(true);
 
       await Promise.all(
-        reviews.map((review) => {
-          const payload = {
+        reviews.map((review) =>
+          reviewsApi.createReview({
             targetUserId: review.memberId,
             recruitPostId: selectedRecruitId,
             rating: review.rating,
             content: review.reviewText,
-          };
-
-          console.log("리뷰 제출 데이터:", payload);
-
-          return reviewsApi.createReview(payload);
-        }),
+          }),
+        ),
       );
 
       alert("팀원 리뷰가 작성되었습니다.");
       closeReviewModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error("리뷰 작성 실패:", error);
-      alert("리뷰 작성에 실패했습니다.");
+
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "리뷰 작성에 실패했습니다.";
+
+      if (
+        message.includes("이미") ||
+        message.includes("중복") ||
+        message.includes("review")
+      ) {
+        alert("이미 해당 팀원에게 리뷰를 작성했습니다.");
+        return;
+      }
+
+      if (error?.response?.status === 401) {
+        alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
+        return;
+      }
+
+      alert(message);
     } finally {
       setIsSubmittingReview(false);
     }

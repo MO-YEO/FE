@@ -1,15 +1,17 @@
 import type { MouseEvent } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import backIcon from "../../assets/back.svg";
 import PostCard from "../../components/PostCard";
 import { boardsApi } from "../../api/boards";
 
 export default function MyScrap() {
-  console.log("✅ MyScrap 페이지 렌더링됨");
-
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+
+  // 스크랩 페이지 안에서만 임시로 "스크랩 해제된 게시글" 관리
+  // 새로고침하면 다시 API 기준으로 목록이 불러와짐
+  const [unbookmarkedPostIds, setUnbookmarkedPostIds] = useState<number[]>([]);
 
   const {
     data: scrappedPosts,
@@ -17,51 +19,45 @@ export default function MyScrap() {
     isError,
   } = useQuery({
     queryKey: ["myScrappedPostsPage"],
-    queryFn: async () => {
-      console.log("📌 스크랩 목록 API 요청 시작");
-
-      const data = await boardsApi.getScrappedPosts({
-        page: 0,
-        size: 20,
-      });
-
-      console.log("📌 스크랩 목록 API 응답:", data);
-
-      return data;
-    },
+    queryFn: () => boardsApi.getScrappedPosts({ page: 0, size: 20 }),
     retry: false,
   });
 
-  const unbookmarkMutation = useMutation({
-    mutationFn: async (postId: number) => {
-      console.log("🚀 스크랩 취소 API 요청 시작:", postId);
+  const toggleBookmarkMutation = useMutation({
+    mutationFn: async ({
+      postId,
+      isCurrentlyBookmarked,
+    }: {
+      postId: number;
+      isCurrentlyBookmarked: boolean;
+    }) => {
+      if (isCurrentlyBookmarked) {
+        return boardsApi.unbookmarkPost(postId);
+      }
 
-      const data = await boardsApi.unbookmarkPost(postId);
-
-      console.log("✅ 스크랩 취소 API 응답:", data);
-
-      return data;
+      return boardsApi.bookmarkPost(postId);
     },
 
-    onSuccess: () => {
-      console.log("✅ 스크랩 취소 성공 - 목록 다시 불러오기");
+    onSuccess: (_, variables) => {
+      const { postId, isCurrentlyBookmarked } = variables;
 
-      queryClient.invalidateQueries({
-        queryKey: ["myScrappedPostsPage"],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["myPostsPage"],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ["myLikedPostsPage"],
-      });
+      if (isCurrentlyBookmarked) {
+        // 파란색 → 회색
+        setUnbookmarkedPostIds((prev) => {
+          if (prev.includes(postId)) return prev;
+          return [...prev, postId];
+        });
+      } else {
+        // 회색 → 파란색
+        setUnbookmarkedPostIds((prev) =>
+          prev.filter((id) => id !== postId),
+        );
+      }
     },
 
     onError: (error) => {
-      console.error("❌ 스크랩 취소 실패:", error);
-      alert("스크랩 취소에 실패했습니다.");
+      console.error("스크랩 상태 변경 실패:", error);
+      alert("스크랩 상태 변경에 실패했습니다.");
     },
   });
 
@@ -80,24 +76,21 @@ export default function MyScrap() {
     });
   };
 
-  const handleUnbookmark = (
+  const handleBookmarkClick = (
     e: MouseEvent<HTMLButtonElement>,
     postId: number,
   ) => {
-    console.log("🔥 handleUnbookmark 함수 들어옴:", postId);
-
     e.preventDefault();
     e.stopPropagation();
 
-    console.log("🔥 preventDefault / stopPropagation 실행 완료");
+    if (toggleBookmarkMutation.isPending) return;
 
-    if (unbookmarkMutation.isPending) {
-      console.log("⚠️ 이미 스크랩 취소 요청 중이라 중단");
-      return;
-    }
+    const isCurrentlyBookmarked = !unbookmarkedPostIds.includes(postId);
 
-    console.log("🔥 스크랩 취소 mutate 실행:", postId);
-    unbookmarkMutation.mutate(postId);
+    toggleBookmarkMutation.mutate({
+      postId,
+      isCurrentlyBookmarked,
+    });
   };
 
   return (
@@ -140,7 +133,7 @@ export default function MyScrap() {
         {!isLoading && !isError && scrappedPosts?.posts?.length ? (
           <div className="flex flex-col gap-[12px]">
             {scrappedPosts.posts.map((post: any) => {
-              console.log("🧾 스크랩 카드 렌더링:", post.postId, post.title);
+              const isBookmarked = !unbookmarkedPostIds.includes(post.postId);
 
               return (
                 <PostCard
@@ -151,11 +144,9 @@ export default function MyScrap() {
                   time={formatDate(post.createdAt)}
                   likeCount={post.likeCount ?? 0}
                   commentCount={post.commentCount ?? 0}
-                  isBookmarked={true}
-                  onBookmarkClick={(e) => {
-                    console.log("🔥 MyScrap에서 onBookmarkClick 받음:", post.postId);
-                    handleUnbookmark(e, post.postId);
-                  }}
+                  isBookmarked={isBookmarked}
+                  onCardClick={() => navigate(`/board/${post.postId}`)}
+                  onBookmarkClick={(e) => handleBookmarkClick(e, post.postId)}
                 />
               );
             })}
