@@ -132,10 +132,17 @@ export default function ProjectCard({
         .filter(Boolean),
     };
 
-    patchRecruit({
-      recruitId: selectedProject.recruitId,
-      payload: finalData,
-    });
+    patchRecruit(
+      {
+        recruitId: selectedProject.recruitId,
+        payload: finalData,
+      },
+      {
+        onSuccess: () => {
+          handleCloseSheet();
+        },
+      },
+    );
   };
 
   useEffect(() => {
