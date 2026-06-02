@@ -9,6 +9,7 @@ import ApplyForm from "../../components/applyForm";
 import { useBookmarkMutation } from "../../hooks/mutations/useBookmarkMutation";
 import useGetRecruitsDetail from "../../hooks/queries/useGetRecruitsDetail";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { calculateDday } from "../../utils/calculateDay";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -85,7 +86,6 @@ const ProjectDetailPage = () => {
       alert("성공적으로 프로젝트에 지원되었습니다!");
     });
   };
-
   return (
     <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[88px] font-sans relative">
       <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
@@ -114,7 +114,7 @@ const ProjectDetailPage = () => {
           <ProjectCard
             key={data.recruitId}
             category={data.category}
-            dDay={data.deadline}
+            dDay={calculateDday(data.deadline)}
             title={data.title}
             description={data.content}
             recruitCount={data.totalHeadcount}

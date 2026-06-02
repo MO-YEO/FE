@@ -15,6 +15,7 @@ import ApplyForm from "../../components/applyForm";
 import useGetRecruits from "../../hooks/queries/useGetRecruits";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { useBookmarkMutation } from "../../hooks/mutations/useBookmarkMutation";
+import { calculateDday } from "../../utils/calculateDay";
 
 const ProjectPage = () => {
   const [selectMenu, setSelectMenu] = useState("ALL");
@@ -256,7 +257,7 @@ const ProjectPage = () => {
                 <ProjectCard
                   key={data.recruitId}
                   category={data.category}
-                  dDay={data.deadline}
+                  dDay={calculateDday(data.deadline)}
                   title={data.title}
                   description={data.content}
                   recruitCount={data.totalHeadcount}
