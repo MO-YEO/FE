@@ -51,7 +51,6 @@ export default function ProjectCard({
   onCardClick,
 }: ProjectCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [sheetWidth, setSheetWidth] = useState<number>(430);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const categoryLabel =
@@ -87,10 +86,6 @@ export default function ProjectCard({
   };
 
   const handleOpenSheet = () => {
-    if (wrapperRef.current) {
-      setSheetWidth(wrapperRef.current.offsetWidth);
-    }
-
     setIsEditOpen(true);
   };
 
@@ -142,21 +137,6 @@ export default function ProjectCard({
       payload: finalData,
     });
   };
-
-  useEffect(() => {
-    const updateSheetWidth = () => {
-      if (wrapperRef.current) {
-        setSheetWidth(wrapperRef.current.offsetWidth);
-      }
-    };
-
-    updateSheetWidth();
-    window.addEventListener("resize", updateSheetWidth);
-
-    return () => {
-      window.removeEventListener("resize", updateSheetWidth);
-    };
-  }, []);
 
   useEffect(() => {
     document.body.style.overflow = isEditOpen ? "hidden" : "";
@@ -284,7 +264,7 @@ export default function ProjectCard({
         <BottomSheet
           open={isEditOpen}
           title="프로젝트 수정"
-          sheetWidth={sheetWidth}
+          sheetWidth={430}
           onClose={handleCloseSheet}
         >
           <RegisterForm
