@@ -31,12 +31,14 @@ type ProfileEditType = {
   githubUrl: string;
 };
 
+// 모달 컴포넌트가 반환하는 스펙 정의에 githubUrl 필드를 추가합니다.
 type ProfileFormFromModal = {
   name: string;
   role: string;
   email: string;
   bio: string;
   techStacks: string[];
+  githubUrl: string;
 };
 
 export default function MyPage() {
@@ -147,6 +149,7 @@ export default function MyPage() {
     }
   };
 
+  // 모달 폼에서 전달받은 updatedProfile.githubUrl을 서버 페이로드와 안전하게 동기화합니다.
   const handleSaveProfile = async (updatedProfile: ProfileFormFromModal) => {
     const payload: UpdateMyProfileRequest = {
       nickname: updatedProfile.name,
@@ -155,10 +158,7 @@ export default function MyPage() {
       role: updatedProfile.role,
       contactEmail: updatedProfile.email,
       phoneNumber: profile?.phoneNumber ?? "010-0000-0000",
-      githubUrl:
-        editableProfile.githubUrl ||
-        profile?.githubUrl ||
-        "https://github.com/example",
+      githubUrl: updatedProfile.githubUrl || "https://github.com/example",
       intro: updatedProfile.bio,
       techStacks: updatedProfile.techStacks,
       activityCategories: profile?.activityCategories?.length
@@ -634,6 +634,7 @@ export default function MyPage() {
         </section>
       </main>
 
+      {/* initialProfile 프롭스에 깃허브 주소를 안전하게 실어 보냅니다. */}
       <ProfileEditModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}

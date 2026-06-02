@@ -7,6 +7,7 @@ type ProfileForm = {
   email: string;
   bio: string;
   techStacks: string[];
+  githubUrl: string;
 };
 
 type ProfileEditModalProps = {
@@ -28,6 +29,7 @@ export default function ProfileEditModal({
     email: "",
     bio: "",
     techStacksText: "",
+    githubUrl: "",
   });
 
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function ProfileEditModal({
       email: initialProfile.email ?? "",
       bio: initialProfile.bio ?? "",
       techStacksText: initialProfile.techStacks?.join(", ") ?? "",
+      githubUrl: initialProfile.githubUrl ?? "",
     });
   }, [isOpen, initialProfile]);
 
@@ -58,9 +61,10 @@ export default function ProfileEditModal({
       email: form.email.trim(),
       bio: form.bio.trim(),
       techStacks: parseTechStacks(form.techStacksText),
+      githubUrl: form.githubUrl.trim(),
     };
 
-    console.log("모달에서 만든 techStacks:", nextProfile.techStacks);
+    console.log("모달에서 만든 데이터:", nextProfile);
 
     await onSave(nextProfile);
   };
@@ -128,6 +132,20 @@ export default function ProfileEditModal({
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, email: e.target.value }))
                   }
+                  className="h-[46px] rounded-[12px] border border-[#D7DFEA] px-[14px] text-[14px] focus:outline-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-[8px]">
+                <label className="text-[14px] font-semibold text-[#111827]">
+                  깃허브 주소
+                </label>
+                <input
+                  value={form.githubUrl}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, githubUrl: e.target.value }))
+                  }
+                  placeholder="https://github.com/username"
                   className="h-[46px] rounded-[12px] border border-[#D7DFEA] px-[14px] text-[14px] focus:outline-none"
                 />
               </div>
