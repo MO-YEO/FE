@@ -37,6 +37,7 @@ type ProfileFormFromModal = {
   email: string;
   bio: string;
   techStacks: string[];
+  githubUrl: string;
 };
 
 export default function MyPage() {
@@ -147,6 +148,24 @@ export default function MyPage() {
     }
   };
 
+  // 🚨 회원 탈퇴 처리 핸들러 함수
+  const handleWithdraw = async () => {
+    if (!window.confirm("정말로 탈퇴하시겠습니까?\n작성하신 공고, 지원서 및 모든 데이터가 영구 삭제되며 복구할 수 없습니다.")) return;
+
+    try {
+      await authApi.withdrawAccount(); // 백엔드 DELETE /members/me 호출
+      alert("회원 탈퇴가 정상적으로 완료되었습니다.");
+    } catch (error) {
+      console.error("회원 탈퇴 API 실패:", error);
+      alert("탈퇴 처리 중 오류가 발생했습니다. 다시 시도해 주세요.");
+    } finally {
+      // 성공/실패 여부와 관계없이 클라이언트 세션을 안전하게 파기하고 내보냅니다.
+      localStorage.removeItem("access_token");
+      queryClient.clear();
+      navigate("/login", { replace: true });
+    }
+  };
+
   const handleSaveProfile = async (updatedProfile: ProfileFormFromModal) => {
     const payload: UpdateMyProfileRequest = {
       nickname: updatedProfile.name,
@@ -155,15 +174,12 @@ export default function MyPage() {
       role: updatedProfile.role,
       contactEmail: updatedProfile.email,
       phoneNumber: profile?.phoneNumber ?? "010-0000-0000",
-      githubUrl:
-        editableProfile.githubUrl ||
-        profile?.githubUrl ||
-        "https://github.com/example",
+      githubUrl: updatedProfile.githubUrl || "https://github.com/example",
       intro: updatedProfile.bio,
       techStacks: updatedProfile.techStacks,
       activityCategories: profile?.activityCategories?.length
         ? profile.activityCategories
-        : ["프로젝트"],
+        : ["PROJ"],
     };
 
     try {
@@ -606,6 +622,33 @@ export default function MyPage() {
                 </div>
               )}
             </section>
+
+            {/* ⭕ 회원 탈퇴 버튼 컴포넌트 추가 배치부 (로그아웃 바로 위) */}
+            <button
+              type="button"
+              onClick={handleWithdraw}
+              className="mt-[4px] flex h-[52px] w-full items-center justify-between rounded-[14px] border border-[#FEE2E2] bg-white px-[16px] text-left shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition-all active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-[10px]">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#EF4444"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0"
+                >
+                  <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6" />
+                </svg>
+                <span className="text-[14px] font-medium leading-[20px] text-[#EF4444]">
+                  회원 탈퇴
+                </span>
+              </div>
+              <img src={chevronRightIcon} alt="" className="h-[16px] w-[16px] shrink-0" />
+            </button>
 
             <button
               type="button"

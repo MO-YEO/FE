@@ -9,19 +9,26 @@ import { membersApi } from "../api/member";
 const SignUpPage = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [input, setInput] = useState("");
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const navigate = useNavigate();
-
 
   useEffect(() => {
     const checkUser = async () => {
       try {
         const profile = await membersApi.getMyProfile();
-        if (profile && profile.nickname) navigate(PATH.HOME, { replace: true });
-      } catch (e) {}
+        if (profile && profile.nickname) {
+          navigate(PATH.HOME, { replace: true });
+          return;
+        }
+      } catch (e) {
+        console.error("기존 회원 검증 실패:", e);
+      } finally {
+        // 검증이 완벽히 끝나서 신규 회원임이 확정되었을 때만 가입 화면을 잠금 해제합니다.
+        setIsPageLoading(false);
+      }
     };
     checkUser();
   }, [navigate]);
-  
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && input.trim() !== "") {
@@ -40,7 +47,6 @@ const SignUpPage = () => {
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    // API 명세서 필드명 매핑
     const finalData = {
       nickname: String(data.nickname),
       profileImageUrl: "",
@@ -62,6 +68,15 @@ const SignUpPage = () => {
       alert("등록 실패 (백엔드 준비 중일 수 있습니다)");
     }
   };
+
+  // 기존 유저 여부를 판별하는 동안 백색 화면이나 로딩 창을 띄워 UX 껌벅임을 차단합니다.
+  if (isPageLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#F7F8FA]">
+        <div className="w-10 h-10 border-4 border-[#2F6BFF] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[400px] bg-[#F7F8FA] pb-[100px] relative text-left">

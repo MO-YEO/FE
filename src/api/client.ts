@@ -29,9 +29,7 @@ apiClient.interceptors.request.use(
         .replace(/[\r\n\t]/g, '')
         .trim();
 
-
       config.headers['Authorization'] = `Bearer ${cleanToken}`;
-
     }
 
     return config;
