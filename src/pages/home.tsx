@@ -18,6 +18,39 @@ import Time from "../assets/time.svg?react";
 
 type SearchType = 'project' | 'board';
 
+// ⏱️ 게시글 작성 시간을 "방금 전/N분 전/N시간 전"으로 변환하는 가공 함수
+const formatRelativeTime = (dateString?: string) => {
+  if (!dateString) return "방금 전";
+  const now = new Date();
+  const past = new Date(dateString);
+  const diffMs = now.getTime() - past.getTime();
+  
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+  if (diffMins < 1) return "방금 전";
+  if (diffMins < 60) return `${diffMins}분 전`;
+  if (diffHours < 24) return `${diffHours}시간 전`;
+  
+  return past.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
+// 📅 마감일 포맷을 "MM-DD"로 간결하게 포맷팅하는 함수
+const formatDeadline = (dateString?: string) => {
+  if (!dateString) return "마감임박";
+  // T 분리 또는 대시(-) 분리를 통해 날짜만 추출
+  const datePart = dateString.split("T")[0]; // YYYY-MM-DD
+  const parts = datePart.split("-");
+  if (parts.length >= 3) {
+    return `${parts[1]}-${parts[2]}`; // MM-DD
+  }
+  return dateString;
+};
+
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -134,7 +167,7 @@ const Home: React.FC = () => {
             {searchType === 'project' && (
               <div className="flex flex-col">
                 {filteredRecruits.length > 0 ? filteredRecruits.map((p: any) => (
-                  <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "모집중"} members={p.applicantCount} maxMembers={p.totalHeadcount} time="조회중" onClick={() => navigate(`/project/${p.recruitId}`)} />
+                  <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "모집중"} members={p.applicantCount} maxMembers={p.totalHeadcount} time={formatDeadline(p.deadline)} onClick={() => navigate(`/project/${p.recruitId}`)} />
                 )) : <EmptyState />}
               </div>
             )}
@@ -143,7 +176,7 @@ const Home: React.FC = () => {
               <div className="flex flex-col gap-3">
                 {filteredPosts.length > 0 ? filteredPosts.map((p: any) => (
                   <div key={p.postId} onClick={() => navigate(`/board/${p.postId}`)} className="cursor-pointer">
-                    <PostPreviewCard title={p.title} likeCount={p.likeCount} commentCount={p.commentCount} date="최신" author={p.author?.nickname || p.author} />
+                    <PostPreviewCard title={p.title} likeCount={p.likeCount} commentCount={p.commentCount} date={formatRelativeTime(p.createdAt)} author={p.author?.nickname || p.author} />
                   </div>
                 )) : <EmptyState />}
               </div>
@@ -203,7 +236,7 @@ const Home: React.FC = () => {
               {recruitsLoading ? (
                 <div className="w-full h-[80px] bg-white rounded-[14px] animate-pulse mb-3" />
               ) : recruitsList.slice(0, 3).map((p: any) => (
-                <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "작성자"} members={p.applicantCount} maxMembers={p.totalHeadcount} time="마감임박" onClick={() => navigate(`/project/${p.recruitId}`)} />
+                <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "작성자"} members={p.applicantCount} maxMembers={p.totalHeadcount} time={formatDeadline(p.deadline)} onClick={() => navigate(`/project/${p.recruitId}`)} />
               ))}
             </div>
 
@@ -220,7 +253,7 @@ const Home: React.FC = () => {
                   <div className="w-full h-[60px] bg-white rounded-[14px] animate-pulse" />
                 ) : postsList.slice(0, 3).map((p: any) => (
                   <div key={p.postId} onClick={() => navigate(`/board/${p.postId}`)} className="cursor-pointer">
-                    <PostPreviewCard title={p.title} likeCount={p.likeCount} commentCount={p.commentCount} date="방금 전" author={p.author?.nickname || p.author} />
+                    <PostPreviewCard title={p.title} likeCount={p.likeCount} commentCount={p.commentCount} date={formatRelativeTime(p.createdAt)} author={p.author?.nickname || p.author} />
                   </div>
                 ))}
               </div>
