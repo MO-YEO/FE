@@ -18,7 +18,6 @@ import Time from "../assets/time.svg?react";
 
 type SearchType = 'project' | 'board';
 
-// ⏱️ 게시글 작성 시간 유동적 변환 함수
 const formatRelativeTime = (dateString?: string) => {
   if (!dateString) return "방금 전";
   const now = new Date();
@@ -39,7 +38,6 @@ const formatRelativeTime = (dateString?: string) => {
   });
 };
 
-// 📅 마감일 포맷 "MM-DD" 변환 함수
 const formatDeadline = (dateString?: string) => {
   if (!dateString) return "마감임박";
   const datePart = dateString.split("T")[0];
@@ -71,15 +69,30 @@ const Home: React.FC = () => {
     queryFn: () => boardsApi.getPosts({ size: 20 }),
   });
 
-  // 🤖 진짜 백엔드 비동기 통신을 정상적으로 추적하는 쿼리 가운터
   const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation'],
     queryFn: aiRecommendApi.getAiRecommendations,
     enabled: !!profile,
-    staleTime: 1000 * 60 * 30,   // 30분간 캐시 보존으로 화면 전환 시 깜빡임 차단
-    gcTime: 1000 * 60 * 60,      // 메모리 유지 1시간
-    refetchOnWindowFocus: false, // 윈도우 포커스 시 재요청 방지
+    staleTime: 1000 * 60 * 30,   
+    gcTime: 1000 * 60 * 60,      
+    refetchOnWindowFocus: false, 
   });
+
+  // 🔍 [디버깅용 콘솔] 백엔드 응답을 실시간으로 추적하는 추적기
+  useEffect(() => {
+    if (aiRecommendData) {
+      console.log("=========================================");
+      console.log("🤖 [AI 추천 API] 전체 응답 배열:", aiRecommendData);
+      
+      if (aiRecommendData.length > 0) {
+        console.log("📌 첫 번째 추천 데이터 본체:", aiRecommendData[0]);
+        console.log("💬 백엔드가 준 aiComment 값:", aiRecommendData[0].aiComment);
+      } else {
+        console.warn("⚠️ 추천 데이터 배열이 텅 비어서( [] ) 들어왔습니다.");
+      }
+      console.log("=========================================");
+    }
+  }, [aiRecommendData]);
 
   useEffect(() => {
     if (profile && profile.email) {
@@ -295,7 +308,6 @@ const AIProjectCard: React.FC<AIProjectCardProps> = ({ title, matchingScore, aiC
     
     <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]">
       <p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">
-        {/* 🤖 진짜 데이터가 오면 출력하고, 딜레이로 비어 오면 실시간 심층 분석 중이라는 유도 문구 작동 */}
         {aiComment ? `🤖 ${aiComment}` : "🤖 LLM 기반의 실시간 심층 역량 분석 및 요약 리포트가 진행 중입니다. 잠시만 기다려주시면 완벽한 추천 이유가 화면에 업데이트됩니다!"}
       </p>
     </div>
