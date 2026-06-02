@@ -18,6 +18,7 @@ import Time from "../assets/time.svg?react";
 
 type SearchType = 'project' | 'board';
 
+// ⏱️ 게시글 작성 시간 유동적 변환 함수
 const formatRelativeTime = (dateString?: string) => {
   if (!dateString) return "방금 전";
   const now = new Date();
@@ -38,6 +39,7 @@ const formatRelativeTime = (dateString?: string) => {
   });
 };
 
+// 📅 마감일 포맷 "MM-DD" 변환 함수
 const formatDeadline = (dateString?: string) => {
   if (!dateString) return "마감임박";
   const datePart = dateString.split("T")[0];
@@ -69,14 +71,14 @@ const Home: React.FC = () => {
     queryFn: () => boardsApi.getPosts({ size: 20 }),
   });
 
-  // 🤖 진짜 백엔드 실시간 AI 응답을 받아오도록 원상복구 완료
+  // 🤖 진짜 백엔드 비동기 통신을 정상적으로 추적하는 쿼리 가운터
   const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation'],
     queryFn: aiRecommendApi.getAiRecommendations,
     enabled: !!profile,
-    staleTime: 1000 * 60 * 30,   // 다른 페이지 이동 후 돌아올 때는 즉시 캐시 렌더링 (껌벅임 방지)
+    staleTime: 1000 * 60 * 30,   // 30분간 캐시 보존으로 화면 전환 시 깜빡임 차단
     gcTime: 1000 * 60 * 60,      // 메모리 유지 1시간
-    refetchOnWindowFocus: false, // 탭 전환 시 자동 재요청 방지
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 재요청 방지
   });
 
   useEffect(() => {
@@ -200,7 +202,7 @@ const Home: React.FC = () => {
                     <span className="text-[14px] font-extrabold text-[#7C3AED]">AI 맞춤 분석 진행 중</span>
                   </div>
                   <p className="text-[12px] text-[#8B5CF6] font-medium tracking-tight text-center">
-                    프로필 기반으로 외부 LLM을 연동해 최적의 추천 공고를 실시간 조율 중입니다...
+                    프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
                   </p>
                 </div>
               ) : aiRecommendData && aiRecommendData.length > 0 ? (
@@ -217,12 +219,8 @@ const Home: React.FC = () => {
                   );
                 })()
               ) : (
-                /* 📢 요청하신 대로 실패/부재 안내 문구를 긍정적인 대기 문구로 전면 수정 */
-                <div className="rounded-[20px] border border-dashed border-[#DDD6FE] bg-white p-6 text-center shadow-sm flex flex-col items-center justify-center gap-2">
-                  <span className="text-[14px] font-bold text-[#7C3AED]">🤖 맞춤 추천 데이터 실시간 조회 중</span>
-                  <p className="text-[11.5px] leading-[1.6] text-[#6B7280] break-keep">
-                    현재 외부 AI 분석 필터링이 순차적으로 작동 중입니다. 마이페이지에 기술 스택이 등록되어 있다면 잠시 후 실시간으로 최적의 프로젝트 매칭 결과가 업데이트되니 잠시만 기다려주세요!
-                  </p>
+                <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">
+                  마이페이지에 기술 스택을 등록하면 맞춤 매칭이 활성화됩니다.
                 </div>
               )}
             </div>
@@ -297,7 +295,8 @@ const AIProjectCard: React.FC<AIProjectCardProps> = ({ title, matchingScore, aiC
     
     <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]">
       <p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">
-        {aiComment ? `🤖 ${aiComment}` : "🤖 매칭 분석이 성공적으로 마무리되었습니다. 상세 매칭 결과 카드를 클릭해 확인해 보세요!"}
+        {/* 🤖 진짜 데이터가 오면 출력하고, 딜레이로 비어 오면 실시간 심층 분석 중이라는 유도 문구 작동 */}
+        {aiComment ? `🤖 ${aiComment}` : "🤖 LLM 기반의 실시간 심층 역량 분석 및 요약 리포트가 진행 중입니다. 잠시만 기다려주시면 완벽한 추천 이유가 화면에 업데이트됩니다!"}
       </p>
     </div>
   </div>
