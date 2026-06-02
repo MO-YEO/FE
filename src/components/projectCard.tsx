@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import bookmarkIcon from "../assets/bookmark.svg";
 import bookmarkActiveIcon from "../assets/bookmark.svg";
 import RegisterForm from "./registerForm";
@@ -51,7 +51,6 @@ export default function ProjectCard({
   onCardClick,
 }: ProjectCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const categoryLabel =
     RECRUIT_CATEGORY.find((item) => item.value === category)?.label || category;
@@ -132,10 +131,17 @@ export default function ProjectCard({
         .filter(Boolean),
     };
 
-    patchRecruit({
-      recruitId: selectedProject.recruitId,
-      payload: finalData,
-    });
+    patchRecruit(
+      {
+        recruitId: selectedProject.recruitId,
+        payload: finalData,
+      },
+      {
+        onSuccess: () => {
+          handleCloseSheet();
+        },
+      },
+    );
   };
 
   useEffect(() => {
@@ -146,9 +152,21 @@ export default function ProjectCard({
     };
   }, [isEditOpen]);
 
+  const [sheetWidth, setSheetWidth] = useState(() =>
+    Math.min(window.innerWidth, 400),
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setSheetWidth(Math.min(window.innerWidth, 400));
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <div
-      ref={wrapperRef}
       className="flex flex-col gap-3 rounded-[14px] border border-[#D0D0D0] bg-white p-4 shadow-sm"
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("button")) {
@@ -264,7 +282,7 @@ export default function ProjectCard({
         <BottomSheet
           open={isEditOpen}
           title="프로젝트 수정"
-          sheetWidth={430}
+          sheetWidth={sheetWidth}
           onClose={handleCloseSheet}
         >
           <RegisterForm
