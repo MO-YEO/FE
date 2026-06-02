@@ -42,7 +42,6 @@ const formatRelativeTime = (dateString?: string) => {
 // 📅 마감일 포맷을 "MM-DD"로 간결하게 포맷팅하는 함수
 const formatDeadline = (dateString?: string) => {
   if (!dateString) return "마감임박";
-  // T 분리 또는 대시(-) 분리를 통해 날짜만 추출
   const datePart = dateString.split("T")[0]; // YYYY-MM-DD
   const parts = datePart.split("-");
   if (parts.length >= 3) {
@@ -72,13 +71,14 @@ const Home: React.FC = () => {
     queryFn: () => boardsApi.getPosts({ size: 20 }),
   });
 
+  // 🚨 Vercel 및 브라우저의 304 캐시 고임 방지를 위한 저격수 옵션 세팅
   const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation'],
     queryFn: aiRecommendApi.getAiRecommendations,
     enabled: !!profile,
-    staleTime: 1000 * 60 * 30,
-    gcTime: 1000 * 60 * 60,
-    refetchOnWindowFocus: false,
+    staleTime: 0,              // 데이터를 즉시 만료된 것으로 판단하여 항상 백엔드를 찌르게 만듭니다.
+    gcTime: 0,                 // 메모리에 이전 방어 문구 응답을 남겨두지 않고 즉시 지웁니다.
+    refetchOnWindowFocus: true, // 사용자가 다른 탭을 보다가 창을 다시 클릭만 해도 최신 데이터를 호출합니다.
   });
 
   useEffect(() => {
