@@ -106,8 +106,9 @@ const ProjectDetailPage = () => {
         </div>
       </header>
       <div className="flex-1 bg-[#F9FAFB] px-5 py-4 pb-20">
-        {isError && <p>에러가 발생했습니다. 다시 한번 시도해주세요.</p>}
-        {!data || isLoading ? (
+        {isError ? (
+          <p>에러가 발생했습니다. 다시 한번 시도해주세요.</p>
+        ) : !data || isLoading ? (
           <LoadingSpinner />
         ) : (
           <ProjectCard
