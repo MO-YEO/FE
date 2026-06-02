@@ -1,5 +1,3 @@
-// 📄 src/pages/home/Home.tsx 전체 교체본
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PostPreviewCard from '../components/PostPreviewCard'; 
@@ -11,6 +9,8 @@ import { useQuery } from "@tanstack/react-query";
 import { recruitsApi } from "../api/recruits";
 import { boardsApi } from "../api/boards";
 import { membersApi } from "../api/member";
+import { aiRecommendApi } from "../api/aiRecommend";
+import type { AIRecommendation } from "../api/aiRecommend";
 
 import Member from "../assets/footer/member.svg?react";
 import HomeBoard from "../assets/homeBoard.svg?react";
@@ -69,6 +69,16 @@ const Home: React.FC = () => {
     queryFn: () => boardsApi.getPosts({ size: 20 }),
   });
 
+  // 🤖 진짜 백엔드 실시간 AI 응답을 받아오도록 원상복구 완료
+  const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation[]>({
+    queryKey: ['recruits', 'recommendation'],
+    queryFn: aiRecommendApi.getAiRecommendations,
+    enabled: !!profile,
+    staleTime: 1000 * 60 * 30,   // 다른 페이지 이동 후 돌아올 때는 즉시 캐시 렌더링 (껌벅임 방지)
+    gcTime: 1000 * 60 * 60,      // 메모리 유지 1시간
+    refetchOnWindowFocus: false, // 탭 전환 시 자동 재요청 방지
+  });
+
   useEffect(() => {
     if (profile && profile.email) {
       if (!profile.email.endsWith("@catholic.ac.kr")) {
@@ -95,12 +105,7 @@ const Home: React.FC = () => {
     p?.title?.toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 5);
 
-  // 시연 안정성을 위해 로딩 스피너 조건 제거
-  const isAiProcessing = false;
-
-  // 최근 프로젝트 목록 중 첫 번째 글을 기반으로 AI 추천 타이틀 연동
-  const topProjectTitle = recruitsList[0]?.title || "공모전 개발자 구함";
-  const topProjectId = recruitsList[0]?.recruitId || "";
+  const isAiProcessing = aiLoading || (aiFetching && !aiRecommendData);
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[400px] bg-[#F8FAFC] pb-[100px] relative text-left shadow-2xl">
@@ -185,16 +190,41 @@ const Home: React.FC = () => {
                 <h2 className="font-bold text-[18px] text-[#1E293B]">나를 위한 맞춤 프로젝트</h2>
               </div>
 
-              {/* 🚨 발표용 UX 가드 레이어: 껌벅임 차단 및 자연스러운 개인화 코멘트 강제 마운트 */}
-              <AIProjectCard 
-                title={topProjectTitle} 
-                matchingScore={92} 
-                aiComment={`${profile?.nickname || '학우'}님이 마이페이지에 등록하신 핵심 역량(React, TypeScript)은 해당 프로젝트 공고에서 구하고 있는 프론트엔드 포지션 기술 요구사항과 92% 일치합니다. 성공적인 팀 빌딩 가능성이 매우 높으니 지금 확인해 보세요!`} 
-                onClick={() => {
-                  if (topProjectId) navigate(`/project/${topProjectId}`);
-                  else navigate("/project");
-                }} 
-              />
+              {isAiProcessing ? (
+                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm flex flex-col items-center justify-center gap-3 animate-pulse">
+                  <div className="flex items-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-[#8B5CF6]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-[14px] font-extrabold text-[#7C3AED]">AI 맞춤 분석 진행 중</span>
+                  </div>
+                  <p className="text-[12px] text-[#8B5CF6] font-medium tracking-tight text-center">
+                    프로필 기반으로 외부 LLM을 연동해 최적의 추천 공고를 실시간 조율 중입니다...
+                  </p>
+                </div>
+              ) : aiRecommendData && aiRecommendData.length > 0 ? (
+                (() => {
+                  const topMatch: AIRecommendation = aiRecommendData[0]; 
+                  return (
+                    <AIProjectCard 
+                      key={topMatch.recruitPostId} 
+                      title={topMatch.title || "추천 프로젝트"} 
+                      matchingScore={topMatch.matchingScore} 
+                      aiComment={topMatch.aiComment} 
+                      onClick={() => navigate(`/project/${topMatch.recruitPostId}`)} 
+                    />
+                  );
+                })()
+              ) : (
+                /* 📢 요청하신 대로 실패/부재 안내 문구를 긍정적인 대기 문구로 전면 수정 */
+                <div className="rounded-[20px] border border-dashed border-[#DDD6FE] bg-white p-6 text-center shadow-sm flex flex-col items-center justify-center gap-2">
+                  <span className="text-[14px] font-bold text-[#7C3AED]">🤖 맞춤 추천 데이터 실시간 조회 중</span>
+                  <p className="text-[11.5px] leading-[1.6] text-[#6B7280] break-keep">
+                    현재 외부 AI 분석 필터링이 순차적으로 작동 중입니다. 마이페이지에 기술 스택이 등록되어 있다면 잠시 후 실시간으로 최적의 프로젝트 매칭 결과가 업데이트되니 잠시만 기다려주세요!
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="mb-10">
@@ -267,7 +297,7 @@ const AIProjectCard: React.FC<AIProjectCardProps> = ({ title, matchingScore, aiC
     
     <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]">
       <p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">
-        🤖 {aiComment}
+        {aiComment ? `🤖 ${aiComment}` : "🤖 매칭 분석이 성공적으로 마무리되었습니다. 상세 매칭 결과 카드를 클릭해 확인해 보세요!"}
       </p>
     </div>
   </div>
