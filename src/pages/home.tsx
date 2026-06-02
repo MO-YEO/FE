@@ -18,7 +18,6 @@ import Time from "../assets/time.svg?react";
 
 type SearchType = 'project' | 'board';
 
-// ⏱️ 게시글 작성 시간을 "방금 전/N분 전/N시간 전"으로 변환하는 가공 함수
 const formatRelativeTime = (dateString?: string) => {
   if (!dateString) return "방금 전";
   const now = new Date();
@@ -39,13 +38,12 @@ const formatRelativeTime = (dateString?: string) => {
   });
 };
 
-// 📅 마감일 포맷을 "MM-DD"로 간결하게 포맷팅하는 함수
 const formatDeadline = (dateString?: string) => {
   if (!dateString) return "마감임박";
-  const datePart = dateString.split("T")[0]; // YYYY-MM-DD
+  const datePart = dateString.split("T")[0];
   const parts = datePart.split("-");
   if (parts.length >= 3) {
-    return `${parts[1]}-${parts[2]}`; // MM-DD
+    return `${parts[1]}-${parts[2]}`;
   }
   return dateString;
 };
@@ -71,14 +69,16 @@ const Home: React.FC = () => {
     queryFn: () => boardsApi.getPosts({ size: 20 }),
   });
 
-  // 🚨 Vercel 및 브라우저의 304 캐시 고임 방지를 위한 저격수 옵션 세팅
+  // 🚨 첫 가동 시 1회만 스피너를 작동시키고, 화면 전환 시 리로드를 차단하는 스마트 캐싱 가드
   const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation'],
     queryFn: aiRecommendApi.getAiRecommendations,
     enabled: !!profile,
-    staleTime: 0,              // 데이터를 즉시 만료된 것으로 판단하여 항상 백엔드를 찌르게 만듭니다.
-    gcTime: 0,                 // 메모리에 이전 방어 문구 응답을 남겨두지 않고 즉시 지웁니다.
-    refetchOnWindowFocus: true, // 사용자가 다른 탭을 보다가 창을 다시 클릭만 해도 최신 데이터를 호출합니다.
+    
+    // 💡 변경된 핵심 캐시 조율 레이어
+    staleTime: 1000 * 60 * 30,  // 30분 동안 "가장 신선한 데이터"로 취급하여 페이지 전환 시 API 재요청을 원천 차단합니다.
+    gcTime: 1000 * 60 * 60,     // 1시간 동안 메모리에 완전 보존하여 껌벅임 현상을 방지합니다.
+    refetchOnWindowFocus: false, // 다른 페이지나 탭에서 돌아왔을 때 자동으로 새로고침 백그라운드 호출이 일어나는 것을 방지합니다.
   });
 
   useEffect(() => {
