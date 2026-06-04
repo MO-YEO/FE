@@ -15,15 +15,10 @@ const SignUpPage = () => {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const profile = await membersApi.getMyProfile();
-        if (profile && profile.nickname) {
-          navigate(PATH.HOME, { replace: true });
-          return;
-        }
+        await membersApi.getMyProfile();
       } catch (e) {
         console.error("기존 회원 검증 실패:", e);
       } finally {
-        // 검증이 완벽히 끝나서 신규 회원임이 확정되었을 때만 가입 화면을 잠금 해제합니다.
         setIsPageLoading(false);
       }
     };
@@ -69,7 +64,6 @@ const SignUpPage = () => {
     }
   };
 
-  // 기존 유저 여부를 판별하는 동안 백색 화면이나 로딩 창을 띄워 UX 껌벅임을 차단합니다.
   if (isPageLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#F7F8FA]">
