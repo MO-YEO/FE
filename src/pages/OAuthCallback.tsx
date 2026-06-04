@@ -39,11 +39,20 @@ const OAuthCallback: React.FC = () => {
 
       localStorage.setItem("access_token", token);
 
+      // 토큰 저장 즉시 프로필 조회를 실행하여 유저 상태 분기 처리
       (async () => {
         try {
-          await membersApi.getMyProfile();
-          navigate(PATH.SIGNUP, { replace: true });
+          const profile = await membersApi.getMyProfile();
+          
+          // 기존에 가입하여 닉네임 정보가 등록되어 있는 유저인 경우
+          if (profile && profile.nickname) {
+            navigate(PATH.HOME, { replace: true });
+          } else {
+            // 완전 최초 로그인 상태인 유저인 경우
+            navigate(PATH.SIGNUP, { replace: true });
+          }
         } catch (e) {
+          // 토큰은 있으나 프로필 조회가 실패한 경우 가입 폼으로 방어 유도
           navigate(PATH.SIGNUP, { replace: true });
         }
       })();
