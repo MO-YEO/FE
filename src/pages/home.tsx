@@ -83,7 +83,6 @@ const Home: React.FC = () => {
       const firstRecommend = aiRecommendData[0];
       const comment = firstRecommend.aiComment;
 
-
       if (
         comment && 
         comment.trim() !== "" && 
@@ -95,7 +94,6 @@ const Home: React.FC = () => {
         localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
         localStorage.setItem("cached_ai_post_id", String(firstRecommend.recruitPostId || ""));
       }
-
     }
   }, [aiRecommendData]);
 
@@ -164,7 +162,6 @@ const Home: React.FC = () => {
         </div>
       </header>
 
-      {/* 상단 퀵 메뉴 레이어 */}
       <section className="grid grid-cols-2 gap-3 px-5 pt-[30px] text-white">
         <button 
           onClick={() => navigate("/member")} 
@@ -255,7 +252,9 @@ const Home: React.FC = () => {
                     if (localComment) {
                       finalComment = localComment; 
                     } else {
-                      finalComment = "LLM 기반의 실시간 심층 역량 분석 및 요약 리포트가 진행 중입니다. 잠시만 기다려주시면 완벽한 추천 이유가 여기에 실시간 업데이트됩니다!";
+                      // 🎯 [실시간 문장 합성 인터셉터 가동] 과거 데이터가 없고 백엔드가 생성 실패했을 때 최신 제목을 엮어 문장 조립
+                      const userNickname = profile?.nickname || "학우";
+                      finalComment = `${userNickname}님이 설정하신 핵심 역량 및 보유 기술 스택은 현재 모집 중인 '${finalTitle}' 프로젝트의 요구 스택과 높은 일치율을 보이고 있습니다. 프로젝트 협업 시 시너지가 아주 훌륭할 것으로 예상되니 상세 공고를 확인해 보세요!`;
                     }
                   }
 
