@@ -78,17 +78,28 @@ const Home: React.FC = () => {
     refetchOnWindowFocus: false, 
   });
 
-  // 🔍 [디버깅용 콘솔] 백엔드 응답을 실시간으로 추적하는 추적기
+  // 💾 [프론트엔드 캐시 가드] 백엔드가 정상 데이터를 줄 때만 로컬 스토리지에 박제하는 로직
   useEffect(() => {
-    if (aiRecommendData) {
+    if (aiRecommendData && aiRecommendData.length > 0) {
+      const firstRecommend = aiRecommendData[0];
+      const comment = firstRecommend.aiComment;
+
       console.log("=========================================");
       console.log("🤖 [AI 추천 API] 전체 응답 배열:", aiRecommendData);
-      
-      if (aiRecommendData.length > 0) {
-        console.log("📌 첫 번째 추천 데이터 본체:", aiRecommendData[0]);
-        console.log("💬 백엔드가 준 aiComment 값:", aiRecommendData[0].aiComment);
-      } else {
-        console.warn("⚠️ 추천 데이터 배열이 텅 비어서( [] ) 들어왔습니다.");
+      console.log("💬 백엔드가 준 현재 aiComment 값:", comment);
+
+      // 백엔드가 준 값이 정상적인 진짜 AI 문장인 경우에만 로컬 스토리지에 스냅샷 저장
+      if (
+        comment && 
+        comment.trim() !== "" && 
+        !comment.includes("생성하지 못했습니다") && 
+        !comment.includes("기준으로 추천된 모집글입니다")
+      ) {
+        console.log("✨ 정상 AI 코멘트 확인 완료. 로컬 스토리지에 캐시 박제 처리합니다.");
+        localStorage.setItem("cached_ai_comment", comment);
+        localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
+        localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
+        localStorage.setItem("cached_ai_post_id", String(firstRecommend.recruitPostId || ""));
       }
       console.log("=========================================");
     }
@@ -218,16 +229,47 @@ const Home: React.FC = () => {
                     프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
                   </p>
                 </div>
-              ) : aiRecommendData && aiRecommendData.length > 0 ? (
+              ) : (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
                 (() => {
-                  const topMatch: AIRecommendation = aiRecommendData[0]; 
+                  const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
+                  
+                  // 🚨 실시간 값이 실패 코드인지 감정 필터링
+                  const isCurrentFailed = 
+                    !topMatch || 
+                    !topMatch.aiComment || 
+                    topMatch.aiComment.trim() === "" || 
+                    topMatch.aiComment.includes("생성하지 못했습니다") || 
+                    topMatch.aiComment.includes("기준으로 추천된 모집글입니다");
+
+                  // 💡 캐시된 안전 자산 데이터가 스토리지에 있는지 조회
+                  const localComment = localStorage.getItem("cached_ai_comment");
+                  const localTitle = localStorage.getItem("cached_ai_project_title");
+                  const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
+                  const localPostId = localStorage.getItem("cached_ai_post_id");
+
+                  // 🎯 [하이브리드 바인딩] 백엔드가 터졌는데 과거 성공 기록이 있다면 캐시 데이터 강제 마운트!
+                  const finalTitle = isCurrentFailed && localTitle ? localTitle : (topMatch?.title || "추천 프로젝트");
+                  const finalScore = isCurrentFailed && localScore ? localScore : (topMatch?.matchingScore || 0);
+                  const finalPostId = isCurrentFailed && localPostId ? localPostId : (topMatch?.recruitPostId || "");
+                  
+                  let finalComment = topMatch?.aiComment || "";
+                  if (isCurrentFailed) {
+                    if (localComment) {
+                      finalComment = localComment; // 예전에 한 번이라도 성공했던 진짜 AI 멘트 우선 복구
+                    } else {
+                      // 완전히 데이터가 없는 최초 상태인 경우 요청하신 대기 안내 멘트로 안전 융합
+                      finalComment = "LLM 기반의 실시간 심층 역량 분석 및 요약 리포트가 진행 중입니다. 잠시만 기다려주시면 완벽한 추천 이유가 여기에 실시간 업데이트됩니다!";
+                    }
+                  }
+
                   return (
                     <AIProjectCard 
-                      key={topMatch.recruitPostId} 
-                      title={topMatch.title || "추천 프로젝트"} 
-                      matchingScore={topMatch.matchingScore} 
-                      aiComment={topMatch.aiComment} 
-                      onClick={() => navigate(`/project/${topMatch.recruitPostId}`)} 
+                      title={finalTitle} 
+                      matchingScore={finalScore} 
+                      aiComment={finalComment} 
+                      onClick={() => {
+                        if (finalPostId) navigate(`/project/${finalPostId}`);
+                      }} 
                     />
                   );
                 })()
@@ -308,7 +350,7 @@ const AIProjectCard: React.FC<AIProjectCardProps> = ({ title, matchingScore, aiC
     
     <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]">
       <p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">
-        {aiComment ? `🤖 ${aiComment}` : "🤖 LLM 기반의 실시간 심층 역량 분석 및 요약 리포트가 진행 중입니다. 잠시만 기다려주시면 완벽한 추천 이유가 화면에 업데이트됩니다!"}
+        🤖 {aiComment}
       </p>
     </div>
   </div>
