@@ -79,14 +79,6 @@ const Home: React.FC = () => {
   });
 
   useEffect(() => {
-    const hasVisitedSignup = sessionStorage.getItem("video_visited_signup");
-    if (!hasVisitedSignup) {
-      sessionStorage.setItem("video_visited_signup", "true");
-      navigate("/signup"); 
-    }
-  }, [navigate]);
-
-  useEffect(() => {
     if (aiRecommendData && aiRecommendData.length > 0) {
       const firstRecommend = aiRecommendData[0];
       const comment = firstRecommend.aiComment;
