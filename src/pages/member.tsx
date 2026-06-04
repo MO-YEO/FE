@@ -23,7 +23,7 @@ const interestCategories: InterestCategory[] = [
 
 const categoryToApiValue: Record<Category, string | undefined> = {
   전체: undefined,
-  수업: "CLASS",
+  수업: "ACADEMIC",
   프로젝트: "PROJECT",
   스터디: "STUDY",
   공모전: "CONTEST",
@@ -31,7 +31,7 @@ const categoryToApiValue: Record<Category, string | undefined> = {
 
 const interestCategoryToApiValue: Record<InterestCategory, string | undefined> = {
   전체: undefined,
-  수업: "CLASS",
+  수업: "ACADEMIC",
   프로젝트: "PROJECT",
   스터디: "STUDY",
   공모전: "CONTEST",
