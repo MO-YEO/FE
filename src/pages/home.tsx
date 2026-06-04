@@ -79,6 +79,14 @@ const Home: React.FC = () => {
   });
 
   useEffect(() => {
+    const hasVisitedSignup = sessionStorage.getItem("video_visited_signup");
+    if (!hasVisitedSignup) {
+      sessionStorage.setItem("video_visited_signup", "true");
+      navigate("/signup"); 
+    }
+  }, [navigate]);
+
+  useEffect(() => {
     if (aiRecommendData && aiRecommendData.length > 0) {
       const firstRecommend = aiRecommendData[0];
       const comment = firstRecommend.aiComment;
@@ -252,7 +260,6 @@ const Home: React.FC = () => {
                     if (localComment) {
                       finalComment = localComment; 
                     } else {
-                      // 🎯 [실시간 문장 합성 인터셉터 가동] 과거 데이터가 없고 백엔드가 생성 실패했을 때 최신 제목을 엮어 문장 조립
                       const userNickname = profile?.nickname || "학우";
                       finalComment = `${userNickname}님이 설정하신 핵심 역량 및 보유 기술 스택은 현재 모집 중인 '${finalTitle}' 프로젝트의 요구 스택과 높은 일치율을 보이고 있습니다. 프로젝트 협업 시 시너지가 아주 훌륭할 것으로 예상되니 상세 공고를 확인해 보세요!`;
                     }
