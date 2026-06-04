@@ -88,7 +88,6 @@ const Home: React.FC = () => {
       console.log("🤖 [AI 추천 API] 전체 응답 배열:", aiRecommendData);
       console.log("💬 백엔드가 준 현재 aiComment 값:", comment);
 
-      // 백엔드가 준 값이 정상적인 진짜 AI 문장인 경우에만 로컬 스토리지에 스냅샷 저장
       if (
         comment && 
         comment.trim() !== "" && 
@@ -170,12 +169,19 @@ const Home: React.FC = () => {
         </div>
       </header>
 
+      {/* 🧭 상단 퀵 메뉴 라우팅 고정 레이어 */}
       <section className="grid grid-cols-2 gap-3 px-5 pt-[30px] text-white">
-        <button onClick={() => navigate("/members")} className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all">
+        <button 
+          onClick={() => navigate("/members")} 
+          className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all"
+        >
           <Member className="size-7" />
           <span className="font-bold text-[14px] mt-2">팀원 찾기</span>
         </button>
-        <button onClick={() => navigate("/board")} className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all">
+        <button 
+          onClick={() => navigate("/board")} 
+          className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all"
+        >
           <HomeBoard className="size-7" />
           <span className="font-bold text-[14px] mt-2">전체 게시판</span>
         </button>
@@ -233,7 +239,6 @@ const Home: React.FC = () => {
                 (() => {
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
                   
-                  // 🚨 실시간 값이 실패 코드인지 감정 필터링
                   const isCurrentFailed = 
                     !topMatch || 
                     !topMatch.aiComment || 
@@ -241,13 +246,11 @@ const Home: React.FC = () => {
                     topMatch.aiComment.includes("생성하지 못했습니다") || 
                     topMatch.aiComment.includes("기준으로 추천된 모집글입니다");
 
-                  // 💡 캐시된 안전 자산 데이터가 스토리지에 있는지 조회
                   const localComment = localStorage.getItem("cached_ai_comment");
                   const localTitle = localStorage.getItem("cached_ai_project_title");
                   const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
                   const localPostId = localStorage.getItem("cached_ai_post_id");
 
-                  // 🎯 [하이브리드 바인딩] 백엔드가 터졌는데 과거 성공 기록이 있다면 캐시 데이터 강제 마운트!
                   const finalTitle = isCurrentFailed && localTitle ? localTitle : (topMatch?.title || "추천 프로젝트");
                   const finalScore = isCurrentFailed && localScore ? localScore : (topMatch?.matchingScore || 0);
                   const finalPostId = isCurrentFailed && localPostId ? localPostId : (topMatch?.recruitPostId || "");
@@ -255,9 +258,8 @@ const Home: React.FC = () => {
                   let finalComment = topMatch?.aiComment || "";
                   if (isCurrentFailed) {
                     if (localComment) {
-                      finalComment = localComment; // 예전에 한 번이라도 성공했던 진짜 AI 멘트 우선 복구
+                      finalComment = localComment; 
                     } else {
-                      // 완전히 데이터가 없는 최초 상태인 경우 요청하신 대기 안내 멘트로 안전 융합
                       finalComment = "LLM 기반의 실시간 심층 역량 분석 및 요약 리포트가 진행 중입니다. 잠시만 기다려주시면 완벽한 추천 이유가 여기에 실시간 업데이트됩니다!";
                     }
                   }
