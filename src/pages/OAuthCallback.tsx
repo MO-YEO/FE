@@ -46,7 +46,7 @@ const OAuthCallback: React.FC = () => {
           
           // 기존에 가입하여 닉네임 정보가 등록되어 있는 유저인 경우
           if (profile && profile.nickname) {
-            navigate(PATH.HOME, { replace: true });
+            navigate(PATH.SIGNUP, { replace: true });
           } else {
             // 완전 최초 로그인 상태인 유저인 경우
             navigate(PATH.SIGNUP, { replace: true });
