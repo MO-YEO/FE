@@ -78,15 +78,11 @@ const Home: React.FC = () => {
     refetchOnWindowFocus: false, 
   });
 
-  // 💾 [프론트엔드 캐시 가드] 백엔드가 정상 데이터를 줄 때만 로컬 스토리지에 박제하는 로직
   useEffect(() => {
     if (aiRecommendData && aiRecommendData.length > 0) {
       const firstRecommend = aiRecommendData[0];
       const comment = firstRecommend.aiComment;
 
-      console.log("=========================================");
-      console.log("🤖 [AI 추천 API] 전체 응답 배열:", aiRecommendData);
-      console.log("💬 백엔드가 준 현재 aiComment 값:", comment);
 
       if (
         comment && 
@@ -94,13 +90,12 @@ const Home: React.FC = () => {
         !comment.includes("생성하지 못했습니다") && 
         !comment.includes("기준으로 추천된 모집글입니다")
       ) {
-        console.log("✨ 정상 AI 코멘트 확인 완료. 로컬 스토리지에 캐시 박제 처리합니다.");
         localStorage.setItem("cached_ai_comment", comment);
         localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
         localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
         localStorage.setItem("cached_ai_post_id", String(firstRecommend.recruitPostId || ""));
       }
-      console.log("=========================================");
+
     }
   }, [aiRecommendData]);
 
@@ -169,10 +164,10 @@ const Home: React.FC = () => {
         </div>
       </header>
 
-      {/* 🧭 상단 퀵 메뉴 라우팅 고정 레이어 */}
+      {/* 상단 퀵 메뉴 레이어 */}
       <section className="grid grid-cols-2 gap-3 px-5 pt-[30px] text-white">
         <button 
-          onClick={() => navigate("/members")} 
+          onClick={() => navigate("/member")} 
           className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all"
         >
           <Member className="size-7" />
