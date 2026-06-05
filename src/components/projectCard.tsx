@@ -268,14 +268,17 @@ export default function ProjectCard({
           <p>{writer}</p>
           <p>{department}</p>
         </div>
-
-        <button
-          type="button"
-          className="cursor-pointer rounded-lg bg-[#2F6BFF] px-4 py-2 text-[12px] font-bold leading-none text-white shadow-sm"
-          onClick={onButtonClick}
-        >
-          {buttonLabel}
-        </button>
+        {author && buttonLabel === "지원하기" ? (
+          <></>
+        ) : (
+          <button
+            type="button"
+            className="cursor-pointer rounded-lg bg-[#2F6BFF] px-4 py-2 text-[12px] font-bold leading-none text-white shadow-sm"
+            onClick={onButtonClick}
+          >
+            {buttonLabel}
+          </button>
+        )}
       </div>
 
       {selectedProject ? (
