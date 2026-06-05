@@ -10,6 +10,7 @@ import { useBookmarkMutation } from "../../hooks/mutations/useBookmarkMutation";
 import useGetRecruitsDetail from "../../hooks/queries/useGetRecruitsDetail";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { calculateDday } from "../../utils/calculateDay";
+import { meApi } from "../../api/me";
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -86,6 +87,21 @@ const ProjectDetailPage = () => {
       alert("성공적으로 프로젝트에 지원되었습니다!");
     });
   };
+  const [myId, setMyId] = useState<number>();
+
+  //나의 아이디 조회 api
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await meApi.getMe();
+        setMyId(data);
+      } catch (error) {
+        console.log("아이디조회실패", error);
+      }
+    })();
+  }, []);
+  const Author = myId === data?.author.memberId;
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-[430px] bg-[#F8FAFC] pb-[88px] font-sans relative">
       <header className="border-b border-[#E5E7EB] bg-white sticky top-0 z-30">
@@ -122,6 +138,7 @@ const ProjectDetailPage = () => {
             writer={data.author?.nickname || "익명"}
             department={data.department}
             buttonLabel="지원하기"
+            author={Author}
             onButtonClick={() => handleOpenSheet(data.recruitId)}
             selectedProject={data}
             isBookmarked={data.bookmarkedByMe}
