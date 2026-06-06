@@ -221,6 +221,7 @@ const Home: React.FC = () => {
                 </div>
               ) : (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
                 (() => {
+                  const userStacks = profile?.techStacks?.map((s: string) => s.toLowerCase().trim()) || [];
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
 
                   const localComment = localStorage.getItem("cached_ai_comment");
@@ -228,10 +229,24 @@ const Home: React.FC = () => {
                   const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
                   const localPostId = localStorage.getItem("cached_ai_post_id");
 
+                  let targetProject: any = recruitsList[0] || null;
+                  const currentTitle = topMatch ? topMatch.title : localTitle;
+
+                  if (currentTitle) {
+                    const found = recruitsList.find((p: any) => p.title === currentTitle || p.recruitId === topMatch?.recruitPostId);
+                    if (found) targetProject = found;
+                  }
+
                   const finalTitle = topMatch ? topMatch.title : (localTitle || "추천 프로젝트");
-                  const finalScore = topMatch ? topMatch.matchingScore : localScore;
                   const finalPostId = topMatch ? topMatch.recruitPostId : (localPostId || "");
-                  const finalComment = topMatch ? topMatch.aiComment : (localComment || "추천 코멘트를 불러올 수 없습니다.");
+                  const finalComment = topMatch ? topMatch.aiComment : (localComment || "추천 사유를 불러오고 있습니다.");
+
+                  let finalScore = topMatch ? topMatch.matchingScore : localScore;
+                  if (targetProject && userStacks.length > 0) {
+                    const projectSkills = targetProject?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
+                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
+                    finalScore = Math.min(Math.round((intersections.length / userStacks.length) * 100), 100);
+                  }
 
                   return (
                     <AIProjectCard 
