@@ -2,27 +2,26 @@ import { apiClient } from "./client";
 
 export interface AIRecommendation {
   recruitPostId: number;
-  memberId: number;
-  memberRole: string;            
-  recruitCategory: string;
-  roleMatched: boolean;
-  roleScore: number;
-  memberActivityCategories: string[];
-  recruitActivityCategory: string; 
-  activityCategoryMatched: boolean;
-  activityCategoryScore: number;
+  title: string; 
+  activityCategory: string;       
+  recruitCategory: string;        
   requiredSkills: string[];
   memberSkills: string[];
   matchedSkills: string[];
   missingSkills: string[];
+  roleScore: number;
+  activityCategoryScore: number;  
   skillScore: number;
-  matchingScore: number;
-  aiComment: string;             
+  matchingScore: number;         
+  totalHeadcount: number;
+  applicantCount: number;
+  deadline: string;
+  aiComment: string;            
 }
 
 export const aiRecommendApi = {
-  getAiRecommendations: async (recruitPostId: number): Promise<AIRecommendation> => {
-    const response = await apiClient.get(`/recruit-posts/${recruitPostId}/matching/ai/me`);
+  getAiRecommendations: async (): Promise<AIRecommendation[]> => {
+    const response = await apiClient.get('/recruits/recommendations/me');
     return response.data; 
   }
 };
