@@ -318,6 +318,7 @@ export default function TeamMemberPage() {
                 role={member.role}
                 description={member.intro}
                 techStacks={member.techStacks ?? []}
+                email={member.contactEmail ?? member.email ?? ""}
                 rating={0}
                 profileInitial={member.nickname?.charAt(0) ?? "?"}
                 githubUrl={member.githubUrl}
