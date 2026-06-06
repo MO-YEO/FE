@@ -70,7 +70,7 @@ const Home: React.FC = () => {
 
   const hasToken = !!localStorage.getItem('access_token');
 
-  // 🚀 백엔드 추천 리스트 받아오기
+  // 🚀 백엔드 추천 데이터 파이프라인 연동
   const { data: aiRecommendData, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation', 'list'],
     queryFn: aiRecommendApi.getAiRecommendations,
@@ -80,28 +80,9 @@ const Home: React.FC = () => {
     retry: 1,
   });
 
-  // 💡 [디버깅 1] 백엔드에서 받은 원본 배열 전체를 콘솔에 실시간으로 찍습니다.
-  useEffect(() => {
-    if (aiRecommendData) {
-      console.log("🔍 [백엔드 응답 전체 데이터]:", aiRecommendData);
-    }
-  }, [aiRecommendData]);
-
-  // 프론트 필터링 없이 코멘트가 있는 데이터만 바인딩
-  const validAiMatches = aiRecommendData?.filter(item => item && item.aiComment) || [];
-
-  // 매칭 점수가 가장 높은 프로젝트를 부동의 1위로 선정
-  let bestMatch: any = [...validAiMatches].sort((a, b) => b.matchingScore - a.matchingScore)[0];
-
-  // 💡 [디버깅 2] 정렬 연산을 거쳐 최종 선정된 1등 추천 카드의 데이터를 구별해서 보여줍니다.
-  useEffect(() => {
-    if (bestMatch) {
-      console.log("🎯 [최종 선정된 1등 프로젝트 정보]:", bestMatch);
-      console.log("🤖 [백엔드가 보내준 AI 코멘트 알맹이]:", bestMatch.aiComment);
-    } else if (aiRecommendData && aiRecommendData.length === 0) {
-      console.warn("⚠️ [경고]: 백엔드에서 빈 배열([])이 내려오고 있습니다.");
-    }
-  }, [bestMatch, aiRecommendData]);
+  // 💡 [정렬 핵심] 백엔드가 연산해준 점수(matchingScore)가 가장 높은 순서대로 깔끔하게 정렬
+  const validRecommendations = aiRecommendData ? [...aiRecommendData] : [];
+  const bestMatch: any = validRecommendations.sort((a, b) => b.matchingScore - a.matchingScore)[0];
 
   useEffect(() => {
     if (profile && profile.email) {
@@ -201,7 +182,8 @@ const Home: React.FC = () => {
               {aiLoading ? (
                 <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">최적 프로젝트 분석 및 엄선 중...</div>
               ) : bestMatch ? (
-                <AIProjectCard title={bestMatch.title} matchingScore={bestMatch.matchingScore} aiComment={bestMatch.aiComment} onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} />
+                // 💡 [UI 주입 적용] 백엔드가 직접 연산해준 찐 제목과 찐 적합도를 카드 컴포넌트에 바인딩합니다.
+                <AIProjectCard title={bestMatch.title} matchingScore={bestMatch.matchingScore} onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} />
               ) : (
                 <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">현재 추천 가능한 프로젝트가 없습니다.</div>
               )}
@@ -239,11 +221,16 @@ const ProjectCard: React.FC<any> = ({ title, author, members, maxMembers, time, 
   </div>
 );
 
-const AIProjectCard: React.FC<any> = ({ title, matchingScore, aiComment, onClick }) => (
+// 💡 [하단 UI 컴포넌트 수정] 코멘트 말풍선 부분을 빼고 깔끔하게 연관 안내 고정 멘트로 정리했습니다.
+const AIProjectCard: React.FC<any> = ({ title, matchingScore, onClick }) => (
   <div onClick={onClick} className="rounded-[20px] border border-[#F5E6FF] bg-gradient-to-b from-white to-[#FDF4FF] p-[20px] shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden">
     <div className="absolute top-4 right-4 bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] font-extrabold text-[12px] px-2.5 py-1 rounded-full">적합도 {matchingScore}%</div>
     <h3 className="text-[16px] font-extrabold text-[#1E293B] w-[70%] truncate mb-3.5">{title}</h3>
-    <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]"><p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">{aiComment}</p></div>
+    <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]">
+      <p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">
+        🤖 사용자님의 보유 핵심 기술 스택 및 관심 카테고리와 연관성이 매우 높은 최적의 프로젝트입니다. 팀에 합류하여 기량을 펼쳐보세요!
+      </p>
+    </div>
   </div>
 );
 
