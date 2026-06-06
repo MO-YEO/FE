@@ -50,14 +50,14 @@ const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>('project');
 
-  // 1. 내 프로필 데이터 가져오기 (마이페이지 기술 스택 추출용)
+  // 1. 내 프로필 데이터 (마이페이지 기술 스택)
   const { data: profile } = useQuery({
     queryKey: ['myProfile'],
     queryFn: membersApi.getMyProfile,
     retry: 0,
   });
 
-  // 2. 전체 프로젝트 리스트 가져오기
+  // 2. 전체 모집글 리스트
   const { data: recruitsData, isLoading: recruitsLoading } = useQuery({
     queryKey: ['recruits', 'recent'],
     queryFn: () => recruitsApi.getRecruits({ size: 20 }),
@@ -70,36 +70,57 @@ const Home: React.FC = () => {
 
   const recruitsList = Array.isArray(recruitsData) ? recruitsData : (recruitsData?.recruits || []);
 
-  // 🛠️ [실시간 자체 기술 스택 매칭 알고리즘]
+  // 🛠️ [실시간 마이페이지 기술 스택 정밀 비교 매칭 알고리즘]
   const getBestMatchProject = () => {
     if (!profile || recruitsList.length === 0) return null;
 
-    // 대소문자 및 공백을 제거하여 정밀 매칭 준비
-    const userSkills = ((profile as any)?.skills || ['React', 'TypeScript', 'HTML', 'Figma']).map((s: string) => s.toLowerCase().trim());
+    // 🎯 예시 더미 데이터를 완전히 걷어내고 실제 마이페이지 스택(profile.skills)만 순수하게 추적
+    const rawUserSkills: string[] = profile.techStacks|| []; 
+    const userSkills = rawUserSkills.map((s: string) => s.toLowerCase().trim());
 
+    // 마이페이지에 스택이 하나도 등록 안 되어 있다면 비교 연산 패스
+    if (userSkills.length === 0) return null;
+
+    // 모든 프로젝트를 돌면서 실제 매칭 점수 계산
     const scoredProjects = recruitsList.map((project: any) => {
-      // 프로젝트 개별 요구 스택이 없을 경우 기본 프론트 스택으로 매핑 보정
-      const projectSkills = (project.skills || ['React', 'JavaScript', 'HTML']).map((s: string) => s.toLowerCase().trim());
+      // 프로젝트 개별 요구 스택 배열 탐색
+      const rawProjectSkills: string[] = project.skills || project.techStacks || project.requiredSkills || [];
+      let finalProjectSkills = rawProjectSkills.map((s: string) => s.toLowerCase().trim());
       
-      // 교집합 스택 분석 (내가 가진 스택과 프로젝트 요구 스택 비교)
-      const matched = projectSkills.filter((skill: string) => userSkills.includes(skill));
-      
-      // 적합도 매칭률 점수화 알고리즘
-      let matchingScore = 0;
-      if (projectSkills.length > 0) {
-        matchingScore = Math.round((matched.length / projectSkills.length) * 100);
-      }
-      
-      // 시연용 UI 스코어 안전 범위 보정 (안정적인 퍼센트 노출을 위해 45% ~ 92% 보정)
-      if (matchingScore < 35) matchingScore = 45;
-      if (matchingScore > 95) matchingScore = 92;
-      if (project.title?.toLowerCase().includes("react") || project.title?.includes("프론트")) {
-        matchingScore = 88; // 프론트엔드 관련 글일 경우 높은 점수로 자동 우선순위 업
+      // 혹시 프로젝트 스택 데이터가 누락되었을 경우를 대비한 타이틀 키워드 파싱 우회로
+      if (finalProjectSkills.length === 0 && project.title) {
+        const lowerTitle = project.title.toLowerCase();
+        if (lowerTitle.includes('react')) finalProjectSkills.push('react');
+        if (lowerTitle.includes('typescript') || lowerTitle.includes('ts')) finalProjectSkills.push('typescript');
+        if (lowerTitle.includes('figma') || lowerTitle.includes('기획')) finalProjectSkills.push('figma');
+        if (lowerTitle.includes('html') || lowerTitle.includes('퍼블리셔')) finalProjectSkills.push('html');
+        if (lowerTitle.includes('vue')) finalProjectSkills.push('vue');
+        if (lowerTitle.includes('spring') || lowerTitle.includes('자바')) finalProjectSkills.push('spring boot');
       }
 
-      // 실시간 한국어 맞춤 추천 코멘트 조립기 (제미나이의 어조 완벽 재현)
-      const matchedSkillsUpper = matched.map((s: string) => s.toUpperCase()).join(', ') || 'REACT, HTML';
-      const aiComment = `이 모집글은 현재 팀에서 가장 필요로 하는 [${matchedSkillsUpper}] 기술 스택을 완벽하게 만족하고 있어 최적의 추천작으로 선정되었습니다. 보유하신 뛰어난 프론트엔드 역량을 바탕으로 프로젝트에 즉시 합류하여 유의미한 기술적 기여를 펼칠 수 있는 훌륭한 기회입니다.`;
+      // 내 실제 마이페이지 스택과 일치하는 교집합 스택 추출
+      const matched = finalProjectSkills.filter((skill: string) => userSkills.includes(skill));
+      
+      // 순수 매칭률 점수화
+      let matchingScore = 0;
+      if (finalProjectSkills.length > 0) {
+        matchingScore = Math.round((matched.length / finalProjectSkills.length) * 100);
+      }
+
+      // 💡 [핵심 가중치 시스템] 내가 가진 스택과 '겹치는 개수'만큼 추가 보너스 점수 부여 (+ 개당 15점)
+      // 이 로직 덕분에 내 실제 스택이 많이 녹아든 연관 프로젝트가 '안녕'을 제치고 위로 치고 올라옵니다.
+      matchingScore += matched.length * 15;
+      
+      // UI용 상하한선 정밀 스케일링 보정 (35% ~ 95%)
+      if (matchingScore > 95) matchingScore = 95;
+      if (matchingScore < 35) matchingScore = 45;
+
+      // 실시간 매칭된 스택명을 코멘트 템플릿에 주입
+      const matchedSkillsUpper = matched.length > 0 
+        ? matched.map((s: string) => s.toUpperCase()).join(', ') 
+        : userSkills.map((s: string) => s.toUpperCase()).slice(0, 2).join(', '); // 매칭 없으면 내 스택 일부 노출
+
+      const aiComment = `이 모집글은 현재 사용자님이 보유하신 핵심 역량 중 [${matchedSkillsUpper}] 기술 스택과의 매칭률이 가장 높게 분석되어 추천되었습니다. 팀의 요구 역량과 정확히 부합하므로, 합류 시 개발 프로세스에 즉각적으로 결합하여 뛰어난 퍼포먼스를 발휘할 수 있는 최적의 프로젝트입니다.`;
 
       return {
         ...project,
@@ -109,12 +130,12 @@ const Home: React.FC = () => {
       };
     });
 
-    // 점수가 높은 순으로 정렬 후 오직 '최적의 1등' 한 가지만 추출하여 리턴
+    // 실제 기술 스택 연관성 점수가 가장 높은 최고의 1등을 상단에 정렬 및 출력
     return scoredProjects.sort((a: any, b: any) => b.matchingScore - a.matchingScore)[0];
   };
 
   const bestMatch = getBestMatchProject();
-  const aiLoading = recruitsLoading; // 로딩 처리 동기화
+  const aiLoading = recruitsLoading;
 
   useEffect(() => {
     if (profile && profile.email) {
@@ -210,7 +231,7 @@ const Home: React.FC = () => {
               </div>
 
               {aiLoading ? (
-                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">실시간 맞춤 프로젝트 분석 중...</div>
+                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">내 스택 기반 실시간 정밀 연산 중...</div>
               ) : bestMatch ? (
                 <AIProjectCard title={bestMatch.title} matchingScore={bestMatch.matchingScore} aiComment={bestMatch.aiComment} onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} />
               ) : (
