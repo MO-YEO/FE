@@ -68,21 +68,31 @@ const Home: React.FC = () => {
     queryFn: () => boardsApi.getPosts({ size: 20 }),
   });
 
+  const hasToken = !!localStorage.getItem('access_token');
+
   const { data: aiRecommendData, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation', 'list'],
     queryFn: aiRecommendApi.getAiRecommendations,
-    enabled: !!profile,
-    staleTime: 1000 * 60 * 30,
+    enabled: hasToken,
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    retry: 2,
+    retryDelay: (attempt) => attempt * 1000,
   });
 
-  const validAiMatches = aiRecommendData?.filter(item => 
-    item.aiComment && 
-    !item.aiComment.includes("생성하지 못했습니다") && 
-    !item.aiComment.includes("문제가 발생했습니다") &&
-    item.aiComment.length > 20
+  const AI_ERROR_STRINGS = [
+    '생성하지 못했습니다',
+    '문제가 발생했습니다',
+    '불러오지 못했습니다',
+  ];
+
+  const validAiMatches = aiRecommendData?.filter(item =>
+    item.aiComment &&
+    item.aiComment.trim().length > 10 &&
+    !AI_ERROR_STRINGS.some(errStr => item.aiComment.includes(errStr))
   ) || [];
 
-  const bestMatch = validAiMatches.sort((a, b) => b.matchingScore - a.matchingScore)[0];
+  const bestMatch = [...validAiMatches].sort((a, b) => b.matchingScore - a.matchingScore)[0];
 
   useEffect(() => {
     if (profile && profile.email) {
