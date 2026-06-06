@@ -70,12 +70,12 @@ const Home: React.FC = () => {
 
   const hasToken = !!localStorage.getItem('access_token');
 
-  // 🚀 의심포인트 해소: staleTime을 10초로 줄여 언제든 신선한 데이터를 강제 갱신하게 유도
+  // 🚀 상위 2개 리스트 관리를 위한 쿼리 세팅
   const { data: aiRecommendData, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
-    queryKey: ['recruits', 'recommendation', 'list'],
+    queryKey: ['recruits', 'recommendation', 'top2'],
     queryFn: aiRecommendApi.getAiRecommendations,
-    enabled: hasToken && !!profile, // 의심포인트 71번째줄: 토큰과 프로필이 모두 보장될 때만 안전하게 시동
-    staleTime: 1000 * 10,           // 10초 뒤에는 낡은 데이터로 취급해서 즉시 리페치 가능하게 수정
+    enabled: hasToken && !!profile,
+    staleTime: 1000 * 10, // 캐시 고임 방지용 10초 설정
     gcTime: 1000 * 60 * 5,
     retry: 1,
   });
@@ -86,18 +86,17 @@ const Home: React.FC = () => {
     '불러오지 못했습니다',
   ];
 
-  // 1️⃣ 단계: 백엔드가 준 상위 3개 데이터 중 제미나이가 완벽하게 뽑아낸 멘트만 필터링
+  // 💡 [2개 필터링] 백엔드가 준 상위 2개 중 정상적으로 생성된 AI 멘트만 필터링
   const validAiMatches = aiRecommendData?.filter(item =>
     item.aiComment &&
     item.aiComment.trim().length > 10 &&
     !AI_ERROR_STRINGS.some(errStr => item.aiComment.includes(errStr))
   ) || [];
 
-  // 2️⃣ 단계: 정석대로 유효한 매칭 데이터 중 가장 점수가 높은 1위 선정
+  // 💡 [2개 정렬] 둘 중 적합도 점수가 더 높은 최종 1등을 선정
   let bestMatch = [...validAiMatches].sort((a, b) => b.matchingScore - a.matchingScore)[0];
 
-  // 3️⃣ 단계 [하이브리드 방어막]: 만약 백엔드 제미나이가 폭파돼서 3개 다 에러 멘트만 왔을 경우, 
-  // 텅 빈 화면을 띄우지 않고 리스트의 가장 순수 매칭 스코어가 높은 글을 가져와 "대체 범용 멘트"로 복구 렌더링
+  // 🛡️ [하이브리드 방어막] 혹시나 2개 다 에러가 나더라도 화면이 절대 깨지지 않게 백업 문구 처리
   if (!bestMatch && aiRecommendData && aiRecommendData.length > 0) {
     const rawTopMatch = [...aiRecommendData].sort((a, b) => b.matchingScore - a.matchingScore)[0];
     bestMatch = {
@@ -202,7 +201,7 @@ const Home: React.FC = () => {
               </div>
 
               {aiLoading ? (
-                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">상위 3개 최적 프로젝트 매칭 분석 중...</div>
+                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">상위 2개 프로젝트 엄선 중...</div>
               ) : bestMatch ? (
                 <AIProjectCard title={bestMatch.title} matchingScore={bestMatch.matchingScore} aiComment={bestMatch.aiComment} onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} />
               ) : (
