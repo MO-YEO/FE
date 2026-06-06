@@ -100,6 +100,23 @@ const Home: React.FC = () => {
   const postsList = Array.isArray(postsData) ? postsData : (postsData?.posts || []);
   const filteredPosts = postsList.filter((p: any) => p?.title?.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
 
+  // 💡 [점수 상향 평준화 가공 엔진] 
+  // 백엔드 30점 만점 베이스 시스템을 프론트 단에서 기분 좋은 매칭 퍼센트 체계로 완벽 변환합니다.
+  let displayScore = 85; // 데이터 스크랩 지연 시 기본 디폴트 방어 점수
+  if (bestMatch) {
+    const rawScore = bestMatch.matchingScore || bestMatch.skillScore || 0;
+    const matchedCount = Array.isArray(bestMatch.matchedSkills) ? bestMatch.matchedSkills.length : 0;
+    
+    // 공식 가동: (원점수 * 2) + 기본 보정치 25점 + (일치 스택 개수 * 5)
+    let calculated = (rawScore * 2) + 25 + (matchedCount * 5);
+    
+    // 60점 미만이나 98점 초과로 튀는 것을 막는 클램프 보정막
+    if (calculated > 98) calculated = 96; 
+    if (calculated < 60) calculated = 72;
+    
+    displayScore = Math.round(calculated);
+  }
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-[400px] bg-[#F8FAFC] pb-[100px] relative text-left shadow-2xl">
       <header className="bg-[#2F6BFF] pt-5 pb-12 px-5 shadow-lg relative z-20">
@@ -182,10 +199,9 @@ const Home: React.FC = () => {
               {aiLoading ? (
                 <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">최적 프로젝트 분석 및 엄선 중...</div>
               ) : bestMatch ? (
-                // 💡 [개조 포인트] 백엔드에서 내려온 일치하는 기술 스택 리스트와 부족한 스택 리스트를 컴포넌트에 통째로 넘깁니다.
                 <AIProjectCard 
                   title={bestMatch.title} 
-                  matchingScore={bestMatch.matchingScore} 
+                  matchingScore={displayScore} // 💡 가공 완료된 상향 평준화 점수를 주입합니다!
                   matchedSkills={bestMatch.matchedSkills || []}
                   missingSkills={bestMatch.missingSkills || []}
                   onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} 
@@ -227,7 +243,6 @@ const ProjectCard: React.FC<any> = ({ title, author, members, maxMembers, time, 
   </div>
 );
 
-// 💡 [디자인 완전 개조] 구구절절한 줄글 코멘트를 완전히 지우고, 스택 일치 여부를 매칭 칩(Chip) 형태로 세분화해서 보여줍니다.
 const AIProjectCard: React.FC<any> = ({ title, matchingScore, matchedSkills, missingSkills, onClick }) => (
   <div onClick={onClick} className="rounded-[20px] border border-[#E0E7FF] bg-gradient-to-b from-white to-[#EEF2FF] p-[20px] shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden">
     <div className="absolute top-4 right-4 bg-[#EEF2FF] border border-[#C7D2FE] text-[#4F46E5] font-extrabold text-[12.5px] px-3 py-1 rounded-full shadow-sm">
@@ -237,7 +252,6 @@ const AIProjectCard: React.FC<any> = ({ title, matchingScore, matchedSkills, mis
     <h3 className="text-[16.5px] font-black text-[#1E293B] w-[65%] truncate mb-4">{title}</h3>
     
     <div className="space-y-3 pt-1 border-t border-dashed border-gray-200">
-      {/* 🟢 보유 스택 매칭 현황 */}
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[11px] font-bold text-[#10B981] bg-[#ECFDF5] px-1.5 py-0.5 rounded mr-1">보유 스택 일치</span>
         {matchedSkills.length > 0 ? (
@@ -251,7 +265,6 @@ const AIProjectCard: React.FC<any> = ({ title, matchingScore, matchedSkills, mis
         )}
       </div>
 
-      {/* 🔴 부족 스택 매칭 현황 */}
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[11px] font-bold text-[#EF4444] bg-[#FEF2F2] px-1.5 py-0.5 rounded mr-1">추가 요구 스택</span>
         {missingSkills.length > 0 ? (
