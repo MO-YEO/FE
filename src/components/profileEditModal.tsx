@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
 import closeIcon from "../assets/close.svg";
 
+type InterestCategory = "수업" | "프로젝트" | "스터디" | "공모전";
+
+const interestCategories: InterestCategory[] = [
+  "수업",
+  "프로젝트",
+  "스터디",
+  "공모전",
+];
+
 type ProfileForm = {
   name: string;
   role: string;
+  activityCategories: InterestCategory[];
   email: string;
   bio: string;
   techStacks: string[];
@@ -26,6 +36,7 @@ export default function ProfileEditModal({
   const [form, setForm] = useState({
     name: "",
     role: "",
+    activityCategories: [] as InterestCategory[],
     email: "",
     bio: "",
     techStacksText: "",
@@ -38,6 +49,7 @@ export default function ProfileEditModal({
     setForm({
       name: initialProfile.name ?? "",
       role: initialProfile.role ?? "",
+      activityCategories: initialProfile.activityCategories ?? [],
       email: initialProfile.email ?? "",
       bio: initialProfile.bio ?? "",
       techStacksText: initialProfile.techStacks?.join(", ") ?? "",
@@ -54,10 +66,24 @@ export default function ProfileEditModal({
       .filter(Boolean);
   };
 
+  const handleToggleCategory = (category: InterestCategory) => {
+    setForm((prev) => {
+      const isSelected = prev.activityCategories.includes(category);
+
+      return {
+        ...prev,
+        activityCategories: isSelected
+          ? prev.activityCategories.filter((item) => item !== category)
+          : [...prev.activityCategories, category],
+      };
+    });
+  };
+
   const handleSave = async () => {
     const nextProfile: ProfileForm = {
       name: form.name.trim(),
       role: form.role.trim(),
+      activityCategories: form.activityCategories,
       email: form.email.trim(),
       bio: form.bio.trim(),
       techStacks: parseTechStacks(form.techStacksText),
@@ -121,6 +147,34 @@ export default function ProfileEditModal({
                   }
                   className="h-[46px] rounded-[12px] border border-[#D7DFEA] px-[14px] text-[14px] focus:outline-none"
                 />
+              </div>
+
+              <div className="flex flex-col gap-[8px]">
+                <label className="text-[14px] font-semibold text-[#111827]">
+                  관심 분야
+                </label>
+
+                <div className="flex flex-wrap gap-[8px]">
+                  {interestCategories.map((category) => {
+                    const isSelected =
+                      form.activityCategories.includes(category);
+
+                    return (
+                      <button
+                        key={category}
+                        type="button"
+                        onClick={() => handleToggleCategory(category)}
+                        className={`h-[37px] rounded-[8px] border px-[14px] text-[12px] font-medium ${
+                          isSelected
+                            ? "border-[#2F6BFF] bg-[#2F6BFF] text-white"
+                            : "border-[#E2E8F0] bg-white text-[#314158]"
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="flex flex-col gap-[8px]">
