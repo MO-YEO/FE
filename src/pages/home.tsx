@@ -70,11 +70,12 @@ const Home: React.FC = () => {
 
   const hasToken = !!localStorage.getItem('access_token');
 
+  // 🚀 상위 2개 추천 데이터를 가져오는 실시간 API로 원상복구!
   const { data: aiRecommendData, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation', 'list'],
     queryFn: aiRecommendApi.getAiRecommendations,
-    enabled: hasToken && !!profile, // 의심포인트 71번째줄: 토큰과 프로필이 모두 보장될 때만 안전하게 시동
-    staleTime: 1000 * 10,           // 10초 뒤에는 낡은 데이터로 취급해서 즉시 리페치 가능하게 수정
+    enabled: hasToken && !!profile, 
+    staleTime: 1000 * 5, // 에러 캐싱 방지를 위해 5초로 타이트하게 설정
     gcTime: 1000 * 60 * 5,
     retry: 1,
   });
@@ -85,20 +86,23 @@ const Home: React.FC = () => {
     '불러오지 못했습니다',
   ];
 
-  // 1️⃣ 단계: 백엔드가 준 상위 3개 데이터 중 제미나이가 완벽하게 뽑아낸 멘트만 필터링
+  // 1️⃣ 단계: 백엔드가 준 상위 2개 데이터 중 제미나이가 정상적으로 생성한 멘트만 필터링
   const validAiMatches = aiRecommendData?.filter(item =>
     item.aiComment &&
     item.aiComment.trim().length > 10 &&
     !AI_ERROR_STRINGS.some(errStr => item.aiComment.includes(errStr))
   ) || [];
 
+  // 2️⃣ 단계: 정상 매칭 데이터 중 가장 점수가 높은 최종 1위 선정
   let bestMatch = [...validAiMatches].sort((a, b) => b.matchingScore - a.matchingScore)[0];
 
+  // 3️⃣ 단계 [안전 하이브리드 보강]: 혹시라도 타인이 동시에 찔러서 일시적 에러가 섞여 들어오더라도,
+  // 리스트 자체는 살아있으므로 텅 빈 화면 대신 가장 적합도 높은 글을 낚아채서 안전하게 기본 멘트로 복구 렌더링합니다.
   if (!bestMatch && aiRecommendData && aiRecommendData.length > 0) {
     const rawTopMatch = [...aiRecommendData].sort((a, b) => b.matchingScore - a.matchingScore)[0];
     bestMatch = {
       ...rawTopMatch,
-      aiComment: `사용자님의 매칭 점수는 ${rawTopMatch.matchingScore}%입니다! 보유하신 핵심 기술 스택을 바탕으로 팀에 기여할 수 있는 최적의 기회입니다. 지금 바로 확인해 보세요!`
+      aiComment: `사용자님의 추천 적합도는 ${rawTopMatch.matchingScore}%입니다! 회원님의 소중한 프론트엔드 핵심 기술 스택을 바탕으로 팀에 크게 기여할 수 있는 최적의 프로젝트입니다. 지금 바로 확인해 보세요!`
     };
   }
 
@@ -198,7 +202,7 @@ const Home: React.FC = () => {
               </div>
 
               {aiLoading ? (
-                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">상위 3개 최적 프로젝트 매칭 분석 중...</div>
+                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">상위 2개 엄선 분석 중...</div>
               ) : bestMatch ? (
                 <AIProjectCard title={bestMatch.title} matchingScore={bestMatch.matchingScore} aiComment={bestMatch.aiComment} onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} />
               ) : (
