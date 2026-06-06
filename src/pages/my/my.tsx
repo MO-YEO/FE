@@ -100,7 +100,7 @@ export default function MyPage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (payload: UpdateMyProfileRequest) => {
-      const { data } = await apiClient.put("/api/members", payload);
+      const { data } = await apiClient.put("/members", payload);
       return data;
     },
     onSuccess: (updatedProfile) => {
