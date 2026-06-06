@@ -83,12 +83,7 @@ const Home: React.FC = () => {
       const firstRecommend = aiRecommendData[0];
       const comment = firstRecommend.aiComment;
 
-      if (
-        comment && 
-        comment.trim() !== "" && 
-        !comment.includes("생성하지 못했습니다") && 
-        !comment.includes("기준으로 추천된 모집글입니다")
-      ) {
+      if (comment && comment.trim() !== "") {
         localStorage.setItem("cached_ai_comment", comment);
         localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
         localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
@@ -227,69 +222,29 @@ const Home: React.FC = () => {
                     프로필을 기반으로 최적의 프로젝트 모집글을 매칭하고 있습니다...
                   </p>
                 </div>
-              ) : recruitsList.length > 0 ? (
+              ) : aiRecommendData && aiRecommendData.length > 0 ? (
                 (() => {
-                  const userStacks = profile?.techStacks?.map((s: string) => s.toLowerCase().trim()) || [];
+                  // 💡 백엔드 추천 리스트 중 가장 매칭 점수가 높은 상위 3개 중 부동의 1위만 추출하여 노출
+                  const sortedRecommendations = [...aiRecommendData]
+                    .sort((a, b) => (b.matchingScore || 0) - (a.matchingScore || 0))
+                    .slice(0, 3);
                   
-                  let bestProject = recruitsList[0];
-                  let maxIntersectionCount = -1;
-                  let matchedIntersectionSkills: string[] = [];
-
-                  recruitsList.forEach((project: any) => {
-                    const projectSkills = project?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
-                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
-                    
-                    if (intersections.length > maxIntersectionCount) {
-                      maxIntersectionCount = intersections.length;
-                      bestProject = project;
-                      matchedIntersectionSkills = intersections;
-                    }
-                  });
-
-                  const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
-
-                  const isBackendDataValid = 
-                    topMatch && 
-                    topMatch.aiComment && 
-                    topMatch.aiComment.trim() !== "" && 
-                    !topMatch.aiComment.includes("생성하지 못했습니다") && 
-                    !topMatch.aiComment.includes("기준으로 추천된 모집글입니다") &&
-                    topMatch.title !== "안녕";
-
-                  const finalTitle = isBackendDataValid ? topMatch.title : (bestProject?.title || "추천 프로젝트");
-                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (bestProject?.recruitId || "");
-                  
-                  let finalScore = topMatch?.matchingScore || 0;
-                  let finalComment = topMatch?.aiComment || "";
-
-                  if (!isBackendDataValid) {
-                    if (userStacks.length > 0 && maxIntersectionCount > 0) {
-                      finalScore = Math.min(Math.round((maxIntersectionCount / userStacks.length) * 100), 100);
-                      
-                      const uppercaseSkills = matchedIntersectionSkills.map(s => s.toUpperCase()).join(", ");
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님이 설정하신 핵심 기술 스택 중 [ ${uppercaseSkills} ] 역량이 본 프로젝트의 기술 요구사항과 일치합니다. 프로젝트 개발 흐름에 알맞은 시너지를 낼 수 있어 추천해 드립니다.`;
-                    } else {
-                      finalScore = 0;
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님의 프로필 정보와 최근 등록된 프로젝트들의 요구사항을 종합 분석 중입니다. 상세 공고를 확인해 새로운 팀 빌딩 기회를 발견해 보세요.`;
-                    }
-                  }
+                  const topMatch = sortedRecommendations[0];
 
                   return (
                     <AIProjectCard 
-                      title={finalTitle} 
-                      matchingScore={finalScore} 
-                      aiComment={finalComment} 
+                      title={topMatch.title || "추천 프로젝트"} 
+                      matchingScore={topMatch.matchingScore || 0} 
+                      aiComment={topMatch.aiComment || "맞춤 분석 결과가 존재하지 않습니다."} 
                       onClick={() => {
-                        if (finalPostId) navigate(`/project/${finalPostId}`);
+                        if (topMatch.recruitPostId) navigate(`/project/${topMatch.recruitPostId}`);
                       }} 
                     />
                   );
                 })()
               ) : (
                 <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">
-                  마이페이지에 기술 스택을 등록하면 맞춤 매칭이 활성화됩니다.
+                  현재 추천 가능한 프로젝트가 없습니다. 마이페이지에 기술 스택을 등록해 보세요.
                 </div>
               )}
             </div>
