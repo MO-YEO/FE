@@ -73,7 +73,29 @@ const Home: React.FC = () => {
     queryKey: ['recruits', 'recommendation'],
     queryFn: aiRecommendApi.getAiRecommendations,
     enabled: !!profile,
+    staleTime: 1000 * 60 * 30,   
+    gcTime: 1000 * 60 * 60,      
+    refetchOnWindowFocus: false, 
   });
+
+  useEffect(() => {
+    if (aiRecommendData && aiRecommendData.length > 0) {
+      const firstRecommend = aiRecommendData[0];
+      const comment = firstRecommend.aiComment;
+
+      if (
+        comment && 
+        comment.trim() !== "" && 
+        !comment.includes("생성하지 못했습니다") && 
+        !comment.includes("기준으로 추천된 모집글입니다")
+      ) {
+        localStorage.setItem("cached_ai_comment", comment);
+        localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
+        localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
+        localStorage.setItem("cached_ai_post_id", String(firstRecommend.recruitPostId || ""));
+      }
+    }
+  }, [aiRecommendData]);
 
   useEffect(() => {
     if (profile && profile.email) {
@@ -205,26 +227,51 @@ const Home: React.FC = () => {
                     프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
                   </p>
                 </div>
-              ) : (
+              ) : (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
                 (() => {
-                  const topMatch =
-                    aiRecommendData && aiRecommendData.length > 0
-                      ? aiRecommendData[0]
-                      : null;
+                  const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
+                  
+                  const isCurrentFailed = 
+                    !topMatch || 
+                    !topMatch.aiComment || 
+                    topMatch.aiComment.trim() === "" || 
+                    topMatch.aiComment.includes("생성하지 못했습니다") || 
+                    topMatch.aiComment.includes("기준으로 추천된 모집글입니다");
+
+                  const localComment = localStorage.getItem("cached_ai_comment");
+                  const localTitle = localStorage.getItem("cached_ai_project_title");
+                  const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
+                  const localPostId = localStorage.getItem("cached_ai_post_id");
+
+                  const finalTitle = isCurrentFailed && localTitle ? localTitle : (topMatch?.title || "추천 프로젝트");
+                  const finalScore = isCurrentFailed && localScore ? localScore : (topMatch?.matchingScore || 0);
+                  const finalPostId = isCurrentFailed && localPostId ? localPostId : (topMatch?.recruitPostId || "");
+                  
+                  let finalComment = topMatch?.aiComment || "";
+                  if (isCurrentFailed) {
+                    if (localComment) {
+                      finalComment = localComment; 
+                    } else {
+                      const userNickname = profile?.nickname || "학우";
+                      finalComment = `${userNickname}님이 설정하신 핵심 역량 및 보유 기술 스택은 현재 모집 중인 '${finalTitle}' 프로젝트의 요구 스택과 높은 일치율을 보이고 있습니다. 프로젝트 협업 시 시너지가 아주 훌륭할 것으로 예상되니 상세 공고를 확인해 보세요!`;
+                    }
+                  }
 
                   return (
                     <AIProjectCard 
-                      title={topMatch?.title || "추천 프로젝트"} 
-                      matchingScore={topMatch?.matchingScore || 0} 
-                      aiComment={topMatch?.aiComment || "AI 추천 코멘트가 없습니다."} 
+                      title={finalTitle} 
+                      matchingScore={finalScore} 
+                      aiComment={finalComment} 
                       onClick={() => {
-                        if (topMatch?.recruitPostId) {
-                          navigate(`/project/${topMatch.recruitPostId}`);
-                        }
+                        if (finalPostId) navigate(`/project/${finalPostId}`);
                       }} 
                     />
                   );
                 })()
+              ) : (
+                <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">
+                  마이페이지에 기술 스택을 등록하면 맞춤 매칭이 활성화됩니다.
+                </div>
               )}
             </div>
 
