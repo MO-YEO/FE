@@ -5,6 +5,7 @@ type TeamMemberCardProps = {
   role: string;
   description: string;
   techStacks: string[];
+  email?: string;
   githubLabel?: string;
   githubUrl?: string;
   rating: number;
@@ -16,6 +17,7 @@ export default function TeamMemberCard({
   role,
   description,
   techStacks,
+  email,
   githubLabel = "GitHub",
   githubUrl,
   profileInitial,
@@ -46,9 +48,16 @@ export default function TeamMemberCard({
             <span className="truncate text-[14px] font-semibold leading-[20px] text-[#1D293D]">
               {name}
             </span>
+
             <span className="truncate text-[14px] font-normal leading-[20px] text-[#62748E]">
               {role}
             </span>
+
+            {email ? (
+              <span className="mt-[2px] truncate text-[12px] font-normal leading-[18px] text-[#94A3B8]">
+                {email}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>

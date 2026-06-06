@@ -37,6 +37,8 @@ export interface UpdateMyProfileRequest {
 
 export interface Member {
   memberId: number;
+  email?: string;
+  contactEmail?: string;
   nickname: string;
   role: string;
   intro: string;
@@ -46,7 +48,6 @@ export interface Member {
   activityCategories: string[];
   isBookmarked?: boolean;
 }
-
 export interface TeamProfileRegisterRequest {
   nickname: string;
   role: string;
