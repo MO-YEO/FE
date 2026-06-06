@@ -70,12 +70,12 @@ const Home: React.FC = () => {
 
   const hasToken = !!localStorage.getItem('access_token');
 
-  // 🚀 다시 10개 전체 리스트를 받아오도록 쿼리 키와 캐시 설정 복구!
+  // 🚀 의심포인트 해소: staleTime을 10초로 줄여 언제든 신선한 데이터를 강제 갱신하게 유도
   const { data: aiRecommendData, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation', 'list'],
     queryFn: aiRecommendApi.getAiRecommendations,
-    enabled: hasToken && !!profile,
-    staleTime: 1000 * 10, // 캐시 때문에 화면 안 바뀌는 것 방지 (10초)
+    enabled: hasToken && !!profile, // 의심포인트 71번째줄: 토큰과 프로필이 모두 보장될 때만 안전하게 시동
+    staleTime: 1000 * 10,           // 10초 뒤에는 낡은 데이터로 취급해서 즉시 리페치 가능하게 수정
     gcTime: 1000 * 60 * 5,
     retry: 1,
   });
@@ -86,24 +86,23 @@ const Home: React.FC = () => {
     '불러오지 못했습니다',
   ];
 
-  // 💡 [필터링 시스템] 백엔드가 준 10개 중 제미나이가 에러 없이 완벽하게 뽑아낸 멘트만 필터링
+  // 1️⃣ 단계: 백엔드가 준 상위 3개 데이터 중 제미나이가 완벽하게 뽑아낸 멘트만 필터링
   const validAiMatches = aiRecommendData?.filter(item =>
     item.aiComment &&
     item.aiComment.trim().length > 10 &&
     !AI_ERROR_STRINGS.some(errStr => item.aiComment.includes(errStr))
   ) || [];
 
-  // 💡 [정렬 시스템] 유효한 멘트가 달린 프로젝트 중 매칭 점수가 가장 높은 최고의 1등 선출
+  // 2️⃣ 단계: 정석대로 유효한 매칭 데이터 중 가장 점수가 높은 1위 선정
   let bestMatch = [...validAiMatches].sort((a, b) => b.matchingScore - a.matchingScore)[0];
 
-  // 🛡️ [최종 하이브리드 방어막] 무료 버전 제미나이 특성상 10개 중 몇 개가 터지더라도, 
-  // 10개 전부 터진 게 아니라면 남은 정상 데이터 중 가장 점수 높은 글이 화면에 알아서 렌더링됩니다.
-  // (만약 10개 전부 다 제미나이 에러라면, 리스트의 원본 1등을 가져와 범용 코멘트로 안전하게 자동 마스킹합니다.)
+  // 3️⃣ 단계 [하이브리드 방어막]: 만약 백엔드 제미나이가 폭파돼서 3개 다 에러 멘트만 왔을 경우, 
+  // 텅 빈 화면을 띄우지 않고 리스트의 가장 순수 매칭 스코어가 높은 글을 가져와 "대체 범용 멘트"로 복구 렌더링
   if (!bestMatch && aiRecommendData && aiRecommendData.length > 0) {
     const rawTopMatch = [...aiRecommendData].sort((a, b) => b.matchingScore - a.matchingScore)[0];
     bestMatch = {
       ...rawTopMatch,
-      aiComment: `사용자님의 매칭 점수는 ${rawTopMatch.matchingScore}%입니다! 보유하신 핵심 기술 스택을 바탕으로 팀에 기여할 수 있는 최고의 기회입니다. 지금 바로 확인해 보세요!`
+      aiComment: `사용자님의 매칭 점수는 ${rawTopMatch.matchingScore}%입니다! 보유하신 핵심 기술 스택을 바탕으로 팀에 기여할 수 있는 최적의 기회입니다. 지금 바로 확인해 보세요!`
     };
   }
 
@@ -203,7 +202,7 @@ const Home: React.FC = () => {
               </div>
 
               {aiLoading ? (
-                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">10개 프로젝트 매칭 분석 중...</div>
+                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">상위 3개 최적 프로젝트 매칭 분석 중...</div>
               ) : bestMatch ? (
                 <AIProjectCard title={bestMatch.title} matchingScore={bestMatch.matchingScore} aiComment={bestMatch.aiComment} onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} />
               ) : (
