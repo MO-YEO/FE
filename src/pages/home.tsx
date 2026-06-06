@@ -70,7 +70,7 @@ const Home: React.FC = () => {
 
   const hasToken = !!localStorage.getItem('access_token');
 
-  // 🚀 백엔드 실시간 추천 리스트 바인딩
+  // 🚀 백엔드 추천 리스트 받아오기
   const { data: aiRecommendData, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation', 'list'],
     queryFn: aiRecommendApi.getAiRecommendations,
@@ -80,57 +80,12 @@ const Home: React.FC = () => {
     retry: 1,
   });
 
-  const AI_ERROR_STRINGS = [
-    '생성하지 못했습니다',
-    '문제가 발생했습니다',
-    '불러오지 못했습니다',
-  ];
+  // 💡 [수정 포인트] 프론트에서 글자를 검사해서 임의로 걸러내던 검역 로직을 전면 제거합니다.
+  // 백엔드가 코멘트를 채워 보낸 데이터가 존재하기만 하면 무조건 유효한 매칭 후보로 인정합니다.
+  const validAiMatches = aiRecommendData?.filter(item => item && item.aiComment) || [];
 
-  // 1️⃣ 단계: 제미나이가 정상적으로 생성한 문장만 필터링
-  const validAiMatches = aiRecommendData?.filter(item =>
-    item.aiComment &&
-    item.aiComment.trim().length > 20 &&
-    !AI_ERROR_STRINGS.some(errStr => item.aiComment.includes(errStr))
-  ) || [];
-
-  // 💡 [해결 포인트] bestMatch 변수 선언 시 any 타입을 명시하여 재할당 시 발생하는 타입 에러 원천 차단!
+  // 💡 백엔드가 넘겨준 리스트 중 '가장 매칭 점수가 높은 프로젝트'를 부동의 1위로 선정합니다.
   let bestMatch: any = [...validAiMatches].sort((a, b) => b.matchingScore - a.matchingScore)[0];
-
-  // 3️⃣ 단계 [철벽 이중 방어막 가동]:
-  // 제미나이 트래픽 초과로 빈 리스트가 내려오거나 에러 발생 시 프론트 자체 매칭 연산 실행
-  if (!bestMatch) {
-    const recruitsList = Array.isArray(recruitsData) ? recruitsData : (recruitsData?.recruits || []);
-    
-    if (recruitsList && recruitsList.length > 0 && profile) {
-      // 💡 [해결 포인트] 존재하지 않는 skills 필드를 완전히 삭제하고 오직 techStacks만 바인딩하여 컴파일 에러 완전 해결!
-      const userSkills = (profile.techStacks || []).map((s: string) => s.toLowerCase().trim());
-      
-      const backupScored = recruitsList.map((project: any) => {
-        if (!project) return null;
-        
-        // 프로젝트 측 객체도 techStacks 위주로 매핑 체계 통일
-        const projectSkills = (project.techStacks || []).map((s: string) => s.toLowerCase().trim());
-        const matched = projectSkills.filter((skill: string) => userSkills.includes(skill));
-        
-        let score = projectSkills.length > 0 ? Math.round((matched.length / projectSkills.length) * 100) : 50;
-        score += matched.length * 15;
-        if (score > 95) score = 93;
-        if (score < 40) score = 55;
-
-        return {
-          recruitPostId: project.recruitId,
-          title: project.title || "추천 프로젝트",
-          matchingScore: score,
-          aiComment: "보유하신 핵심 Front-end 경험을 바탕으로 프로젝트 팀에 즉각 합류하여 기술적인 기여를 크게 펼칠 수 있을 것으로 보여 강력 추천합니다."
-        };
-      }).filter(Boolean);
-
-      if (backupScored && backupScored.length > 0) {
-        // 💡 [해결 포인트] 정렬 후 할당 연산이 any 타입 선언 덕분에 에러 없이 깨끗하게 대입됩니다.
-        bestMatch = [...backupScored].sort((a: any, b: any) => b.matchingScore - a.matchingScore)[0];
-      }
-    }
-  }
 
   useEffect(() => {
     if (profile && profile.email) {
@@ -272,7 +227,7 @@ const AIProjectCard: React.FC<any> = ({ title, matchingScore, aiComment, onClick
   <div onClick={onClick} className="rounded-[20px] border border-[#F5E6FF] bg-gradient-to-b from-white to-[#FDF4FF] p-[20px] shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden">
     <div className="absolute top-4 right-4 bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] font-extrabold text-[12px] px-2.5 py-1 rounded-full">적합도 {matchingScore}%</div>
     <h3 className="text-[16px] font-extrabold text-[#1E293B] w-[70%] truncate mb-3.5">{title}</h3>
-    <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]"><p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">🤖 {aiComment}</p></div>
+    <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]"><p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">{aiComment}</p></div>
   </div>
 );
 
