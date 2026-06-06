@@ -20,7 +20,6 @@ import { membersApi } from "../../api/member";
 import { recruitsApi } from "../../api/recruits";
 import { boardsApi } from "../../api/boards";
 import { authApi } from "../../api/auth";
-import { apiClient } from "../../api/client";
 import type { UpdateMyProfileRequest } from "../../types";
 
 type ProfileEditType = {
@@ -99,10 +98,7 @@ export default function MyPage() {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (payload: UpdateMyProfileRequest) => {
-      const { data } = await apiClient.put("/members", payload);
-      return data;
-    },
+    mutationFn: membersApi.updateMyProfile,
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(["myProfile"], updatedProfile);
       queryClient.invalidateQueries({ queryKey: ["myProfile"] });
