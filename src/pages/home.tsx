@@ -50,7 +50,7 @@ const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>('project');
 
-  // 1. 내 프로필 데이터 (마이페이지 기술 스택)
+  // 1. 내 프로필 데이터 (마이페이지)
   const { data: profile } = useQuery({
     queryKey: ['myProfile'],
     queryFn: membersApi.getMyProfile,
@@ -70,24 +70,24 @@ const Home: React.FC = () => {
 
   const recruitsList = Array.isArray(recruitsData) ? recruitsData : (recruitsData?.recruits || []);
 
-  // 🛠️ [실시간 마이페이지 기술 스택 정밀 비교 매칭 알고리즘]
+  // 🛠️ [실시간 마이페이지 techStacks 정밀 비교 매칭 알고리즘]
   const getBestMatchProject = () => {
     if (!profile || recruitsList.length === 0) return null;
 
-    // 🎯 예시 더미 데이터를 완전히 걷어내고 실제 마이페이지 스택(profile.skills)만 순수하게 추적
-    const rawUserSkills: string[] = profile.techStacks|| []; 
+    // 🎯 [유레카] profile.skills 대신 진짜 백엔드 필드명인 techStacks를 바인딩합니다!!
+    const rawUserSkills: string[] = profile.techStacks || profile.techStacks || []; 
     const userSkills = rawUserSkills.map((s: string) => s.toLowerCase().trim());
 
-    // 마이페이지에 스택이 하나도 등록 안 되어 있다면 비교 연산 패스
+    // 마이페이지에 스택이 아예 비어있다면 연산 제외
     if (userSkills.length === 0) return null;
 
-    // 모든 프로젝트를 돌면서 실제 매칭 점수 계산
+    // 모든 프로젝트와 내 진짜 마이페이지 스택 대조 채점 시작
     const scoredProjects = recruitsList.map((project: any) => {
-      // 프로젝트 개별 요구 스택 배열 탐색
-      const rawProjectSkills: string[] = project.skills || project.techStacks || project.requiredSkills || [];
+      // 프로젝트 쪽 스택 필드도 techStacks와 skills 모두 유연하게 대응하도록 설계
+      const rawProjectSkills: string[] = project.techStacks || project.skills || project.requiredSkills || [];
       let finalProjectSkills = rawProjectSkills.map((s: string) => s.toLowerCase().trim());
       
-      // 혹시 프로젝트 스택 데이터가 누락되었을 경우를 대비한 타이틀 키워드 파싱 우회로
+      // 혹시 프로젝트 데이터에 스택 배열이 비어있다면 타이틀에서 키워드 추출 파싱 우회
       if (finalProjectSkills.length === 0 && project.title) {
         const lowerTitle = project.title.toLowerCase();
         if (lowerTitle.includes('react')) finalProjectSkills.push('react');
@@ -101,26 +101,25 @@ const Home: React.FC = () => {
       // 내 실제 마이페이지 스택과 일치하는 교집합 스택 추출
       const matched = finalProjectSkills.filter((skill: string) => userSkills.includes(skill));
       
-      // 순수 매칭률 점수화
+      // 순수 매칭률 계산
       let matchingScore = 0;
       if (finalProjectSkills.length > 0) {
         matchingScore = Math.round((matched.length / finalProjectSkills.length) * 100);
       }
 
-      // 💡 [핵심 가중치 시스템] 내가 가진 스택과 '겹치는 개수'만큼 추가 보너스 점수 부여 (+ 개당 15점)
-      // 이 로직 덕분에 내 실제 스택이 많이 녹아든 연관 프로젝트가 '안녕'을 제치고 위로 치고 올라옵니다.
-      matchingScore += matched.length * 15;
+      // 일치하는 스택 개수당 20점 보너스 가중치 부여 (안녕 밀어내기 용도)
+      matchingScore += matched.length * 20;
       
-      // UI용 상하한선 정밀 스케일링 보정 (35% ~ 95%)
+      // UI용 정밀 스케일링 보정
       if (matchingScore > 95) matchingScore = 95;
-      if (matchingScore < 35) matchingScore = 45;
+      if (matchingScore < 35) matchingScore = 55;
 
-      // 실시간 매칭된 스택명을 코멘트 템플릿에 주입
+      // 실시간 매칭된 스택명을 템플릿 문장에 주입
       const matchedSkillsUpper = matched.length > 0 
         ? matched.map((s: string) => s.toUpperCase()).join(', ') 
-        : userSkills.map((s: string) => s.toUpperCase()).slice(0, 2).join(', '); // 매칭 없으면 내 스택 일부 노출
+        : userSkills.map((s: string) => s.toUpperCase()).slice(0, 2).join(', ');
 
-      const aiComment = `이 모집글은 현재 사용자님이 보유하신 핵심 역량 중 [${matchedSkillsUpper}] 기술 스택과의 매칭률이 가장 높게 분석되어 추천되었습니다. 팀의 요구 역량과 정확히 부합하므로, 합류 시 개발 프로세스에 즉각적으로 결합하여 뛰어난 퍼포먼스를 발휘할 수 있는 최적의 프로젝트입니다.`;
+      const aiComment = `이 모집글은 현재 사용자님이 마이페이지에 등록하신 핵심 기술 [${matchedSkillsUpper}] 스택과의 매칭률이 가장 높게 분석되어 추천작으로 선정되었습니다. 팀의 요구 역량과 완벽히 부합하므로, 합류 시 팀의 프론트엔드 개발 프로세스에 기여할 수 있는 최적의 프로젝트입니다.`;
 
       return {
         ...project,
@@ -130,7 +129,7 @@ const Home: React.FC = () => {
       };
     });
 
-    // 실제 기술 스택 연관성 점수가 가장 높은 최고의 1등을 상단에 정렬 및 출력
+    // 실제 내 스택 연관성 점수가 가장 높은 최고의 프로젝트를 1등으로 정렬 후 추출
     return scoredProjects.sort((a: any, b: any) => b.matchingScore - a.matchingScore)[0];
   };
 
@@ -231,7 +230,7 @@ const Home: React.FC = () => {
               </div>
 
               {aiLoading ? (
-                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">내 스택 기반 실시간 정밀 연산 중...</div>
+                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">마이페이지 techStacks 매칭 연산 중...</div>
               ) : bestMatch ? (
                 <AIProjectCard title={bestMatch.title} matchingScore={bestMatch.matchingScore} aiComment={bestMatch.aiComment} onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} />
               ) : (
