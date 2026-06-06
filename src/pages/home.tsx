@@ -64,33 +64,22 @@ const Home: React.FC = () => {
     queryFn: () => recruitsApi.getRecruits({ size: 20 }),
   });
 
-  const { data: postsData, isLoading: postsLoading } = useQuery({
-    queryKey: ['boards', 'recent'],
-    queryFn: () => boardsApi.getPosts({ size: 20 }),
-  });
+  const recruitsList = Array.isArray(recruitsData)
+    ? recruitsData
+    : (recruitsData?.recruits || []);
 
-  const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation[]>({
-    queryKey: ['recruits', 'recommendation'],
-    queryFn: aiRecommendApi.getAiRecommendations,
-    enabled: !!profile,
+  // 💡 최근 프로젝트 글 중 첫 번째 글의 ID를 추출합니다.
+  const targetRecruitId = recruitsList[0]?.recruitId || recruitsList[0]?.recruitPostId;
+
+  // 🚀 [스웨거 반영] 추출한 첫 번째 게시글 ID가 존재할 때만 배포된 진짜 AI API를 호출합니다.
+  const { data: aiMatchData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation>({
+    queryKey: ['recruits', 'recommendation', targetRecruitId],
+    queryFn: () => aiRecommendApi.getAiRecommendations(Number(targetRecruitId)),
+    enabled: !!profile && !!targetRecruitId, // 👈 의존성 설정
     staleTime: 1000 * 60 * 30,   
     gcTime: 1000 * 60 * 60,      
     refetchOnWindowFocus: false, 
   });
-
-  useEffect(() => {
-    if (aiRecommendData && aiRecommendData.length > 0) {
-      const firstRecommend = aiRecommendData[0];
-      const comment = firstRecommend.aiComment;
-
-      if (comment && comment.trim() !== "") {
-        localStorage.setItem("cached_ai_comment", comment);
-        localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
-        localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
-        localStorage.setItem("cached_ai_post_id", String(firstRecommend.recruitPostId || ""));
-      }
-    }
-  }, [aiRecommendData]);
 
   useEffect(() => {
     if (profile && profile.email) {
@@ -102,13 +91,14 @@ const Home: React.FC = () => {
     }
   }, [profile, navigate]);
 
-  const recruitsList = Array.isArray(recruitsData)
-    ? recruitsData
-    : (recruitsData?.recruits || []);
-
   const filteredRecruits = recruitsList.filter((p: any) => 
     p?.title?.toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 5);
+
+  const { data: postsData, isLoading: postsLoading } = useQuery({
+    queryKey: ['boards', 'recent'],
+    queryFn: () => boardsApi.getPosts({ size: 20 }),
+  });
 
   const postsList = Array.isArray(postsData)
     ? postsData
@@ -118,7 +108,7 @@ const Home: React.FC = () => {
     p?.title?.toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 5);
 
-  const isAiProcessing = aiLoading || (aiFetching && !aiRecommendData);
+  const isAiProcessing = aiLoading || (aiFetching && !aiMatchData);
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[400px] bg-[#F8FAFC] pb-[100px] relative text-left shadow-2xl">
@@ -222,34 +212,26 @@ const Home: React.FC = () => {
                     프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
                   </p>
                 </div>
-              ) : (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
+              ) : aiMatchData ? (
                 (() => {
-                  const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
-
-                  const localComment = localStorage.getItem("cached_ai_comment");
-                  const localTitle = localStorage.getItem("cached_ai_project_title");
-                  const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
-                  const localPostId = localStorage.getItem("cached_ai_post_id");
-
-                  const finalTitle = topMatch ? topMatch.title : (localTitle || "추천 프로젝트");
-                  const finalScore = topMatch ? topMatch.matchingScore : localScore;
-                  const finalPostId = topMatch ? topMatch.recruitPostId : (localPostId || "");
-                  const finalComment = topMatch ? topMatch.aiComment : (localComment || "추천 사유를 불러오고 있습니다.");
+                  // 💡 타겟 프로젝트 오브젝트를 찾아서 실제 카드 제목으로 매핑합니다.
+                  const currentProject = recruitsList.find((p: any) => p.recruitId === aiMatchData.recruitPostId);
+                  const cardTitle = currentProject?.title || "추천 프로젝트";
 
                   return (
                     <AIProjectCard 
-                      title={finalTitle} 
-                      matchingScore={finalScore} 
-                      aiComment={finalComment} 
+                      title={cardTitle} 
+                      matchingScore={aiMatchData.matchingScore || 0} 
+                      aiComment={aiMatchData.aiComment || "추천 사유를 분석할 수 없습니다."} 
                       onClick={() => {
-                        if (finalPostId) navigate(`/project/${finalPostId}`);
+                        if (aiMatchData.recruitPostId) navigate(`/project/${aiMatchData.recruitPostId}`);
                       }} 
                     />
                   );
                 })()
               ) : (
                 <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">
-                  마이페이지에 기술 스택을 등록하면 맞춤 매칭이 활성화됩니다.
+                  현재 매칭 가능한 유효한 추천 프로젝트 모집글이 없습니다.
                 </div>
               )}
             </div>
