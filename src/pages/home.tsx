@@ -230,30 +230,25 @@ const Home: React.FC = () => {
               ) : (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
                 (() => {
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
-                  
-                  const isCurrentFailed = 
-                    !topMatch || 
-                    !topMatch.aiComment || 
-                    topMatch.aiComment.trim() === "" || 
-                    topMatch.aiComment.includes("생성하지 못했습니다") || 
-                    topMatch.aiComment.includes("기준으로 추천된 모집글입니다");
 
                   const localComment = localStorage.getItem("cached_ai_comment");
                   const localTitle = localStorage.getItem("cached_ai_project_title");
                   const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
                   const localPostId = localStorage.getItem("cached_ai_post_id");
 
-                  const finalTitle = isCurrentFailed && localTitle ? localTitle : (topMatch?.title || "추천 프로젝트");
-                  const finalScore = isCurrentFailed && localScore ? localScore : (topMatch?.matchingScore || 0);
-                  const finalPostId = isCurrentFailed && localPostId ? localPostId : (topMatch?.recruitPostId || "");
+                  const finalTitle = topMatch ? topMatch.title : (localTitle || "추천 프로젝트");
+                  const finalPostId = topMatch ? topMatch.recruitPostId : (localPostId || "");
+                  const finalComment = topMatch ? topMatch.aiComment : (localComment || "추천 코멘트를 불러올 수 없습니다.");
+
+                  let finalScore = topMatch ? topMatch.matchingScore : localScore;
                   
-                  let finalComment = topMatch?.aiComment || "";
-                  if (isCurrentFailed) {
-                    if (localComment) {
-                      finalComment = localComment; 
-                    } else {
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님이 설정하신 핵심 역량 및 보유 기술 스택은 현재 모집 중인 '${finalTitle}' 프로젝트의 요구 스택과 높은 일치율을 보이고 있습니다. 프로젝트 협업 시 시너지가 아주 훌륭할 것으로 예상되니 상세 공고를 확인해 보세요!`;
+                  if (topMatch) {
+                    const reqSkills = Array.isArray(topMatch.requiredSkills) ? topMatch.requiredSkills.map(s => s.toLowerCase().trim()) : [];
+                    const memSkills = Array.isArray(topMatch.memberSkills) ? topMatch.memberSkills.map(s => s.toLowerCase().trim()) : [];
+                    
+                    if (memSkills.length > 0 && reqSkills.length > 0) {
+                      const intersections = reqSkills.filter(skill => memSkills.includes(skill));
+                      finalScore = Math.min(Math.round((intersections.length / memSkills.length) * 100), 100);
                     }
                   }
 
