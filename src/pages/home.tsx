@@ -83,12 +83,7 @@ const Home: React.FC = () => {
       const firstRecommend = aiRecommendData[0];
       const comment = firstRecommend.aiComment;
 
-      if (
-        comment && 
-        comment.trim() !== "" && 
-        !comment.includes("생성하지 못했습니다") && 
-        !comment.includes("기준으로 추천된 모집글입니다")
-      ) {
+      if (comment && comment.trim() !== "") {
         localStorage.setItem("cached_ai_comment", comment);
         localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
         localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
@@ -237,20 +232,9 @@ const Home: React.FC = () => {
                   const localPostId = localStorage.getItem("cached_ai_post_id");
 
                   const finalTitle = topMatch ? topMatch.title : (localTitle || "추천 프로젝트");
+                  const finalScore = topMatch ? topMatch.matchingScore : localScore;
                   const finalPostId = topMatch ? topMatch.recruitPostId : (localPostId || "");
-                  const finalComment = topMatch ? topMatch.aiComment : (localComment || "추천 코멘트를 불러올 수 없습니다.");
-
-                  let finalScore = topMatch ? topMatch.matchingScore : localScore;
-                  
-                  if (topMatch) {
-                    const reqSkills = Array.isArray(topMatch.requiredSkills) ? topMatch.requiredSkills.map(s => s.toLowerCase().trim()) : [];
-                    const memSkills = Array.isArray(topMatch.memberSkills) ? topMatch.memberSkills.map(s => s.toLowerCase().trim()) : [];
-                    
-                    if (memSkills.length > 0 && reqSkills.length > 0) {
-                      const intersections = reqSkills.filter(skill => memSkills.includes(skill));
-                      finalScore = Math.min(Math.round((intersections.length / memSkills.length) * 100), 100);
-                    }
-                  }
+                  const finalComment = topMatch ? topMatch.aiComment : (localComment || "추천 사유를 불러오고 있습니다.");
 
                   return (
                     <AIProjectCard 
