@@ -241,6 +241,7 @@ const Home: React.FC = () => {
                     topMatch.title !== "안녕";
 
                   let targetProject: any = recruitsList[0] || null;
+
                   if (isBackendDataValid) {
                     const found = recruitsList.find((p: any) => p.recruitId === topMatch.recruitPostId || p.title === topMatch.title);
                     if (found) targetProject = found;
@@ -260,9 +261,15 @@ const Home: React.FC = () => {
                   const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (targetProject?.recruitId || "");
 
                   let finalScore = 0;
+                  let projectSkills: string[] = [];
+                  let intersections: string[] = [];
+
+                  if (targetProject) {
+                    projectSkills = targetProject?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
+                    intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
+                  }
+
                   if (targetProject && userStacks.length > 0) {
-                    const projectSkills = targetProject?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
-                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
                     finalScore = Math.min(Math.round((intersections.length / userStacks.length) * 100), 100);
                   } else if (isBackendDataValid) {
                     finalScore = topMatch.matchingScore || 0;
@@ -271,20 +278,13 @@ const Home: React.FC = () => {
                   let finalComment = "";
                   if (isBackendDataValid) {
                     finalComment = topMatch.aiComment;
-                  } else if (targetProject && userStacks.length > 0) {
-                    const projectSkills = targetProject?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
-                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
-                    if (intersections.length > 0) {
-                      const uppercaseSkills = intersections.map((skill: string) => skill.toUpperCase()).join(", ");
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님이 설정하신 핵심 기술 스택 중 [ ${uppercaseSkills} ] 역량이 본 프로젝트의 기술 요구사항과 일치합니다. 프로젝트 개발 흐름에 알맞은 시너지를 낼 수 있어 추천해 드립니다.`;
-                    } else {
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님의 프로필 정보와 최근 등록된 프로젝트들의 요구사항을 종합 분석 중입니다. 상세 공고를 확인해 새로운 팀 빌딩 기회를 발견해 보세요.`;
-                    }
+                  } else if (targetProject && userStacks.length > 0 && intersections.length > 0) {
+                    const matchedText = intersections.map(s => s.toUpperCase()).join(", ");
+                    const reqText = projectSkills.map(s => s.toUpperCase()).join(", ");
+                    finalComment = `보유 스택 [ ${matchedText} ]이 프로젝트 요구 사항 [ ${reqText} ]과 매칭되어 추천되었습니다. 상세 모집 공고를 확인해 보세요.`;
                   } else {
-                    const userNickname = profile?.nickname || "학우";
-                    finalComment = `${userNickname}님의 프로필 정보와 최근 등록된 프로젝트들의 요구사항을 종합 분석 중입니다. 상세 공고를 확인해 새로운 팀 빌딩 기회를 발견해 보세요.`;
+                    const reqText = projectSkills.length > 0 ? projectSkills.map(s => s.toUpperCase()).join(", ") : "미지정";
+                    finalComment = `현재 모집글의 요구 스택은 [ ${reqText} ] 입니다. 상세 요건과 기획안을 검토하여 매칭을 이어가 보세요.`;
                   }
 
                   return (
