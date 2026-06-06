@@ -80,12 +80,28 @@ const Home: React.FC = () => {
     retry: 1,
   });
 
-  // 💡 [수정 포인트] 프론트에서 글자를 검사해서 임의로 걸러내던 검역 로직을 전면 제거합니다.
-  // 백엔드가 코멘트를 채워 보낸 데이터가 존재하기만 하면 무조건 유효한 매칭 후보로 인정합니다.
+  // 💡 [디버깅 1] 백엔드에서 받은 원본 배열 전체를 콘솔에 실시간으로 찍습니다.
+  useEffect(() => {
+    if (aiRecommendData) {
+      console.log("🔍 [백엔드 응답 전체 데이터]:", aiRecommendData);
+    }
+  }, [aiRecommendData]);
+
+  // 프론트 필터링 없이 코멘트가 있는 데이터만 바인딩
   const validAiMatches = aiRecommendData?.filter(item => item && item.aiComment) || [];
 
-  // 💡 백엔드가 넘겨준 리스트 중 '가장 매칭 점수가 높은 프로젝트'를 부동의 1위로 선정합니다.
+  // 매칭 점수가 가장 높은 프로젝트를 부동의 1위로 선정
   let bestMatch: any = [...validAiMatches].sort((a, b) => b.matchingScore - a.matchingScore)[0];
+
+  // 💡 [디버깅 2] 정렬 연산을 거쳐 최종 선정된 1등 추천 카드의 데이터를 구별해서 보여줍니다.
+  useEffect(() => {
+    if (bestMatch) {
+      console.log("🎯 [최종 선정된 1등 프로젝트 정보]:", bestMatch);
+      console.log("🤖 [백엔드가 보내준 AI 코멘트 알맹이]:", bestMatch.aiComment);
+    } else if (aiRecommendData && aiRecommendData.length === 0) {
+      console.warn("⚠️ [경고]: 백엔드에서 빈 배열([])이 내려오고 있습니다.");
+    }
+  }, [bestMatch, aiRecommendData]);
 
   useEffect(() => {
     if (profile && profile.email) {
