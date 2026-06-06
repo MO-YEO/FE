@@ -23,7 +23,6 @@ const formatRelativeTime = (dateString?: string) => {
   const now = new Date();
   const past = new Date(dateString);
   const diffMs = now.getTime() - past.getTime();
-  
   const diffMins = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 
@@ -69,33 +68,42 @@ const Home: React.FC = () => {
     queryFn: () => boardsApi.getPosts({ size: 20 }),
   });
 
-  const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation[]>({
-    queryKey: ['recruits', 'recommendation'],
+  const hasToken = !!localStorage.getItem('access_token');
+
+  // 🚀 상위 2개 리스트 관리를 위한 쿼리 세팅
+  const { data: aiRecommendData, isLoading: aiLoading } = useQuery<AIRecommendation[]>({
+    queryKey: ['recruits', 'recommendation', 'top2'],
     queryFn: aiRecommendApi.getAiRecommendations,
-    enabled: !!profile,
-    staleTime: 1000 * 60 * 30,   
-    gcTime: 1000 * 60 * 60,      
-    refetchOnWindowFocus: false, 
+    enabled: hasToken && !!profile,
+    staleTime: 1000 * 10, // 캐시 고임 방지용 10초 설정
+    gcTime: 1000 * 60 * 5,
+    retry: 1,
   });
 
-  useEffect(() => {
-    if (aiRecommendData && aiRecommendData.length > 0) {
-      const firstRecommend = aiRecommendData[0];
-      const comment = firstRecommend.aiComment;
+  const AI_ERROR_STRINGS = [
+    '생성하지 못했습니다',
+    '문제가 발생했습니다',
+    '불러오지 못했습니다',
+  ];
 
-      if (
-        comment && 
-        comment.trim() !== "" && 
-        !comment.includes("생성하지 못했습니다") && 
-        !comment.includes("기준으로 추천된 모집글입니다")
-      ) {
-        localStorage.setItem("cached_ai_comment", comment);
-        localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
-        localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
-        localStorage.setItem("cached_ai_post_id", String(firstRecommend.recruitPostId || ""));
-      }
-    }
-  }, [aiRecommendData]);
+  // 💡 [2개 필터링] 백엔드가 준 상위 2개 중 정상적으로 생성된 AI 멘트만 필터링
+  const validAiMatches = aiRecommendData?.filter(item =>
+    item.aiComment &&
+    item.aiComment.trim().length > 10 &&
+    !AI_ERROR_STRINGS.some(errStr => item.aiComment.includes(errStr))
+  ) || [];
+
+  // 💡 [2개 정렬] 둘 중 적합도 점수가 더 높은 최종 1등을 선정
+  let bestMatch = [...validAiMatches].sort((a, b) => b.matchingScore - a.matchingScore)[0];
+
+  // 🛡️ [하이브리드 방어막] 혹시나 2개 다 에러가 나더라도 화면이 절대 깨지지 않게 백업 문구 처리
+  if (!bestMatch && aiRecommendData && aiRecommendData.length > 0) {
+    const rawTopMatch = [...aiRecommendData].sort((a, b) => b.matchingScore - a.matchingScore)[0];
+    bestMatch = {
+      ...rawTopMatch,
+      aiComment: `사용자님의 매칭 점수는 ${rawTopMatch.matchingScore}%입니다! 보유하신 핵심 기술 스택을 바탕으로 팀에 기여할 수 있는 최적의 기회입니다. 지금 바로 확인해 보세요!`
+    };
+  }
 
   useEffect(() => {
     if (profile && profile.email) {
@@ -107,23 +115,11 @@ const Home: React.FC = () => {
     }
   }, [profile, navigate]);
 
-  const recruitsList = Array.isArray(recruitsData)
-    ? recruitsData
-    : (recruitsData?.recruits || []);
+  const recruitsList = Array.isArray(recruitsData) ? recruitsData : (recruitsData?.recruits || []);
+  const filteredRecruits = recruitsList.filter((p: any) => p?.title?.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
 
-  const filteredRecruits = recruitsList.filter((p: any) => 
-    p?.title?.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5);
-
-  const postsList = Array.isArray(postsData)
-    ? postsData
-    : (postsData?.posts || []);
-
-  const filteredPosts = postsList.filter((p: any) => 
-    p?.title?.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5);
-
-  const isAiProcessing = aiLoading || (aiFetching && !aiRecommendData);
+  const postsList = Array.isArray(postsData) ? postsData : (postsData?.posts || []);
+  const filteredPosts = postsList.filter((p: any) => p?.title?.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 5);
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[400px] bg-[#F8FAFC] pb-[100px] relative text-left shadow-2xl">
@@ -163,17 +159,11 @@ const Home: React.FC = () => {
       </header>
 
       <section className="grid grid-cols-2 gap-3 px-5 pt-[30px] text-white">
-        <button 
-          onClick={() => navigate("/member")} 
-          className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all"
-        >
+        <button onClick={() => navigate("/member")} className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all">
           <Member className="size-7" />
           <span className="font-bold text-[14px] mt-2">팀원 찾기</span>
         </button>
-        <button 
-          onClick={() => navigate("/board")} 
-          className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all"
-        >
+        <button onClick={() => navigate("/board")} className="bg-gradient-to-r from-[#155DFC] to-[#2B7FFF] p-4 rounded-[14px] flex flex-col items-start active:scale-95 transition-all">
           <HomeBoard className="size-7" />
           <span className="font-bold text-[14px] mt-2">전체 게시판</span>
         </button>
@@ -182,10 +172,7 @@ const Home: React.FC = () => {
       <div className="px-5 mt-10">
         {searchQuery ? (
           <div>
-            <h2 className="font-bold text-[18px] text-[#1E293B] mb-4">
-              '{searchQuery}' 검색 결과
-            </h2>
-            
+            <h2 className="font-bold text-[18px] text-[#1E293B] mb-4">'{searchQuery}' 검색 결과</h2>
             {searchType === 'project' && (
               <div className="flex flex-col">
                 {filteredRecruits.length > 0 ? filteredRecruits.map((p: any) => (
@@ -193,7 +180,6 @@ const Home: React.FC = () => {
                 )) : <EmptyState />}
               </div>
             )}
-
             {searchType === 'board' && (
               <div className="flex flex-col gap-3">
                 {filteredPosts.length > 0 ? filteredPosts.map((p: any) => (
@@ -214,118 +200,29 @@ const Home: React.FC = () => {
                 <h2 className="font-bold text-[18px] text-[#1E293B]">나를 위한 맞춤 프로젝트</h2>
               </div>
 
-              {isAiProcessing ? (
-                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm flex flex-col items-center justify-center gap-3 animate-pulse">
-                  <div className="flex items-center gap-2">
-                    <svg className="animate-spin h-5 w-5 text-[#8B5CF6]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span className="text-[14px] font-extrabold text-[#7C3AED]">AI 맞춤 분석 진행 중</span>
-                  </div>
-                  <p className="text-[12px] text-[#8B5CF6] font-medium tracking-tight text-center">
-                    프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
-                  </p>
-                </div>
-              ) : recruitsList.length > 0 ? (
-                (() => {
-                  const userStacks = profile?.techStacks?.map((s: string) => s.toLowerCase().trim()) || [];
-                  
-                  let bestProject = recruitsList[0];
-                  let maxIntersectionCount = -1;
-                  let matchedIntersectionSkills: string[] = [];
-
-                  recruitsList.forEach((project: any) => {
-                    const projectSkills = project?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
-                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
-                    
-                    if (intersections.length > maxIntersectionCount) {
-                      maxIntersectionCount = intersections.length;
-                      bestProject = project;
-                      matchedIntersectionSkills = intersections;
-                    }
-                  });
-
-                  const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
-
-                  const isBackendDataValid = 
-                    topMatch && 
-                    topMatch.aiComment && 
-                    topMatch.aiComment.trim() !== "" && 
-                    !topMatch.aiComment.includes("생성하지 못했습니다") && 
-                    !topMatch.aiComment.includes("기준으로 추천된 모집글입니다") &&
-                    topMatch.title !== "안녕";
-
-                  const finalTitle = isBackendDataValid ? topMatch.title : (bestProject?.title || "추천 프로젝트");
-                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (bestProject?.recruitId || "");
-                  
-                  let finalScore = topMatch?.matchingScore || 0;
-                  let finalComment = topMatch?.aiComment || "";
-
-                  if (!isBackendDataValid) {
-                    if (userStacks.length > 0 && maxIntersectionCount > 0) {
-                      finalScore = Math.min(Math.round((maxIntersectionCount / userStacks.length) * 100), 100);
-                      
-                      const uppercaseSkills = matchedIntersectionSkills.map(s => s.toUpperCase()).join(", ");
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님이 설정하신 핵심 기술 스택 중 [ ${uppercaseSkills} ] 역량이 본 프로젝트의 기술 요구사항과 일치합니다. 프로젝트 개발 흐름에 알맞은 시너지를 낼 수 있어 추천해 드립니다.`;
-                    } else {
-                      finalScore = 0;
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님의 프로필 정보와 최근 등록된 프로젝트들의 요구사항을 종합 분석 중입니다. 상세 공고를 확인해 새로운 팀 빌딩 기회를 발견해 보세요.`;
-                    }
-                  }
-
-                  return (
-                    <AIProjectCard 
-                      title={finalTitle} 
-                      matchingScore={finalScore} 
-                      aiComment={finalComment} 
-                      onClick={() => {
-                        if (finalPostId) navigate(`/project/${finalPostId}`);
-                      }} 
-                    />
-                  );
-                })()
+              {aiLoading ? (
+                <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">상위 2개 프로젝트 엄선 중...</div>
+              ) : bestMatch ? (
+                <AIProjectCard title={bestMatch.title} matchingScore={bestMatch.matchingScore} aiComment={bestMatch.aiComment} onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} />
               ) : (
-                <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">
-                  마이페이지에 기술 스택을 등록하면 맞춤 매칭이 활성화됩니다.
-                </div>
+                <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">현재 추천 가능한 프로젝트가 없습니다.</div>
               )}
             </div>
 
             <div className="mb-10">
               <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                  <img src={projectIcon} alt="" className="w-5 h-5" />
-                  <h2 className="font-bold text-[18px] text-[#1E293B]">최근 프로젝트</h2>
-                </div>
+                <div className="flex items-center gap-2"><img src={projectIcon} alt="" className="w-5 h-5" /><h2 className="font-bold text-[18px] text-[#1E293B]">최근 프로젝트</h2></div>
                 <button className="text-[13px] text-[#2563EB] font-bold" onClick={() => navigate("/project")}>전체보기</button>
               </div>
-              {recruitsLoading ? (
-                <div className="w-full h-[80px] bg-white rounded-[14px] animate-pulse mb-3" />
-              ) : recruitsList.slice(0, 3).map((p: any) => (
-                <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "작성자"} members={p.applicantCount} maxMembers={p.totalHeadcount} time={formatDeadline(p.deadline)} onClick={() => navigate(`/project/${p.recruitId}`)} />
-              ))}
+              {recruitsLoading ? <div className="w-full h-[80px] bg-white rounded-[14px] animate-pulse mb-3" /> : recruitsList.slice(0, 3).map((p: any) => <ProjectCard key={p.recruitId} title={p.title} author={p.author?.nickname || "작성자"} members={p.applicantCount} maxMembers={p.totalHeadcount} time={formatDeadline(p.deadline)} onClick={() => navigate(`/project/${p.recruitId}`)} />)}
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                  <img src={postIcon} alt="" className="w-5 h-5" />
-                  <h2 className="font-bold text-[18px] text-[#1E293B]">최근 게시글</h2>
-                </div>
+                <div className="flex items-center gap-2"><img src={postIcon} alt="" className="w-5 h-5" /><h2 className="font-bold text-[18px] text-[#1E293B]">최근 게시글</h2></div>
                 <button className="text-[13px] text-[#2563EB] font-bold" onClick={() => navigate("/board")}>더보기</button>
               </div>
-              <div className="flex flex-col gap-3">
-                {postsLoading ? (
-                  <div className="w-full h-[60px] bg-white rounded-[14px] animate-pulse" />
-                ) : postsList.slice(0, 3).map((p: any) => (
-                  <div key={p.postId} onClick={() => navigate(`/board/${p.postId}`)} className="cursor-pointer">
-                    <PostPreviewCard title={p.title} likeCount={p.likeCount} commentCount={p.commentCount} date={formatRelativeTime(p.createdAt)} author={p.author?.nickname || p.author} />
-                  </div>
-                ))}
-              </div>
+              <div className="flex flex-col gap-3">{postsLoading ? <div className="w-full h-[60px] bg-white rounded-[14px] animate-pulse" /> : postsList.slice(0, 3).map((p: any) => <div key={p.postId} onClick={() => navigate(`/board/${p.postId}`)} className="cursor-pointer"><PostPreviewCard title={p.title} likeCount={p.likeCount} commentCount={p.commentCount} date={formatRelativeTime(p.createdAt)} author={p.author?.nickname || p.author} /></div>)}</div>
             </div>
           </>
         )}
@@ -339,41 +236,21 @@ const ProjectCard: React.FC<any> = ({ title, author, members, maxMembers, time, 
     <h3 className="text-[16px] font-bold text-[#1E293B] truncate mb-2">{title}</h3>
     <div className="flex items-center justify-between text-[#94A3B8] text-[12px]">
       <span>작성자: {author}</span>
-      <div className="flex items-center gap-3">
-        <span className="flex items-center gap-1"><Member className="size-[13px]" /> {members}/{maxMembers}</span>
-        <span className="flex items-center gap-1"><Time className="size-[13px]" /> {time}</span>
-      </div>
+      <div className="flex items-center gap-3"><span className="flex items-center gap-1"><Member className="size-[13px]" /> {members}/{maxMembers}</span><span className="flex items-center gap-1"><Time className="size-[13px]" /> {time}</span></div>
     </div>
   </div>
 );
 
-interface AIProjectCardProps {
-  title: string;
-  matchingScore: number;
-  aiComment: string;
-  onClick: () => void;
-}
-
-const AIProjectCard: React.FC<AIProjectCardProps> = ({ title, matchingScore, aiComment, onClick }) => (
+const AIProjectCard: React.FC<any> = ({ title, matchingScore, aiComment, onClick }) => (
   <div onClick={onClick} className="rounded-[20px] border border-[#F5E6FF] bg-gradient-to-b from-white to-[#FDF4FF] p-[20px] shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden">
-    <div className="absolute top-4 right-4 bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] font-extrabold text-[12px] px-2.5 py-1 rounded-full">
-      적합도 {matchingScore}%
-    </div>
-    
+    <div className="absolute top-4 right-4 bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] font-extrabold text-[12px] px-2.5 py-1 rounded-full">적합도 {matchingScore}%</div>
     <h3 className="text-[16px] font-extrabold text-[#1E293B] w-[70%] truncate mb-3.5">{title}</h3>
-    
-    <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]">
-      <p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">
-        🤖 {aiComment}
-      </p>
-    </div>
+    <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]"><p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">🤖 {aiComment}</p></div>
   </div>
 );
 
 const EmptyState = () => (
-  <div className="bg-white p-10 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-sm">
-    일치하는 검색 결과가 없습니다.
-  </div>
+  <div className="bg-white p-10 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-sm">일치하는 검색 결과가 없습니다.</div>
 );
 
 export default Home;
