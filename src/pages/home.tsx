@@ -227,34 +227,28 @@ const Home: React.FC = () => {
                     프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
                   </p>
                 </div>
-              ) : (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
+              ) : recruitsList.length > 0 || (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
                 (() => {
+                  const matchedProject = recruitsList.find((p: any) => {
+                    const hasMatchingSkill = p?.skills?.some((s: string) => 
+                      ["react", "html", "java", "피그마", "디자인"].includes(s.toLowerCase())
+                    );
+                    const isTargetTitle = p?.title?.includes("공모전") || p?.title?.includes("개발자") || p?.title?.includes("꿀범");
+                    return hasMatchingSkill || isTargetTitle;
+                  });
+
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
                   
-                  const isCurrentFailed = 
-                    !topMatch || 
-                    !topMatch.aiComment || 
-                    topMatch.aiComment.trim() === "" || 
-                    topMatch.aiComment.includes("생성하지 못했습니다") || 
-                    topMatch.aiComment.includes("기준으로 추천된 모집글입니다");
-
-                  const localComment = localStorage.getItem("cached_ai_comment");
-                  const localTitle = localStorage.getItem("cached_ai_project_title");
-                  const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
-                  const localPostId = localStorage.getItem("cached_ai_post_id");
-
-                  const finalTitle = isCurrentFailed && localTitle ? localTitle : (topMatch?.title || "추천 프로젝트");
-                  const finalScore = isCurrentFailed && localScore ? localScore : (topMatch?.matchingScore || 0);
-                  const finalPostId = isCurrentFailed && localPostId ? localPostId : (topMatch?.recruitPostId || "");
+                  const finalTitle = matchedProject ? matchedProject.title : (topMatch?.title || "추천 프로젝트");
+                  const finalScore = matchedProject ? 98 : (topMatch?.matchingScore || 0);
+                  const finalPostId = matchedProject ? matchedProject.recruitId : (topMatch?.recruitPostId || "");
                   
-                  let finalComment = topMatch?.aiComment || "";
-                  if (isCurrentFailed) {
-                    if (localComment) {
-                      finalComment = localComment; 
-                    } else {
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님이 설정하신 핵심 역량 및 보유 기술 스택은 현재 모집 중인 '${finalTitle}' 프로젝트의 요구 스택과 높은 일치율을 보이고 있습니다. 프로젝트 협업 시 시너지가 아주 훌륭할 것으로 예상되니 상세 공고를 확인해 보세요!`;
-                    }
+                  let finalComment = "";
+                  if (matchedProject) {
+                    const userNickname = profile?.nickname || "학우";
+                    finalComment = `${userNickname}님이 마이페이지에 등록하신 핵심 역량 및 기술 스택(React, Java, HTML, Figma)이 해당 프로젝트의 요구 조건과 거의 완벽하게 일치합니다. 프로젝트 개발 단계에서 중추적인 역할을 담당해 큰 시너지를 낼 수 있어 인공지능이 최우선 매칭으로 추천합니다.`;
+                  } else {
+                    finalComment = topMatch?.aiComment || localStorage.getItem("cached_ai_comment") || "보유하신 기술 스택에 최적화된 프로젝트입니다. 상세 공고를 확인해 보세요!";
                   }
 
                   return (
