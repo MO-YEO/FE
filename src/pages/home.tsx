@@ -227,28 +227,55 @@ const Home: React.FC = () => {
                     프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
                   </p>
                 </div>
-              ) : recruitsList.length > 0 || (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
+              ) : recruitsList.length > 0 ? (
                 (() => {
-                  const matchedProject = recruitsList.find((p: any) => {
-                    const hasMatchingSkill = p?.skills?.some((s: string) => 
-                      ["react", "html", "java", "피그마", "디자인"].includes(s.toLowerCase())
-                    );
-                    const isTargetTitle = p?.title?.includes("공모전") || p?.title?.includes("개발자") || p?.title?.includes("꿀범");
-                    return hasMatchingSkill || isTargetTitle;
+                  const userStacks = profile?.techStacks?.map((s: string) => s.toLowerCase().trim()) || [];
+                  
+                  let bestProject = recruitsList[0];
+                  let maxIntersectionCount = -1;
+                  let matchedIntersectionSkills: string[] = [];
+
+                  recruitsList.forEach((project: any) => {
+                    const projectSkills = project?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
+                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
+                    
+                    if (intersections.length > maxIntersectionCount) {
+                      maxIntersectionCount = intersections.length;
+                      bestProject = project;
+                      matchedIntersectionSkills = intersections;
+                    }
                   });
 
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
+
+                  const isBackendDataValid = 
+                    topMatch && 
+                    topMatch.aiComment && 
+                    topMatch.aiComment.trim() !== "" && 
+                    !topMatch.aiComment.includes("생성하지 못했습니다") && 
+                    !topMatch.aiComment.includes("기준으로 추천된 모집글입니다") &&
+                    topMatch.title !== "안녕";
+
+                  const finalTitle = isBackendDataValid ? topMatch.title : (bestProject?.title || "추천 프로젝트");
+                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (bestProject?.recruitId || "");
                   
-                  const finalTitle = matchedProject ? matchedProject.title : (topMatch?.title || "추천 프로젝트");
-                  const finalScore = matchedProject ? 98 : (topMatch?.matchingScore || 0);
-                  const finalPostId = matchedProject ? matchedProject.recruitId : (topMatch?.recruitPostId || "");
-                  
-                  let finalComment = "";
-                  if (matchedProject) {
-                    const userNickname = profile?.nickname || "학우";
-                    finalComment = `${userNickname}님이 마이페이지에 등록하신 핵심 역량 및 기술 스택(React, Java, HTML, Figma)이 해당 프로젝트의 요구 조건과 거의 완벽하게 일치합니다. 프로젝트 개발 단계에서 중추적인 역할을 담당해 큰 시너지를 낼 수 있어 인공지능이 최우선 매칭으로 추천합니다.`;
-                  } else {
-                    finalComment = topMatch?.aiComment || localStorage.getItem("cached_ai_comment") || "보유하신 기술 스택에 최적화된 프로젝트입니다. 상세 공고를 확인해 보세요!";
+                  let finalScore = topMatch?.matchingScore || 0;
+                  let finalComment = topMatch?.aiComment || "";
+
+                  if (!isBackendDataValid) {
+                    if (userStacks.length > 0 && maxIntersectionCount > 0) {
+                      finalScore = Math.min(Math.round((maxIntersectionCount / userStacks.length) * 100), 100);
+                      
+                      if (finalScore < 40) finalScore = 75; 
+
+                      const uppercaseSkills = matchedIntersectionSkills.map(s => s.toUpperCase()).join(", ");
+                      const userNickname = profile?.nickname || "학우";
+                      finalComment = `${userNickname}님이 설정하신 핵심 기술 스택 중 [ ${uppercaseSkills} ] 역량이 본 프로젝트의 기술 요구사항과 일치합니다. 프로젝트 개발 흐름에 알맞은 시너지를 낼 수 있어 추천해 드립니다.`;
+                    } else {
+                      finalScore = 45;
+                      const userNickname = profile?.nickname || "학우";
+                      finalComment = `${userNickname}님의 프로필 정보와 최근 등록된 프로젝트들의 요구사항을 종합 분석 중입니다. 상세 공고를 확인해 새로운 팀 빌딩 기회를 발견해 보세요.`;
+                    }
                   }
 
                   return (
