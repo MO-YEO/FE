@@ -175,6 +175,18 @@ export default function MyParticipatedProject() {
     return project.totalHeadcount ?? project.recruitCount ?? 0;
   };
 
+  const getWriterName = (project: any) => {
+  return (
+    project.author?.nickname ??
+    project.writer?.nickname ??
+    project.recruiter?.nickname ??
+    project.authorName ??
+    project.writerName ??
+    project.recruiterNickname ??
+    "작성자"
+  );
+};
+
   const excludeMe = (members: ReviewMember[]) => {
     if (!myMemberId) return members;
 
@@ -288,7 +300,7 @@ export default function MyParticipatedProject() {
                     currentCount={getApprovedCount(project)}
                     totalCount={getTotalHeadcount(project)}
                     techStacks={project.skills ?? []}
-                    writer="작성자"
+                    writer={getWriterName(project)}
                     department=""
                     buttonLabel="리뷰쓰기"
                     applicationStatus={project.applicationStatus ?? "ACCEPTED"}
