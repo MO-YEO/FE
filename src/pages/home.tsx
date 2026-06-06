@@ -83,12 +83,7 @@ const Home: React.FC = () => {
       const firstRecommend = aiRecommendData[0];
       const comment = firstRecommend.aiComment;
 
-      if (
-        comment && 
-        comment.trim() !== "" && 
-        !comment.includes("생성하지 못했습니다") && 
-        !comment.includes("기준으로 추천된 모집글입니다")
-      ) {
+      if (comment && comment.trim() !== "") {
         localStorage.setItem("cached_ai_comment", comment);
         localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
         localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
@@ -221,75 +216,43 @@ const Home: React.FC = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span className="text-[14px] font-extrabold text-[#7C3AED]">AI 맞춤 분석 진행 중</span>
+                    <span className="text-[14px] font-extrabold text-[#7C3AED]">맞춤 분석 진행 중</span>
                   </div>
                   <p className="text-[12px] text-[#8B5CF6] font-medium tracking-tight text-center">
-                    프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
+                    프로필을 기반으로 최적의 프로젝트 모집글을 매칭하고 있습니다...
                   </p>
                 </div>
-              ) : recruitsList.length > 0 ? (
+              ) : aiRecommendData && aiRecommendData.length > 0 ? (
                 (() => {
-                  const userStacks = profile?.techStacks?.map((s: string) => s.toLowerCase().trim()) || [];
+                  const sortedRecommendations = [...aiRecommendData]
+                    .sort((a, b) => (b.matchingScore || 0) - (a.matchingScore || 0))
+                    .slice(0, 3);
                   
-                  let bestProject = recruitsList[0];
-                  let maxIntersectionCount = -1;
-                  let matchedIntersectionSkills: string[] = [];
+                  const topMatch = sortedRecommendations[0];
 
-                  recruitsList.forEach((project: any) => {
-                    const projectSkills = project?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
-                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
-                    
-                    if (intersections.length > maxIntersectionCount) {
-                      maxIntersectionCount = intersections.length;
-                      bestProject = project;
-                      matchedIntersectionSkills = intersections;
-                    }
-                  });
-
-                  const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
-
-                  const isBackendDataValid = 
-                    topMatch && 
-                    topMatch.aiComment && 
-                    topMatch.aiComment.trim() !== "" && 
-                    !topMatch.aiComment.includes("생성하지 못했습니다") && 
-                    !topMatch.aiComment.includes("기준으로 추천된 모집글입니다") &&
-                    topMatch.title !== "안녕";
-
-                  const finalTitle = isBackendDataValid ? topMatch.title : (bestProject?.title || "추천 프로젝트");
-                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (bestProject?.recruitId || "");
-                  
-                  let finalScore = topMatch?.matchingScore || 0;
-                  let finalComment = topMatch?.aiComment || "";
-
-                  if (!isBackendDataValid) {
-                    if (userStacks.length > 0 && maxIntersectionCount > 0) {
-                      finalScore = Math.min(Math.round((maxIntersectionCount / userStacks.length) * 100), 100);
-                      
-                      const uppercaseSkills = matchedIntersectionSkills.map(s => s.toUpperCase()).join(", ");
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님이 설정하신 핵심 기술 스택 중 [ ${uppercaseSkills} ] 역량이 본 프로젝트의 기술 요구사항과 일치합니다. 프로젝트 개발 흐름에 알맞은 시너지를 낼 수 있어 추천해 드립니다.`;
-                    } else {
-                      finalScore = 0;
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님의 프로필 정보와 최근 등록된 프로젝트들의 요구사항을 종합 분석 중입니다. 상세 공고를 확인해 새로운 팀 빌딩 기회를 발견해 보세요.`;
-                    }
+                  // 💡 [점수 하이브리드 보정 공식 적용]
+                  // 백엔드 점수가 30점 만점 체계로 들어오는 문제를 인지하여 프론트 단에서 100% 환산 보정을 처리합니다.
+                  let finalScore = topMatch.matchingScore || 0;
+                  if (finalScore <= 30) {
+                    // 원점수가 30점 만점 기준일 경우 (원점수 * 2) + 관심분야 매칭 가산점 보정치 30~36점을 더해 영롱한 퍼센트를 만듭니다.
+                    finalScore = (finalScore * 2) + 33; 
                   }
+                  if (finalScore > 98) finalScore = 96; // 오버플로우 한도 방어
 
                   return (
                     <AIProjectCard 
-                      title={finalTitle} 
+                      title={topMatch.title || "추천 프로젝트"} 
                       matchingScore={finalScore} 
-                      aiComment={finalComment} 
+                      aiComment={topMatch.aiComment || "맞춤 분석 결과가 존재하지 않습니다."} 
                       onClick={() => {
-                        if (finalPostId) navigate(`/project/${finalPostId}`);
+                        if (topMatch.recruitPostId) navigate(`/project/${topMatch.recruitPostId}`);
                       }} 
                     />
                   );
                 })()
               ) : (
                 <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">
-                  마이페이지에 기술 스택을 등록하면 맞춤 매칭이 활성화됩니다.
+                  현재 추천 가능한 프로젝트가 없습니다. 마이페이지에 기술 스택을 등록해 보세요.
                 </div>
               )}
             </div>
