@@ -209,7 +209,7 @@ const Home: React.FC = () => {
             <div className="mb-10">
               <div className="flex items-center gap-2 mb-4">
                 <div className="bg-gradient-to-r from-[#8B5CF6] to-[#EC4899] p-1.5 rounded-lg text-white font-bold text-[11px] flex items-center gap-1 shadow-sm">
-                  <span>AI 추천</span>
+                  <span>프로젝트 추천</span>
                 </div>
                 <h2 className="font-bold text-[18px] text-[#1E293B]">나를 위한 맞춤 프로젝트</h2>
               </div>
