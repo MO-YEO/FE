@@ -227,38 +227,29 @@ const Home: React.FC = () => {
                     프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
                   </p>
                 </div>
-              ) : (aiRecommendData && aiRecommendData.length > 0) || recruitsList.length > 0 || localStorage.getItem("cached_ai_comment") ? (
+              ) : (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
                 (() => {
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
                   
-                  const targetPost = recruitsList.find((p: any) => 
-                    p?.title?.toLowerCase().includes("공모전") || 
-                    p?.skills?.some((s: string) => ["react", "html", "java"].includes(s.toLowerCase()))
-                  ) || recruitsList[0];
-
                   const isCurrentFailed = 
                     !topMatch || 
                     !topMatch.aiComment || 
                     topMatch.aiComment.trim() === "" || 
                     topMatch.aiComment.includes("생성하지 못했습니다") || 
-                    topMatch.aiComment.includes("기준으로 추천된 모집글입니다") ||
-                    topMatch.title === "안녕";
+                    topMatch.aiComment.includes("기준으로 추천된 모집글입니다");
 
                   const localComment = localStorage.getItem("cached_ai_comment");
                   const localTitle = localStorage.getItem("cached_ai_project_title");
                   const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
                   const localPostId = localStorage.getItem("cached_ai_post_id");
 
-                  const finalTitle = isCurrentFailed && targetPost ? targetPost.title : (isCurrentFailed && localTitle ? localTitle : (topMatch?.title || "추천 프로젝트"));
-                  const finalScore = isCurrentFailed && targetPost ? 96 : (isCurrentFailed && localScore ? localScore : (topMatch?.matchingScore || 0));
-                  const finalPostId = isCurrentFailed && targetPost ? targetPost.recruitId : (isCurrentFailed && localPostId ? localPostId : (topMatch?.recruitPostId || ""));
+                  const finalTitle = isCurrentFailed && localTitle ? localTitle : (topMatch?.title || "추천 프로젝트");
+                  const finalScore = isCurrentFailed && localScore ? localScore : (topMatch?.matchingScore || 0);
+                  const finalPostId = isCurrentFailed && localPostId ? localPostId : (topMatch?.recruitPostId || "");
                   
                   let finalComment = topMatch?.aiComment || "";
                   if (isCurrentFailed) {
-                    if (targetPost && (targetPost.title.includes("공모전") || targetPost.title.includes("개발자"))) {
-                      const userNickname = profile?.nickname || "학우";
-                      finalComment = `${userNickname}님이 마이페이지에 등록하신 핵심 역량인 React, HTML, JAVA 스택이 본 프로젝트의 요구 조건과 95% 이상 일치합니다. 프론트엔드 파트 리드로 참여 시 완성도 높은 공모전 아웃풋을 도출할 수 있어 강력히 추천합니다.`;
-                    } else if (localComment && !localTitle?.includes("안녕")) {
+                    if (localComment) {
                       finalComment = localComment; 
                     } else {
                       const userNickname = profile?.nickname || "학우";
