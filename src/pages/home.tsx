@@ -80,7 +80,12 @@ const Home: React.FC = () => {
       const firstRecommend = aiRecommendData[0];
       const comment = firstRecommend.aiComment;
 
-      if (comment && comment.trim() !== "") {
+      if (
+        comment && 
+        comment.trim() !== "" && 
+        !comment.includes("생성하지 못했습니다") && 
+        !comment.includes("기준으로 추천된 모집글입니다")
+      ) {
         localStorage.setItem("cached_ai_comment", comment);
         localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
         localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
@@ -224,28 +229,63 @@ const Home: React.FC = () => {
                   const userStacks = profile?.techStacks?.map((s: string) => s.toLowerCase().trim()) || [];
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
 
+                  const isBackendDataValid = 
+                    topMatch && 
+                    topMatch.aiComment && 
+                    topMatch.aiComment.trim() !== "" && 
+                    !topMatch.aiComment.includes("생성하지 못했습니다") && 
+                    !topMatch.aiComment.includes("기준으로 추천된 모집글입니다");
+
+                  let targetProject: any = recruitsList[0] || null;
+
+                  if (isBackendDataValid) {
+                    const found = recruitsList.find((p: any) => p.recruitId === topMatch.recruitPostId || p.title === topMatch.title);
+                    if (found) targetProject = found;
+                  } else {
+                    let maxIntersectionCount = -1;
+                    recruitsList.forEach((project: any) => {
+                      const projectSkills = project?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
+                      const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
+                      if (intersections.length > maxIntersectionCount) {
+                        maxIntersectionCount = intersections.length;
+                        targetProject = project;
+                      }
+                    });
+                  }
+
                   const localComment = localStorage.getItem("cached_ai_comment");
                   const localTitle = localStorage.getItem("cached_ai_project_title");
                   const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
                   const localPostId = localStorage.getItem("cached_ai_post_id");
 
-                  let targetProject: any = recruitsList[0] || null;
-                  const currentTitle = topMatch ? topMatch.title : localTitle;
+                  const finalTitle = isBackendDataValid ? topMatch.title : (localTitle || targetProject?.title || "추천 프로젝트");
+                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (localPostId || targetProject?.recruitId || "");
 
-                  if (currentTitle) {
-                    const found = recruitsList.find((p: any) => p.title === currentTitle || p.recruitId === topMatch?.recruitPostId);
-                    if (found) targetProject = found;
+                  let finalScore = isBackendDataValid ? topMatch.matchingScore : localScore;
+                  let projectSkills: string[] = [];
+                  let intersections: string[] = [];
+
+                  if (targetProject) {
+                    projectSkills = targetProject?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
+                    intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
                   }
 
-                  const finalTitle = topMatch ? topMatch.title : (localTitle || "추천 프로젝트");
-                  const finalPostId = topMatch ? topMatch.recruitPostId : (localPostId || "");
-                  const finalComment = topMatch ? topMatch.aiComment : (localComment || "추천 사유를 불러오고 있습니다.");
-
-                  let finalScore = topMatch ? topMatch.matchingScore : localScore;
                   if (targetProject && userStacks.length > 0) {
-                    const projectSkills = targetProject?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
-                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
                     finalScore = Math.min(Math.round((intersections.length / userStacks.length) * 100), 100);
+                  }
+
+                  let finalComment = "";
+                  if (isBackendDataValid) {
+                    finalComment = topMatch.aiComment;
+                  } else if (localComment && !localComment.includes("생성하지 못했습니다")) {
+                    finalComment = localComment;
+                  } else if (targetProject && userStacks.length > 0 && intersections.length > 0) {
+                    const matchedText = intersections.map(s => s.toUpperCase()).join(", ");
+                    const reqText = projectSkills.map(s => s.toUpperCase()).join(", ");
+                    finalComment = `보유 스택 [ ${matchedText} ]이 프로젝트 요구 사항 [ ${reqText} ]과 매칭되어 추천되었습니다. 상세 모집 공고를 확인해 보세요.`;
+                  } else {
+                    const reqText = projectSkills.length > 0 ? projectSkills.map(s => s.toUpperCase()).join(", ") : "미지정";
+                    finalComment = `현재 모집글의 요구 스택은 [ ${reqText} ] 입니다. 상세 요건과 기획안을 검토하여 매칭을 이어가 보세요.`;
                   }
 
                   return (
