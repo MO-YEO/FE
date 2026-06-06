@@ -230,22 +230,6 @@ const Home: React.FC = () => {
               ) : recruitsList.length > 0 ? (
                 (() => {
                   const userStacks = profile?.techStacks?.map((s: string) => s.toLowerCase().trim()) || [];
-                  
-                  let bestProject = recruitsList[0];
-                  let maxIntersectionCount = -1;
-                  let matchedIntersectionSkills: string[] = [];
-
-                  recruitsList.forEach((project: any) => {
-                    const projectSkills = project?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
-                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
-                    
-                    if (intersections.length > maxIntersectionCount) {
-                      maxIntersectionCount = intersections.length;
-                      bestProject = project;
-                      matchedIntersectionSkills = intersections;
-                    }
-                  });
-
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
 
                   const isBackendDataValid = 
@@ -256,26 +240,51 @@ const Home: React.FC = () => {
                     !topMatch.aiComment.includes("기준으로 추천된 모집글입니다") &&
                     topMatch.title !== "안녕";
 
-                  const finalTitle = isBackendDataValid ? topMatch.title : (bestProject?.title || "추천 프로젝트");
-                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (bestProject?.recruitId || "");
-                  
-                  let finalScore = topMatch?.matchingScore || 0;
-                  let finalComment = topMatch?.aiComment || "";
+                  let targetProject: any = recruitsList[0] || null;
+                  if (isBackendDataValid) {
+                    const found = recruitsList.find((p: any) => p.recruitId === topMatch.recruitPostId || p.title === topMatch.title);
+                    if (found) targetProject = found;
+                  } else {
+                    let maxIntersectionCount = -1;
+                    recruitsList.forEach((project: any) => {
+                      const projectSkills = project?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
+                      const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
+                      if (intersections.length > maxIntersectionCount) {
+                        maxIntersectionCount = intersections.length;
+                        targetProject = project;
+                      }
+                    });
+                  }
 
-                  if (!isBackendDataValid) {
-                    if (userStacks.length > 0 && maxIntersectionCount > 0) {
-                      finalScore = Math.min(Math.round((maxIntersectionCount / userStacks.length) * 100), 100);
-                      
-                      if (finalScore < 40) finalScore = 75; 
+                  const finalTitle = isBackendDataValid ? topMatch.title : (targetProject?.title || "추천 프로젝트");
+                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (targetProject?.recruitId || "");
 
-                      const uppercaseSkills = matchedIntersectionSkills.map(s => s.toUpperCase()).join(", ");
+                  let finalScore = 0;
+                  if (targetProject && userStacks.length > 0) {
+                    const projectSkills = targetProject?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
+                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
+                    finalScore = Math.min(Math.round((intersections.length / userStacks.length) * 100), 100);
+                  } else if (isBackendDataValid) {
+                    finalScore = topMatch.matchingScore || 0;
+                  }
+
+                  let finalComment = "";
+                  if (isBackendDataValid) {
+                    finalComment = topMatch.aiComment;
+                  } else if (targetProject && userStacks.length > 0) {
+                    const projectSkills = targetProject?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
+                    const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
+                    if (intersections.length > 0) {
+                      const uppercaseSkills = intersections.map((skill: string) => skill.toUpperCase()).join(", ");
                       const userNickname = profile?.nickname || "학우";
                       finalComment = `${userNickname}님이 설정하신 핵심 기술 스택 중 [ ${uppercaseSkills} ] 역량이 본 프로젝트의 기술 요구사항과 일치합니다. 프로젝트 개발 흐름에 알맞은 시너지를 낼 수 있어 추천해 드립니다.`;
                     } else {
-                      finalScore = 45;
                       const userNickname = profile?.nickname || "학우";
                       finalComment = `${userNickname}님의 프로필 정보와 최근 등록된 프로젝트들의 요구사항을 종합 분석 중입니다. 상세 공고를 확인해 새로운 팀 빌딩 기회를 발견해 보세요.`;
                     }
+                  } else {
+                    const userNickname = profile?.nickname || "학우";
+                    finalComment = `${userNickname}님의 프로필 정보와 최근 등록된 프로젝트들의 요구사항을 종합 분석 중입니다. 상세 공고를 확인해 새로운 팀 빌딩 기회를 발견해 보세요.`;
                   }
 
                   return (
