@@ -80,12 +80,7 @@ const Home: React.FC = () => {
       const firstRecommend = aiRecommendData[0];
       const comment = firstRecommend.aiComment;
 
-      if (
-        comment && 
-        comment.trim() !== "" && 
-        !comment.includes("생성하지 못했습니다") && 
-        !comment.includes("기준으로 추천된 모집글입니다")
-      ) {
+      if (comment && comment.trim() !== "") {
         localStorage.setItem("cached_ai_comment", comment);
         localStorage.setItem("cached_ai_project_title", firstRecommend.title || "");
         localStorage.setItem("cached_ai_score", String(firstRecommend.matchingScore || 0));
@@ -228,22 +223,15 @@ const Home: React.FC = () => {
                 (() => {
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
 
-                  const isBackendDataValid = 
-                    topMatch && 
-                    topMatch.aiComment && 
-                    topMatch.aiComment.trim() !== "" && 
-                    !topMatch.aiComment.includes("생성하지 못했습니다") && 
-                    !topMatch.aiComment.includes("기준으로 추천된 모집글입니다");
-
                   const localComment = localStorage.getItem("cached_ai_comment");
                   const localTitle = localStorage.getItem("cached_ai_project_title");
                   const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
                   const localPostId = localStorage.getItem("cached_ai_post_id");
 
-                  const finalTitle = isBackendDataValid ? topMatch.title : (localTitle || "추천 프로젝트");
-                  const finalScore = isBackendDataValid ? topMatch.matchingScore : localScore;
-                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (localPostId || "");
-                  const finalComment = isBackendDataValid ? topMatch.aiComment : (localComment || "마이페이지에 등록한 스택과 연관도가 높은 프로젝트입니다. 상세 공고를 확인해 보세요.");
+                  const finalTitle = topMatch ? topMatch.title : (localTitle || "추천 프로젝트");
+                  const finalScore = topMatch ? topMatch.matchingScore : localScore;
+                  const finalPostId = topMatch ? topMatch.recruitPostId : (localPostId || "");
+                  const finalComment = topMatch ? topMatch.aiComment : (localComment || "추천 코멘트를 불러올 수 없습니다.");
 
                   return (
                     <AIProjectCard 
