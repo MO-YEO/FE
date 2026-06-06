@@ -53,19 +53,6 @@ const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>('project');
 
-  // 🔍 [디버깅] 현재 로컬 스토리지에 access_token이 제대로 들어있는지 진단
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    console.log("==========================================");
-    console.log("🚨 [디버깅] 1. 프론트엔드 로컬 스토리지 토큰 진단");
-    if (token) {
-      console.log("✅ 토큰이 스토리지에 존재합니다: ", token.substring(0, 20) + "...");
-    } else {
-      console.warn("❌ 경고: access_token이 비어있습니다! 로그아웃 상태이거나 클리어올로 유실되었습니다.");
-    }
-    console.log("==========================================");
-  }, []);
-
   const { data: profile } = useQuery({
     queryKey: ['myProfile'],
     queryFn: membersApi.getMyProfile,
@@ -82,8 +69,7 @@ const Home: React.FC = () => {
     queryFn: () => boardsApi.getPosts({ size: 20 }),
   });
 
-  // 🚀 백엔드 추천 리스트 API 호출
-  const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching, error: apiError } = useQuery<AIRecommendation[]>({
+  const { data: aiRecommendData, isLoading: aiLoading, isFetching: aiFetching } = useQuery<AIRecommendation[]>({
     queryKey: ['recruits', 'recommendation', 'list'],
     queryFn: aiRecommendApi.getAiRecommendations,
     enabled: !!profile,
@@ -91,40 +77,6 @@ const Home: React.FC = () => {
     gcTime: 1000 * 60 * 60,      
     refetchOnWindowFocus: false, 
   });
-
-  // 🔍 [디버깅] 백엔드 응답값을 투명하게 까보는 실시간 로그 모니터링
-  useEffect(() => {
-    console.log("==========================================");
-    console.log("🚨 [디버깅] 2. 백엔드 AI 추천 API (/api/recruits/recommendations/me) 응답 수신");
-    
-    if (apiError) {
-      console.error("❌ API 통신 자체에 실패했습니다 (네트워크 에러 또는 401/403/500 에러):", apiError);
-    }
-
-    if (aiRecommendData) {
-      console.log("✅ 백엔드로부터 응답 수신 성공! 데이터 길이:", aiRecommendData.length);
-      console.log("📊 [날것의 데이터 전량 출력]:", aiRecommendData);
-      
-      if (aiRecommendData.length > 0) {
-        const topMatch = aiRecommendData[0];
-        console.log("🎯 1순위 추천 타겟 프로젝트 정보:");
-        console.log(`- 제목: ${topMatch.title}`);
-        console.log(`- 매칭 스코어: ${topMatch.matchingScore}%`);
-        console.log(`- 백엔드가 보내준 aiComment 실제 텍스트: "${topMatch.aiComment}"`);
-        
-        if (!topMatch.aiComment || topMatch.aiComment.includes("문제가 발생했습니다") || topMatch.aiComment.includes("생성하지 못했습니다")) {
-          console.warn("💡 시스템 진단: 백엔드가 정상 데이터(200 OK)는 줬으나, 내부 Gemini 연산 실패로 '에러용 문자열 대사'를 리턴한 것이 교차 검증되었습니다.");
-        } else {
-          console.log("🎉 시스템 진단: 백엔드로부터 정상적인 Gemini AI 추천 멘트 수신 성공!");
-        }
-      } else {
-        console.warn("⚠️ 경고: 백엔드 응답 배열이 텅 비어있습니다(`[]`). 현재 DB에 OPEN 상태인 모집글이 없거나 매칭 풀이 부족합니다.");
-      }
-    } else if (!aiLoading && !aiFetching) {
-      console.log("💤 대기 중: 아직 데이터가 로드되지 않았거나 프로필 인증 처리 중입니다.");
-    }
-    console.log("==========================================");
-  }, [aiRecommendData, apiError, aiLoading, aiFetching]);
 
   useEffect(() => {
     if (profile && profile.email) {
@@ -258,27 +210,20 @@ const Home: React.FC = () => {
                 </div>
               ) : aiRecommendData && aiRecommendData.length > 0 ? (
                 (() => {
-                  const topMatch = aiRecommendData[0];
-                  
-                  let cardTitle = topMatch.title || "추천 프로젝트";
-                  let finalScore = topMatch.matchingScore || 0;
-                  let finalComment = topMatch.aiComment || "";
+                  // 🚀 [정석 구현] 10개의 리스트 중 "에러 멘트가 없는" 진짜 1순위 추천글을 찾아냅니다.
+                  const validRecommendation = aiRecommendData.find(item => 
+                    item.aiComment && 
+                    !item.aiComment.includes("생성하지 못했습니다") && 
+                    !item.aiComment.includes("문제가 발생했습니다")
+                  );
 
-                  // 💡 백엔드가 예외처리 문구를 던지면 조건문이 감지하고 예쁜 대사로 임시 가이드 처리
-                  if (
-                    !finalComment || 
-                    finalComment.includes("문제가 발생했습니다") || 
-                    finalComment.includes("생성하지 못했습니다")
-                  ) {
-                    if (cardTitle.includes("안녕") || cardTitle === "추천 프로젝트") {
-                      cardTitle = "스프링 백엔드 팀원 구합니다";
-                      finalScore = 100;
-                      finalComment = "이 모집글은 사용자님께 높은 매칭 점수를 보이며 잘 어울립니다. 특히 '스프링 백엔드' 프로젝트에 필요한 Java, Spring, JPA 등 핵심 기술 스택을 보유하고 계셔서 적합한 팀원으로 예상됩니다. 지원 시 보유하신 백엔드 개발 경험과 Spring 활용 능력을 구체적인 프로젝트 사례와 함께 어필하시면 좋은 결과를 기대할 수 있을 것입니다.";
-                    } else {
-                      const userNickname = profile?.nickname || "김재범";
-                      finalComment = `${userNickname}님이 설정하신 핵심 역량 및 보유 기술 스택은 현재 모집 중인 '${cardTitle}' 프로젝트의 요구 스택과 높은 일치율을 보이고 있습니다. 프로젝트 협업 시 시너지가 아주 훌륭할 것으로 예상되니 상세 공고를 확인해 보세요!`;
-                    }
-                  }
+                  // 만약 10개 전부 다 제미나이 에러가 났다면, 어쩔 수 없이 0번째 데이터(에러 내용)를 그대로 보여줍니다. (디버깅 목적)
+                  const topMatch = validRecommendation || aiRecommendData[0];
+                  
+                  // 백엔드가 준 데이터 "그대로" 화면에 렌더링합니다. 어떠한 하드코딩 치트키도 없습니다.
+                  const cardTitle = topMatch.title || "추천 프로젝트";
+                  const finalScore = topMatch.matchingScore || 0;
+                  const finalComment = topMatch.aiComment || "추천 사유를 불러올 수 없습니다.";
 
                   return (
                     <AIProjectCard 
@@ -293,7 +238,7 @@ const Home: React.FC = () => {
                 })()
               ) : (
                 <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">
-                  마이페이지에 기술 스택을 등록하면 맞춤 매칭이 활성화됩니다.
+                  현재 조건에 맞는 추천 프로젝트를 불러오지 못했습니다.
                 </div>
               )}
             </div>
