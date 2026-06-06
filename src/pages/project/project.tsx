@@ -16,6 +16,8 @@ import useGetRecruits from "../../hooks/queries/useGetRecruits";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { useBookmarkMutation } from "../../hooks/mutations/useBookmarkMutation";
 import { calculateDday } from "../../utils/calculateDay";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryFactory } from "../../hooks/queries/queryFactory";
 
 const ProjectPage = () => {
   const [selectMenu, setSelectMenu] = useState("ALL");
@@ -35,6 +37,8 @@ const ProjectPage = () => {
   );
 
   const [myId, setMyId] = useState<number | null>(null);
+
+  const queryClient = useQueryClient();
 
   const bookmarkMutation = useBookmarkMutation();
 
@@ -94,6 +98,9 @@ const ProjectPage = () => {
       try {
         await recruitsApi.createRecruit(finalData);
         handleCloseSheet("register");
+        await queryClient.invalidateQueries({
+          queryKey: queryFactory.recruits.lists(),
+        });
         // 등록 후 최신 목록으로 갱신하기 위해 강제 상태 변경 트리거 가능
       } catch (error) {
         console.log("모집글 등록 실패", error);
