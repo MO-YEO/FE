@@ -80,7 +80,7 @@ const Home: React.FC = () => {
     retry: 1,
   });
 
-  // 💡 [정렬 핵심] 백엔드가 연산해준 점수(matchingScore)가 가장 높은 순서대로 깔끔하게 정렬
+  // 백엔드 매칭 점수가 가장 높은 프로젝트를 부동의 1위로 정렬 및 선정
   const validRecommendations = aiRecommendData ? [...aiRecommendData] : [];
   const bestMatch: any = validRecommendations.sort((a, b) => b.matchingScore - a.matchingScore)[0];
 
@@ -182,8 +182,14 @@ const Home: React.FC = () => {
               {aiLoading ? (
                 <div className="rounded-[20px] border border-[#F3E8FF] bg-gradient-to-b from-white to-[#FAF5FF] p-[24px] shadow-sm animate-pulse text-center text-[#8B5CF6] text-[13px] font-bold">최적 프로젝트 분석 및 엄선 중...</div>
               ) : bestMatch ? (
-                // 💡 [UI 주입 적용] 백엔드가 직접 연산해준 찐 제목과 찐 적합도를 카드 컴포넌트에 바인딩합니다.
-                <AIProjectCard title={bestMatch.title} matchingScore={bestMatch.matchingScore} onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} />
+                // 💡 [개조 포인트] 백엔드에서 내려온 일치하는 기술 스택 리스트와 부족한 스택 리스트를 컴포넌트에 통째로 넘깁니다.
+                <AIProjectCard 
+                  title={bestMatch.title} 
+                  matchingScore={bestMatch.matchingScore} 
+                  matchedSkills={bestMatch.matchedSkills || []}
+                  missingSkills={bestMatch.missingSkills || []}
+                  onClick={() => navigate(`/project/${bestMatch.recruitPostId}`)} 
+                />
               ) : (
                 <div className="bg-white p-6 rounded-2xl border border-dashed border-gray-200 text-center text-gray-400 text-xs">현재 추천 가능한 프로젝트가 없습니다.</div>
               )}
@@ -221,15 +227,43 @@ const ProjectCard: React.FC<any> = ({ title, author, members, maxMembers, time, 
   </div>
 );
 
-// 💡 [하단 UI 컴포넌트 수정] 코멘트 말풍선 부분을 빼고 깔끔하게 연관 안내 고정 멘트로 정리했습니다.
-const AIProjectCard: React.FC<any> = ({ title, matchingScore, onClick }) => (
-  <div onClick={onClick} className="rounded-[20px] border border-[#F5E6FF] bg-gradient-to-b from-white to-[#FDF4FF] p-[20px] shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden">
-    <div className="absolute top-4 right-4 bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] font-extrabold text-[12px] px-2.5 py-1 rounded-full">적합도 {matchingScore}%</div>
-    <h3 className="text-[16px] font-extrabold text-[#1E293B] w-[70%] truncate mb-3.5">{title}</h3>
-    <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]">
-      <p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">
-        🤖 사용자님의 보유 핵심 기술 스택 및 관심 카테고리와 연관성이 매우 높은 최적의 프로젝트입니다. 팀에 합류하여 기량을 펼쳐보세요!
-      </p>
+// 💡 [디자인 완전 개조] 구구절절한 줄글 코멘트를 완전히 지우고, 스택 일치 여부를 매칭 칩(Chip) 형태로 세분화해서 보여줍니다.
+const AIProjectCard: React.FC<any> = ({ title, matchingScore, matchedSkills, missingSkills, onClick }) => (
+  <div onClick={onClick} className="rounded-[20px] border border-[#E0E7FF] bg-gradient-to-b from-white to-[#EEF2FF] p-[20px] shadow-md active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden">
+    <div className="absolute top-4 right-4 bg-[#EEF2FF] border border-[#C7D2FE] text-[#4F46E5] font-extrabold text-[12.5px] px-3 py-1 rounded-full shadow-sm">
+      적합도 {matchingScore}%
+    </div>
+    
+    <h3 className="text-[16.5px] font-black text-[#1E293B] w-[65%] truncate mb-4">{title}</h3>
+    
+    <div className="space-y-3 pt-1 border-t border-dashed border-gray-200">
+      {/* 🟢 보유 스택 매칭 현황 */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-bold text-[#10B981] bg-[#ECFDF5] px-1.5 py-0.5 rounded mr-1">보유 스택 일치</span>
+        {matchedSkills.length > 0 ? (
+          matchedSkills.map((skill: string, idx: number) => (
+            <span key={idx} className="text-[11px] bg-white border border-[#A7F3D0] text-[#065F46] px-2 py-0.5 rounded-full font-semibold uppercase">
+              {skill}
+            </span>
+          ))
+        ) : (
+          <span className="text-[11px] text-gray-400 font-medium">일치하는 스택 없음</span>
+        )}
+      </div>
+
+      {/* 🔴 부족 스택 매칭 현황 */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-bold text-[#EF4444] bg-[#FEF2F2] px-1.5 py-0.5 rounded mr-1">추가 요구 스택</span>
+        {missingSkills.length > 0 ? (
+          missingSkills.map((skill: string, idx: number) => (
+            <span key={idx} className="text-[11px] bg-white border border-[#FCA5A5] text-[#991B1B] px-2 py-0.5 rounded-full font-semibold uppercase">
+              {skill}
+            </span>
+          ))
+        ) : (
+          <span className="text-[11px] text-gray-400 font-medium">없음 (스택 완벽 일치!)</span>
+        )}
+      </div>
     </div>
   </div>
 );
