@@ -24,6 +24,13 @@ export default function TeamMemberCard({
 }: TeamMemberCardProps) {
   const displayInitial = profileInitial || name.trim().charAt(0) || "?";
 
+  const normalizedGithubUrl =
+    githubUrl && githubUrl.trim()
+      ? githubUrl.startsWith("http")
+        ? githubUrl
+        : `https://${githubUrl}`
+      : "";
+
   return (
     <article
       className="
@@ -81,16 +88,16 @@ export default function TeamMemberCard({
         ))}
       </div>
 
-      <div
-        className="
-          mt-4 flex items-center justify-between
-          border-t border-[#F1F5F9]
-          pt-3 pb-1
-        "
-      >
-        {githubUrl ? (
+      {normalizedGithubUrl ? (
+        <div
+          className="
+            mt-4 flex items-center justify-between
+            border-t border-[#F1F5F9]
+            pt-3 pb-1
+          "
+        >
           <a
-            href={githubUrl}
+            href={normalizedGithubUrl}
             target="_blank"
             rel="noreferrer"
             className="flex shrink-0 items-center gap-1 text-[#62748E] hover:opacity-80"
@@ -104,19 +111,8 @@ export default function TeamMemberCard({
               {githubLabel}
             </span>
           </a>
-        ) : (
-          <div className="flex shrink-0 items-center gap-1 text-[#62748E]">
-            <img
-              src={githubIcon}
-              alt="깃허브"
-              className="h-4 w-4 object-contain"
-            />
-            <span className="text-[14px] font-normal leading-[20px]">
-              {githubLabel}
-            </span>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : null}
     </article>
   );
 }
