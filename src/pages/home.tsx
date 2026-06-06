@@ -73,9 +73,6 @@ const Home: React.FC = () => {
     queryKey: ['recruits', 'recommendation'],
     queryFn: aiRecommendApi.getAiRecommendations,
     enabled: !!profile,
-    staleTime: 1000 * 60 * 30,   
-    gcTime: 1000 * 60 * 60,      
-    refetchOnWindowFocus: false, 
   });
 
   useEffect(() => {
@@ -227,9 +224,8 @@ const Home: React.FC = () => {
                     프로필을 기반으로 최적의 프로젝트 모집글을 실시간 매칭하고 있습니다...
                   </p>
                 </div>
-              ) : recruitsList.length > 0 ? (
+              ) : (aiRecommendData && aiRecommendData.length > 0) || localStorage.getItem("cached_ai_comment") ? (
                 (() => {
-                  const userStacks = profile?.techStacks?.map((s: string) => s.toLowerCase().trim()) || [];
                   const topMatch: AIRecommendation | null = aiRecommendData && aiRecommendData.length > 0 ? aiRecommendData[0] : null;
 
                   const isBackendDataValid = 
@@ -237,55 +233,17 @@ const Home: React.FC = () => {
                     topMatch.aiComment && 
                     topMatch.aiComment.trim() !== "" && 
                     !topMatch.aiComment.includes("생성하지 못했습니다") && 
-                    !topMatch.aiComment.includes("기준으로 추천된 모집글입니다") &&
-                    topMatch.title !== "안녕";
+                    !topMatch.aiComment.includes("기준으로 추천된 모집글입니다");
 
-                  let targetProject: any = recruitsList[0] || null;
+                  const localComment = localStorage.getItem("cached_ai_comment");
+                  const localTitle = localStorage.getItem("cached_ai_project_title");
+                  const localScore = Number(localStorage.getItem("cached_ai_score") || 0);
+                  const localPostId = localStorage.getItem("cached_ai_post_id");
 
-                  if (isBackendDataValid) {
-                    const found = recruitsList.find((p: any) => p.recruitId === topMatch.recruitPostId || p.title === topMatch.title);
-                    if (found) targetProject = found;
-                  } else {
-                    let maxIntersectionCount = -1;
-                    recruitsList.forEach((project: any) => {
-                      const projectSkills = project?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
-                      const intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
-                      if (intersections.length > maxIntersectionCount) {
-                        maxIntersectionCount = intersections.length;
-                        targetProject = project;
-                      }
-                    });
-                  }
-
-                  const finalTitle = isBackendDataValid ? topMatch.title : (targetProject?.title || "추천 프로젝트");
-                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (targetProject?.recruitId || "");
-
-                  let finalScore = 0;
-                  let projectSkills: string[] = [];
-                  let intersections: string[] = [];
-
-                  if (targetProject) {
-                    projectSkills = targetProject?.skills?.map((s: string) => s.toLowerCase().trim()) || [];
-                    intersections = projectSkills.filter((skill: string) => userStacks.includes(skill));
-                  }
-
-                  if (targetProject && userStacks.length > 0) {
-                    finalScore = Math.min(Math.round((intersections.length / userStacks.length) * 100), 100);
-                  } else if (isBackendDataValid) {
-                    finalScore = topMatch.matchingScore || 0;
-                  }
-
-                  let finalComment = "";
-                  if (isBackendDataValid) {
-                    finalComment = topMatch.aiComment;
-                  } else if (targetProject && userStacks.length > 0 && intersections.length > 0) {
-                    const matchedText = intersections.map(s => s.toUpperCase()).join(", ");
-                    const reqText = projectSkills.map(s => s.toUpperCase()).join(", ");
-                    finalComment = `보유 스택 [ ${matchedText} ]이 프로젝트 요구 사항 [ ${reqText} ]과 매칭되어 추천되었습니다. 상세 모집 공고를 확인해 보세요.`;
-                  } else {
-                    const reqText = projectSkills.length > 0 ? projectSkills.map(s => s.toUpperCase()).join(", ") : "미지정";
-                    finalComment = `현재 모집글의 요구 스택은 [ ${reqText} ] 입니다. 상세 요건과 기획안을 검토하여 매칭을 이어가 보세요.`;
-                  }
+                  const finalTitle = isBackendDataValid ? topMatch.title : (localTitle || "추천 프로젝트");
+                  const finalScore = isBackendDataValid ? topMatch.matchingScore : localScore;
+                  const finalPostId = isBackendDataValid ? topMatch.recruitPostId : (localPostId || "");
+                  const finalComment = isBackendDataValid ? topMatch.aiComment : (localComment || "마이페이지에 등록한 스택과 연관도가 높은 프로젝트입니다. 상세 공고를 확인해 보세요.");
 
                   return (
                     <AIProjectCard 
