@@ -216,7 +216,7 @@ const Home: React.FC = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span className="text-[14px] font-extrabold text-[#7C3AED]">맞춤 분석 진행 중</span>
+                    <span className="text-[14px] font-extrabold text-[#7C3AED]">AI 맞춤 분석 진행 중</span>
                   </div>
                   <p className="text-[12px] text-[#8B5CF6] font-medium tracking-tight text-center">
                     프로필을 기반으로 최적의 프로젝트 모집글을 매칭하고 있습니다...
@@ -230,14 +230,45 @@ const Home: React.FC = () => {
                   
                   const topMatch = sortedRecommendations[0];
 
-                  // 💡 [점수 하이브리드 보정 공식 적용]
-                  // 백엔드 점수가 30점 만점 체계로 들어오는 문제를 인지하여 프론트 단에서 100% 환산 보정을 처리합니다.
+                  // 💡 [매칭 핵심 브릿지] 마이페이지의 원본 영문 코드 데이터를 한글로 변환해 주는 맵 탑재
+                  const apiValueToKorean: Record<string, string> = {
+                    ACADEMIC: "수업",
+                    PROJECT: "프로젝트",
+                    STUDY: "스터디",
+                    CONTEST: "공모전",
+                  };
+
+                  // 💡 재범님이 발굴해 낸 실제 프로필 관심 카테고리 영문 필드 배열 안전하게 바인딩
+                  const rawApiInterests: string[] = profile?.activityCategories || [];
+
+                  // 💡 영문 리스트를 실시간 한글 리스트로 100% 매핑
+                  const userInterestsInKorean = rawApiInterests
+                    .map(category => apiValueToKorean[category] || category)
+                    .map(str => str.toLowerCase().trim());
+
+                  // 💡 추천 공고 프로젝트의 카테고리 명칭 (예: "공모전")
+                  const projectCategory: string = (topMatch as any).recruitActivityCategory || "";
+                  const cleanProjectCategory = projectCategory.toLowerCase().trim();
+
+                  // 🎯 [실시간 1대1 대조 연산] 실제 카테고리가 일치하는지 판별
+                  const isCategoryMatched = userInterestsInKorean.includes(cleanProjectCategory);
+
                   let finalScore = topMatch.matchingScore || 0;
+                  
                   if (finalScore <= 30) {
-                    // 원점수가 30점 만점 기준일 경우 (원점수 * 2) + 관심분야 매칭 가산점 보정치 30~36점을 더해 영롱한 퍼센트를 만듭니다.
-                    finalScore = (finalScore * 2) + 33; 
+                    // 기술 스택 원점수 비례 환산 (30점 만점 기준 -> 60점 환산)
+                    const baseStackScore = finalScore * 2; 
+
+                    // 크로스 필터 검사 결과 카테고리가 완벽히 맞을 때만 33점 골든 가산점 합산
+                    if (isCategoryMatched) {
+                      finalScore = baseStackScore + 33; 
+                    } else {
+                      // 카테고리가 다르면 스택 비율 기본 점수 대에 가두어 방어
+                      finalScore = baseStackScore + 5; 
+                    }
                   }
-                  if (finalScore > 98) finalScore = 96; // 오버플로우 한도 방어
+                  
+                  if (finalScore > 98) finalScore = 96; 
 
                   return (
                     <AIProjectCard 
@@ -322,9 +353,7 @@ const AIProjectCard: React.FC<AIProjectCardProps> = ({ title, matchingScore, aiC
     <div className="absolute top-4 right-4 bg-[#F5F3FF] border border-[#DDD6FE] text-[#7C3AED] font-extrabold text-[12px] px-2.5 py-1 rounded-full">
       적합도 {matchingScore}%
     </div>
-    
     <h3 className="text-[16px] font-extrabold text-[#1E293B] w-[70%] truncate mb-3.5">{title}</h3>
-    
     <div className="bg-[#FAF5FF] rounded-[12px] p-3 border border-[#F3E8FF]">
       <p className="text-[12.5px] leading-[1.5] text-[#6B21A8] font-medium break-keep">
         🤖 {aiComment}
