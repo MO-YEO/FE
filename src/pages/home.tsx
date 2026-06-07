@@ -230,45 +230,10 @@ const Home: React.FC = () => {
                   
                   const topMatch = sortedRecommendations[0];
 
-                  // 💡 [매칭 핵심 브릿지] 마이페이지의 원본 영문 코드 데이터를 한글로 변환해 주는 맵 탑재
-                  const apiValueToKorean: Record<string, string> = {
-                    ACADEMIC: "수업",
-                    PROJECT: "프로젝트",
-                    STUDY: "스터디",
-                    CONTEST: "공모전",
-                  };
-
-                  // 💡 재범님이 발굴해 낸 실제 프로필 관심 카테고리 영문 필드 배열 안전하게 바인딩
-                  const rawApiInterests: string[] = profile?.activityCategories || [];
-
-                  // 💡 영문 리스트를 실시간 한글 리스트로 100% 매핑
-                  const userInterestsInKorean = rawApiInterests
-                    .map(category => apiValueToKorean[category] || category)
-                    .map(str => str.toLowerCase().trim());
-
-                  // 💡 추천 공고 프로젝트의 카테고리 명칭 (예: "공모전")
-                  const projectCategory: string = (topMatch as any).recruitActivityCategory || "";
-                  const cleanProjectCategory = projectCategory.toLowerCase().trim();
-
-                  // 🎯 [실시간 1대1 대조 연산] 실제 카테고리가 일치하는지 판별
-                  const isCategoryMatched = userInterestsInKorean.includes(cleanProjectCategory);
-
-                  let finalScore = topMatch.matchingScore || 0;
-                  
-                  if (finalScore <= 30) {
-                    // 기술 스택 원점수 비례 환산 (30점 만점 기준 -> 60점 환산)
-                    const baseStackScore = finalScore * 2; 
-
-                    // 크로스 필터 검사 결과 카테고리가 완벽히 맞을 때만 33점 골든 가산점 합산
-                    if (isCategoryMatched) {
-                      finalScore = baseStackScore + 33; 
-                    } else {
-                      // 카테고리가 다르면 스택 비율 기본 점수 대에 가두어 방어
-                      finalScore = baseStackScore + 5; 
-                    }
-                  }
-                  
-                  if (finalScore > 98) finalScore = 96; 
+                  // 🎯 [순수 백엔드 점수 완벽 연동]
+                  // 프론트의 보정 공식 및 96% 한도 제한 장치를 완전히 제거합니다.
+                  // 백엔드가 완벽하게 연산한 100점 만점 원본 데이터를 그대로 꽂아줍니다.
+                  const finalScore = topMatch.matchingScore || 0;
 
                   return (
                     <AIProjectCard 
